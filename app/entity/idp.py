@@ -25,6 +25,19 @@ class IDP(db.Model):
         return db.session.get(cls, idp_id)
 
     @classmethod
+    def visible(cls, query=None):
+        """Only IDPs whose designer is active (not suspended) — what customers may see (C-04)."""
+        from app.entity.user_account import UserAccount
+
+        query = cls.query if query is None else query
+        return (query.join(UserAccount, cls.designer_id == UserAccount.id)
+                .filter(UserAccount.is_suspended.isnot(True)))
+
+    @property
+    def is_visible(self):
+        return not (self.designer and self.designer.is_suspended)
+
+    @classmethod
     def search(cls, keyword):
         """Case-insensitive search on title or category."""
         if not keyword:
@@ -40,20 +53,21 @@ class IDP(db.Model):
     def browse(cls, keyword="", categories=(), status=None, sort="views"):
         """Search, filter and sort projects for the Browse Projects page.
 
-        keyword matches title, category or the designer's company/personal name;
-        categories is a list of category names (empty = all); status is None,
-        'current' or 'past'; sort is 'views' (most viewed) or 'newest'.
+        keyword matches title, description, category or the designer's
+        company/personal name; categories is a list of category names
+        (empty = all); status is None, 'current' or 'past'; sort is 'views'
+        (most viewed) or 'newest'. Suspended designers' IDPs are never returned.
         """
         from app.entity.designer_application import DesignerApplication
         from app.entity.user_account import UserAccount
 
-        query = cls.query
+        query = cls.visible()
         if keyword:
             pattern = f"%{keyword}%"
             query = (
-                query.join(UserAccount, cls.designer_id == UserAccount.id)
-                .outerjoin(DesignerApplication, DesignerApplication.account_id == UserAccount.id)
-                .filter(db.or_(cls.title.ilike(pattern), cls.category.ilike(pattern),
+                query.outerjoin(DesignerApplication, DesignerApplication.account_id == UserAccount.id)
+                .filter(db.or_(cls.title.ilike(pattern), cls.description.ilike(pattern),
+                               cls.category.ilike(pattern),
                                UserAccount.name.ilike(pattern),
                                DesignerApplication.company_name.ilike(pattern)))
             )
@@ -66,14 +80,14 @@ class IDP(db.Model):
 
     @classmethod
     def count_by_status(cls):
-        current = cls.query.filter_by(is_current=True).count()
-        return {"current": current, "past": cls.query.count() - current}
+        current = cls.visible().filter(cls.is_current.is_(True)).count()
+        return {"current": current, "past": cls.visible().count() - current}
 
     @classmethod
     def more_by_designer(cls, designer_id, exclude_id, limit=4):
         """The designer's other projects, most viewed first."""
         return (
-            cls.query.filter(cls.designer_id == designer_id, cls.id != exclude_id)
+            cls.visible().filter(cls.designer_id == designer_id, cls.id != exclude_id)
             .order_by(cls.view_count.desc(), cls.id.desc())
             .limit(limit)
             .all()
@@ -87,18 +101,18 @@ class IDP(db.Model):
     def popular(cls, sort="views", limit=4):
         """Most viewed (default) or newest projects."""
         order = cls.created_at.desc() if sort == "newest" else cls.view_count.desc()
-        return cls.query.order_by(order, cls.id.desc()).limit(limit).all()
+        return cls.visible().order_by(order, cls.id.desc()).limit(limit).all()
 
     @classmethod
     def count_by_category(cls):
-        rows = db.session.query(cls.category, db.func.count(cls.id)).group_by(cls.category)
+        rows = cls.visible(db.session.query(cls.category, db.func.count(cls.id))).group_by(cls.category)
         return dict(rows.all())
 
     @classmethod
     def top_designer_ids(cls, limit=3):
-        """IDs of the designers with the most projects."""
+        """IDs of the (active) designers with the most projects."""
         rows = (
-            db.session.query(cls.designer_id)
+            cls.visible(db.session.query(cls.designer_id))
             .group_by(cls.designer_id)
             .order_by(db.func.count(cls.id).desc(), cls.designer_id)
             .limit(limit)

@@ -67,7 +67,8 @@ def project(idp_id):
     try:
         page = ViewIDPController().view(idp_id, _customer_id())
     except LookupError:
-        abort(404)
+        # Deleted, or the designer is suspended: C-06 AC4 "Project not available"
+        return render_template("customer/project_unavailable.html"), 404
     return render_template("customer/project.html",
                            reasons=ReportIDPController().reasons(), **page)
 
@@ -112,9 +113,13 @@ def favourites():
 def save_favourite(idp_id):
     """Boundary: heart / 'Save to favourites' button on an IDP (C-07)."""
     try:
-        SaveFavouriteController().save(session["user_id"], idp_id)
+        idp, added = SaveFavouriteController().save(session["user_id"], idp_id)
     except LookupError:
         abort(404)
+    if added:
+        flash(f"Saved “{idp.title}” to your favourites.", "success")
+    else:
+        flash(f"“{idp.title}” is already in your favourites.", "success")
     return _back(url_for("customer.favourites"))
 
 

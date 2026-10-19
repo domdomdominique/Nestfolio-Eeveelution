@@ -1,13 +1,24 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Admin dashboard</h1>
-<article>
-  <header><strong>Designer applications</strong></header>
-  {% if pending %}
-  <p>{{ pending }} application{{ 's' if pending != 1 }} waiting for review.</p>
-  {% else %}
-  <p>No applications waiting for review.</p>
-  {% endif %}
-  <a href="{{ url_for('admin.applications') }}" role="button">Review applications</a>
-</article>
+<div class="grid">
+  <article>
+    <header><strong>Designer applications</strong></header>
+    {% if pending %}
+    <p>{{ pending }} application{{ 's' if pending != 1 }} waiting for review.</p>
+    {% else %}
+    <p>No applications waiting for review.</p>
+    {% endif %}
+    <a href="{{ url_for('admin.applications') }}" role="button">Review applications</a>
+  </article>
+  <article>
+    <header><strong>Reported projects</strong></header>
+    {% if open_reports %}
+    <p>{{ open_reports }} report{{ 's' if open_reports != 1 }} waiting for review.</p>
+    {% else %}
+    <p>No reports waiting for review.</p>
+    {% endif %}
+    <a href="{{ url_for('admin.reports') }}" role="button">Review reports</a>
+  </article>
+</div>
 {% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ url_for('designer.home') }}">&larr; Dashboard</a></p>
+<h1>My enquiries</h1>
+<p>Messages customers have sent you from your profile and project pages (C-16).</p>
+
+{% for e in enquiries %}
+<article>
+  <header>
+    <strong>{{ e.name }}</strong> &middot; {{ e.contact }}
+    <br><small>{{ e.created_at.strftime('%d %b %Y, %H:%M') }}
+    {% if e.idp %} &middot; about
+      <a href="{{ url_for('customer.project', idp_id=e.idp_id) }}" target="_blank" rel="noopener">{{ e.idp.title }}</a>
+    {% endif %}</small>
+  </header>
+  <p style="white-space: pre-line">{{ e.message }}</p>
+</article>
+{% else %}
+<p>No enquiries yet. They will appear here when customers contact you.</p>
+{% endfor %}
+{% endblock %}

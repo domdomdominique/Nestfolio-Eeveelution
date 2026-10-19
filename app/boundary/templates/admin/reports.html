@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<p><a href="{{ url_for('admin.home') }}">&larr; Dashboard</a></p>
+<h1>Reported projects</h1>
+<p>Projects customers have reported as inappropriate (C-15).</p>
+
+<div role="group">
+  {% for s, label in [('open', 'Open (' ~ open_count ~ ')'), ('resolved', 'Resolved')] %}
+  <a href="{{ url_for('admin.reports', status=s) }}" role="button"
+     {% if status != s %}class="outline"{% endif %}>{{ label }}</a>
+  {% endfor %}
+</div>
+
+{% if reports %}
+<div class="overflow-auto">
+<table>
+  <thead>
+    <tr><th>Reported</th><th>Project</th><th>Reason</th><th>Details</th><th>Reported by</th><th></th></tr>
+  </thead>
+  <tbody>
+    {% for r in reports %}
+    <tr>
+      <td>{{ r.created_at.strftime('%d %b %Y') }}</td>
+      <td><a href="{{ url_for('customer.project', idp_id=r.idp_id) }}" target="_blank" rel="noopener">{{ r.idp.title }}</a></td>
+      <td>{{ r.reason }}</td>
+      <td>{{ r.details or '-' }}</td>
+      <td>{{ r.customer.name or r.customer.email }}</td>
+      <td>
+        {% if r.status == 'open' %}
+        <form method="post" action="{{ url_for('admin.resolve_report', report_id=r.id) }}">
+          <button type="submit" class="outline">Mark resolved</button>
+        </form>
+        {% else %}
+        Resolved {{ r.resolved_at.strftime('%d %b %Y') }}
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% else %}
+<p>No {{ status }} reports.</p>
+{% endif %}
+{% endblock %}
