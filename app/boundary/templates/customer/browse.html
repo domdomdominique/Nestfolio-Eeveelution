@@ -118,7 +118,7 @@
         {% else %}
           <div class="empty-state">
             <span class="empty-icon"><img src="{{ url_for('static', filename=img ~ 'empty-search.svg') }}" width="28" height="28" alt=""></span>
-            <h2>No projects match your search</h2>
+            <h2>No results found</h2>
             <p>Try a different keyword or remove some filters.</p>
             <a class="btn btn-outline" href="{{ url_for('customer.home') }}">Clear search and filters</a>
           </div>

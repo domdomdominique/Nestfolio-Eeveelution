@@ -11,8 +11,11 @@ class ReportIDPController:
         return Report.REASONS
 
     def report(self, customer_id, idp_id, reason, details=""):
-        if IDP.get(idp_id) is None:
+        idp = IDP.get(idp_id)
+        if idp is None or not idp.is_visible:
             raise LookupError("Project not found.")
+        if Report.exists(customer_id, idp_id):
+            raise ValueError("You have already reported this project. Our admin team will review it.")
         if reason not in Report.REASONS:
             raise ValueError("Please choose a reason for your report.")
         details = (details or "").strip()

@@ -2,6 +2,7 @@ from flask import Blueprint, abort, flash, redirect, render_template, request, s
 
 from app.boundary import role_required
 from app.control.review_designer_application_controller import ReviewDesignerApplicationController
+from app.control.review_reports_controller import ReviewReportsController
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 
@@ -10,7 +11,39 @@ admin_bp = Blueprint("admin", __name__, url_prefix="/admin")
 @role_required("admin")
 def home():
     pending = ReviewDesignerApplicationController().pending_count()
-    return render_template("admin/home.html", pending=pending)
+    return render_template("admin/home.html", pending=pending,
+                           open_reports=ReviewReportsController().open_count())
+
+
+# --- Reported IDPs (UA-17) --------------------------------------------------------
+
+@admin_bp.route("/reports")
+@role_required("admin")
+def reports():
+    """Boundary: ReportedProjectsPage (UA-17, shows reports from C-15)."""
+    controller = ReviewReportsController()
+    status = request.args.get("status", "open")
+    return render_template(
+        "admin/reports.html",
+        reports=controller.list_reports(status),
+        status=status if status in ("open", "resolved") else "open",
+        open_count=controller.open_count(),
+    )
+
+
+@admin_bp.route("/reports/<int:report_id>/resolve", methods=["POST"])
+@role_required("admin")
+def resolve_report(report_id):
+    try:
+        ReviewReportsController().resolve(report_id, session["user_id"])
+    except ValueError as error:
+        flash(str(error))
+    else:
+        flash("Report marked as resolved.")
+    return redirect(url_for("admin.reports"))
+
+
+# --- Designer applications ------------------------------------------------------
 
 
 @admin_bp.route("/applications")

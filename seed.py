@@ -10,8 +10,10 @@ from werkzeug.security import generate_password_hash
 from app import create_app
 from app.entity.db import db
 from app.entity.designer_application import DesignerApplication
+from app.entity.enquiry import Enquiry
 from app.entity.favourite import Favourite
 from app.entity.idp import IDP
+from app.entity.report import Report
 from app.entity.user_account import UserAccount
 
 STYLES = ["Scandinavian", "Industrial", "Modern", "Minimalist", "Japandi", "Classic", "Tropical"]
@@ -108,8 +110,49 @@ with app.app_context():
     for idp in random.sample(idps, 6):
         Favourite.add(demo_customer.id, idp)
 
+    customers = UserAccount.query.filter_by(role="customer").all()
+
+    # 100 reports for the User Admin's review list (C-15 / UA-17): 70 open, 30 resolved.
+    # Each customer reports each project at most once.
+    pairs = random.sample([(c, i) for c in customers for i in idps], 100)
+    for n, (customer, idp) in enumerate(pairs):
+        report = Report(customer_id=customer.id, idp_id=idp.id,
+                        reason=random.choice(Report.REASONS),
+                        details=random.choice(["", "Photos look like they are from another website.",
+                                               "The description is just an advert.",
+                                               "Price and details seem wrong."]),
+                        created_at=datetime.now() - timedelta(days=random.randint(0, 30),
+                                                              minutes=random.randint(0, 1439)))
+        if n >= 70:
+            report.status, report.resolved_by = "resolved", admin.id
+            report.resolved_at = report.created_at + timedelta(days=1)
+        db.session.add(report)
+
+    # 100 enquiries for designers' enquiry lists (C-16 / ID-21);
+    # the demo designer gets 8 so the page has something to show
+    demo_designer = UserAccount.query.filter_by(email="designer@demo.com").first()
+    messages = ["Hi, I like this design. Could you give me a quote for my flat?",
+                "Are you available to start in two months? It's a 4-room HDB.",
+                "What is your usual budget range for a whole-home renovation?",
+                "Could we arrange a site visit next week?"]
+    for n in range(100):
+        customer = random.choice(customers)
+        if n < 8:
+            designer_id, idp_id = demo_designer.id, None
+        else:
+            idp = random.choice(idps)
+            designer_id, idp_id = idp.designer_id, idp.id
+        db.session.add(Enquiry(
+            designer_id=designer_id, customer_id=customer.id, idp_id=idp_id,
+            name=customer.name, contact=customer.email, message=random.choice(messages),
+            created_at=datetime.now() - timedelta(days=random.randint(0, 30),
+                                                  minutes=random.randint(0, 1439))))
+    db.session.commit()
+
     print(f"Accounts: {UserAccount.query.count()}, IDPs: {IDP.query.count()}, "
           f"Favourites: {Favourite.query.count()}, "
+          f"Reports: {Report.query.count()} ({Report.count_open()} open), "
+          f"Enquiries: {Enquiry.query.count()}, "
           f"Designer applications: {DesignerApplication.query.count()} "
           f"({DesignerApplication.count_pending()} pending)")
     print("Demo logins: admin@demo.com / designer@demo.com / customer@demo.com / "

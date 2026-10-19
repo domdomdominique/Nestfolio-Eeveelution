@@ -56,14 +56,14 @@
         {% elif keyword %}
           <div class="empty-state">
             <span class="empty-icon"><img src="{{ url_for('static', filename=img ~ 'empty-search.svg') }}" width="28" height="28" alt=""></span>
-            <h2>No matches in your favourites</h2>
+            <h2>No results found</h2>
             <p>Try another word, or clear the search to see all {{ total }} saved project{{ '' if total == 1 else 's' }}.</p>
             <a class="btn btn-outline" href="{{ url_for('customer.favourites', sort=sort) }}">Clear search</a>
           </div>
         {% else %}
           <div class="empty-state">
             <span class="empty-icon"><img src="{{ url_for('static', filename=img ~ 'menu-favourites.svg') }}" width="18" height="18" alt=""></span>
-            <h2>No favourites yet</h2>
+            <h2>You have no saved projects yet</h2>
             <p>Tap the heart on any project to save it here.</p>
             <a class="btn btn-primary" href="{{ url_for('customer.home') }}">Browse projects</a>
           </div>

@@ -1,5 +1,13 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>Designer dashboard</h1>
-<p>Add this actor's pages here.</p>
+<article>
+  <header><strong>Enquiries</strong></header>
+  {% if enquiry_count %}
+  <p>You have {{ enquiry_count }} enquir{{ 'ies' if enquiry_count != 1 else 'y' }} from customers.</p>
+  {% else %}
+  <p>No enquiries yet.</p>
+  {% endif %}
+  <a href="{{ url_for('designer.enquiries') }}" role="button">View enquiries</a>
+</article>
 {% endblock %}

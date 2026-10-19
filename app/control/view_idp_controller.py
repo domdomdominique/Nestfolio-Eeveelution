@@ -7,7 +7,7 @@ class ViewIDPController:
 
     def view(self, idp_id, customer_id=None):
         idp = IDP.get(idp_id)
-        if idp is None or idp.designer.is_suspended:
+        if idp is None or not idp.is_visible:
             raise LookupError("Project not found.")
         idp.record_view()  # feeds the designer's view statistics (ID-13)
         saved_ids = Favourite.saved_idp_ids(customer_id) if customer_id else set()
