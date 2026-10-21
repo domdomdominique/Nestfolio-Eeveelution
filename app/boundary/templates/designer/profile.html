@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>My profile</h1>
+
+<article>
+  <h2>Personal account details</h2>
+
+  <dl>
+    <dt>Full name</dt>
+    <dd>{{ account.name or 'Not provided' }}</dd>
+
+    <dt>Email address</dt>
+    <dd>{{ account.email }}</dd>
+
+    <dt>Phone number</dt>
+    <dd>{{ account.phone or 'Not provided' }}</dd>
+
+    <dt>Account role</dt>
+    <dd>Interior Designer</dd>
+
+    <dt>Registration status</dt>
+    <dd>{{ registration_status }}</dd>
+  </dl>
+</article>
+
+<p>
+  <a href="{{ url_for('designer.edit_profile') }}" role="button">
+    Edit profile
+  </a>
+</p>
+
+<p>
+  <a href="{{ url_for('designer.home') }}">
+    Back to dashboard
+  </a>
+</p>
+
+{% endblock %}

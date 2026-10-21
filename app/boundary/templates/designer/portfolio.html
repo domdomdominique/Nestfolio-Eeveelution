@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>My portfolio</h1>
+
+<p>
+  <a href="{{ url_for('designer.add_project') }}" role="button">
+    Add project
+  </a>
+</p>
+
+<form
+  method="get"
+  action="{{ url_for('designer.portfolio') }}"
+  class="portfolio-search-form"
+>
+  <label for="portfolio-search-input">
+    Search my projects
+  </label>
+
+  <div class="portfolio-search-row">
+    <input
+      id="portfolio-search-input"
+      type="search"
+      name="q"
+      placeholder="Search by title, category or description"
+      value="{{ keyword }}"
+    >
+
+    <button type="submit">Search</button>
+
+    {% if keyword %}
+      <a
+        href="{{ url_for('designer.portfolio') }}"
+        class="portfolio-clear"
+      >
+        Clear
+      </a>
+    {% endif %}
+  </div>
+</form>
+
+{% if projects %}
+
+  <p>
+    {{ projects|length }}
+    project{{ '' if projects|length == 1 else 's' }}
+    {% if keyword %}
+      matching “{{ keyword }}”
+    {% endif %}.
+  </p>
+
+  <div style="overflow-x: auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Project title</th>
+          <th>Category</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for project in projects %}
+          <tr>
+            <td>
+              <a href="{{ url_for('customer.project', idp_id=project.id) }}">
+                {{ project.title }}
+              </a>
+            </td>
+
+            <td>{{ project.category }}</td>
+
+            <td>
+              {{ 'Current' if project.is_current else 'Past' }}
+            </td>
+
+            <td>
+              <a href="{{ url_for('designer.edit_project', idp_id=project.id) }}">
+                Edit
+              </a>
+
+              |
+
+              <a href="{{ url_for('designer.delete_project', idp_id=project.id) }}">
+                Delete
+              </a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+{% elif keyword %}
+
+  <p>No results found for “{{ keyword }}”.</p>
+
+{% else %}
+
+  <p>
+    No projects yet. Click Add project to create
+    your first portfolio project.
+  </p>
+
+{% endif %}
+
+<p>
+  <a href="{{ url_for('designer.home') }}">
+    Back to dashboard
+  </a>
+</p>
+
+{% endblock %}

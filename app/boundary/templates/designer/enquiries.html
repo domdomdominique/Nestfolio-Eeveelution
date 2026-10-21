@@ -1,21 +1,51 @@
 {% extends "base.html" %}
 {% block content %}
-<p><a href="{{ url_for('designer.home') }}">&larr; Dashboard</a></p>
-<h1>My enquiries</h1>
-<p>Messages customers have sent you from your profile and project pages (C-16).</p>
 
-{% for e in enquiries %}
+<h1>My enquiries</h1>
+<p>Customer messages, newest first.</p>
+
+{% for enquiry in enquiries %}
 <article>
   <header>
-    <strong>{{ e.name }}</strong> &middot; {{ e.contact }}
-    <br><small>{{ e.created_at.strftime('%d %b %Y, %H:%M') }}
-    {% if e.idp %} &middot; about
-      <a href="{{ url_for('customer.project', idp_id=e.idp_id) }}" target="_blank" rel="noopener">{{ e.idp.title }}</a>
-    {% endif %}</small>
+    <strong>{{ enquiry.name }}</strong>
+    <br>
+    <small>
+      {{ enquiry.created_at.strftime('%d %b %Y, %H:%M') }}
+    </small>
   </header>
-  <p style="white-space: pre-line">{{ e.message }}</p>
+
+  <p>
+    <strong>Contact:</strong>
+    {{ enquiry.contact }}
+  </p>
+
+  <p>
+    <strong>Related project:</strong>
+
+    {% if enquiry.idp %}
+      <a href="{{ url_for('customer.project', idp_id=enquiry.idp_id) }}">
+        {{ enquiry.idp.title }}
+      </a>
+    {% else %}
+      General company enquiry or project no longer available.
+    {% endif %}
+  </p>
+
+  <p><strong>Message:</strong></p>
+  <p style="white-space: pre-wrap; overflow-wrap: anywhere;">{{ enquiry.message }}</p>
 </article>
+
 {% else %}
-<p>No enquiries yet. They will appear here when customers contact you.</p>
+<article>
+  <p>No enquiries yet.</p>
+  <p>Messages will appear here when customers contact you.</p>
+</article>
 {% endfor %}
+
+<p>
+  <a href="{{ url_for('designer.home') }}">
+    Back to dashboard
+  </a>
+</p>
+
 {% endblock %}

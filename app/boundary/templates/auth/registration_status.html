@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Designer registration status</h1>
+
+{% if application %}
+  <article>
+    <h2>{{ application.company_name }}</h2>
+
+    <p>
+      Registration email: {{ application.email }}
+    </p>
+
+    <p>
+      Status:
+      <strong>{{ application.status|title }}</strong>
+    </p>
+
+    {% if application.status == 'pending' %}
+
+      <p>
+        Your application is being reviewed.
+        You can use designer features after approval.
+      </p>
+
+    {% elif application.status == 'approved' %}
+
+      <p>
+        Your application has been approved.
+        You can now log in as an Interior Designer.
+      </p>
+
+      <a href="{{ url_for('auth.login') }}" role="button">
+        Go to login
+      </a>
+
+    {% elif application.status == 'rejected' %}
+
+      <p>Your application was not approved.</p>
+
+      <p>
+        Reason:
+        {{ application.rejection_reason or 'Please contact the administrator for details.' }}
+      </p>
+
+    {% endif %}
+  </article>
+{% endif %}
+
+<p>
+  Enter the email and password you used when
+  submitting your designer application.
+</p>
+
+<form method="post">
+  <input
+    type="hidden"
+    name="csrf_token"
+    value="{{ csrf_token }}"
+  >
+
+  <label>
+    Registration email
+    <input
+      name="email"
+      type="email"
+      autocomplete="email"
+      required
+      value="{{ request.form.get('email', '') }}"
+    >
+  </label>
+
+  <label>
+    Password
+    <input
+      name="password"
+      type="password"
+      autocomplete="current-password"
+      required
+    >
+  </label>
+
+  <button type="submit">Check registration status</button>
+</form>
+
+<p>
+  <a href="{{ url_for('auth.login') }}">
+    Back to login
+  </a>
+</p>
+
+{% endblock %}

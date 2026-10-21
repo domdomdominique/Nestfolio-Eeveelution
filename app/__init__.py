@@ -17,11 +17,15 @@ def create_app(test_config=None):
         SECRET_KEY="dev-change-me",
         SQLALCHEMY_DATABASE_URI="sqlite:///eeveelution.db",
         ENCRYPTION_KEY=os.environ.get("ENCRYPTION_KEY", DEV_ENCRYPTION_KEY),
+        MAX_CONTENT_LENGTH=55 * 1024 * 1024,
     )
     if test_config:
         app.config.update(test_config)
 
     db.init_app(app)
+    from app.entity.designer_company import DesignerCompany
+    from app.entity.idp_photo import IDPPhoto
+    from app.entity.idp_view import IDPView
 
     # Boundary layer: one blueprint per actor
     from app.boundary.auth_boundary import auth_bp

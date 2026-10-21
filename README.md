@@ -32,6 +32,11 @@ python run.py                  # open http://127.0.0.1:5000
 ```
 
 Demo logins (password `password123`): `admin@demo.com`, `designer@demo.com`, `customer@demo.com`, `platform@demo.com`.
+| Approved | designer@demo.com | password123 | Designer dashboard opens |
+| Suspended | suspended-test@example.com | password123 | Account suspended message; login blocked |
+| Pending | pending-only@example.com | password123 | Application still being reviewed; login blocked |
+| Rejected | rejected-only@example.com | password123 | Application not approved; login blocked |
+| Incorrect password | Any account above | wrongpassword | Invalid email or password |
 
 Run tests: `pytest -v`
 

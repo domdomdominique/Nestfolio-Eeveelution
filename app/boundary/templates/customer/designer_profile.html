@@ -3,6 +3,13 @@
 {% set nav = 'designers' %}
 {% block title %}{{ designer.display_name }} — Nestfolio{% endblock %}
 {% block content %}
+{% if session.role == 'designer' %}
+  <div class="wrap" style="padding: 16px 0;">
+    <a href="{{ url_for('designer.home') }}" class="btn btn-outline">
+      ← Back to dashboard
+    </a>
+  </div>
+{% endif %}
 {% set img = 'img/ui/' %}
 {% set company = designer.company %}
 {% set shown = projects if show_all else projects[:4] %}
@@ -11,7 +18,19 @@
   </div>
 
   <div class="wrap profile-header">
-    <div class="profile-logo"><span class="initials initials-lg">{{ designer.initials }}</span></div>
+    <div class="profile-logo">
+      {% if company and company.profile_photo %}
+        <img
+          src="{{ url_for('customer.company_photo', designer_id=designer.id) }}"
+          alt="Company profile picture"
+          style="display:block; width:100%; height:100%; object-fit:cover; border-radius:inherit;"
+        >
+      {% else %}
+        <span class="initials initials-lg">
+          {{ designer.initials }}
+        </span>
+      {% endif %}
+      </div>
     <div class="profile-info">
       <h1 class="profile-name">
         {{ designer.display_name }}
@@ -25,6 +44,26 @@
       </div>
     </div>
     <div class="profile-actions">
+      {% if session.get('role') == 'designer'
+      and session.get('user_id') == designer.id
+      and company %}
+
+  <a class="btn btn-outline"
+     href="{{ url_for('designer.edit_company') }}">
+    Edit company
+  </a>
+
+  <a class="btn btn-outline"
+     href="{{ url_for('designer.delete_company') }}">
+    Delete company
+  </a>
+
+  <a class="btn btn-primary"
+      href="{{ url_for('designer.add_project') }}">
+    Add project
+  </a>
+
+{% endif %}
       <button class="btn btn-share" type="button" id="share-btn">
         <img src="{{ url_for('static', filename=img ~ 'share.svg') }}" width="18" height="18" alt="">
         <span>Share</span>
@@ -63,6 +102,33 @@
           {% endif %}
           {% if category_share %}
             <div><dt>Specialities</dt><dd>{{ category_share[:3]|map('first')|join(', ') }}</dd></div>
+          {% endif %}
+
+          {% if company %}
+            {% if company.address|default('') %}
+              <div>
+                <dt>Company address</dt>
+                <dd>{{ company.address }}</dd>
+              </div>
+            {% endif %}
+
+            {% if company.phone %}
+              <div>
+                <dt>Company contact</dt>
+                <dd>{{ company.phone }}</dd>
+              </div>
+            {% endif %}
+
+            {% if company.email %}
+              <div>
+                <dt>Company email</dt>
+                <dd>
+                  <a href="mailto:{{ company.email }}">
+                    {{ company.email }}
+                  </a>
+                </dd>
+              </div>
+            {% endif %}
           {% endif %}
         </dl>
       </section>

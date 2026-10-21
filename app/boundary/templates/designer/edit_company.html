@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Edit company information</h1>
+
+<form method="post" enctype="multipart/form-data">
+  <input
+    type="hidden"
+    name="csrf_token"
+    value="{{ csrf_token }}"
+  >
+
+  <label>
+    Company name *
+    <input
+      name="company_name"
+      required
+      maxlength="150"
+      value="{{ form.get('company_name', '') }}"
+    >
+  </label>
+
+  <label>
+    Description
+    <textarea
+      name="description"
+      maxlength="5000"
+      rows="5"
+    >{{ form.get('description', '') }}</textarea>
+  </label>
+
+  <label>
+    Address
+    <input
+      name="address"
+      maxlength="255"
+      value="{{ form.get('address', '') }}"
+    >
+  </label>
+
+  <label>
+    Contact number
+    <input
+      name="phone"
+      type="tel"
+      value="{{ form.get('phone', '') }}"
+    >
+  </label>
+
+  <label>
+    Company email
+    <input
+      name="email"
+      type="email"
+      maxlength="120"
+      value="{{ form.get('email', '') }}"
+    >
+  </label>
+
+    <label for="profile_photo">
+    Company profile picture
+  </label>
+
+  <input
+    type="file"
+    id="profile_photo"
+    name="profile_photo"
+    accept="image/jpeg,image/png"
+  >
+
+  <p>
+    <small>
+      Choose a JPG or PNG, maximum 5 MB.
+      Leave empty to keep your current picture.
+    </small>
+  </p>
+
+  <label>
+    <input
+      type="checkbox"
+      name="remove_profile_photo"
+      value="1"
+    >
+    Remove current company profile picture
+</label>
+
+  <button type="submit">Save changes</button>
+
+  <a href="{{ url_for('designer.company') }}">
+    Cancel
+  </a>
+</form>
+
+{% endblock %}

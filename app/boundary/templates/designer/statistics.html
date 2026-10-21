@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>My project statistics</h1>
+
+<p>
+  Views show customer and visitor visits to your project pages.
+  Shortlists show how many customers currently have
+  each project saved in their favourites.
+</p>
+
+{% if projects %}
+
+  <div style="overflow-x: auto;">
+    <table>
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Category</th>
+          <th>Views</th>
+          <th>Shortlists</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for project in projects %}
+          <tr>
+            <td>
+              <a href="{{ url_for('customer.project', idp_id=project.id) }}">
+                {{ project.title }}
+              </a>
+            </td>
+
+            <td>{{ project.category }}</td>
+
+            <td>{{ project.view_count or 0 }}</td>
+
+            <td>{{ project.shortlist_count or 0 }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+{% else %}
+
+  <p>
+    No project statistics yet.
+    Add a project to your portfolio first.
+  </p>
+
+{% endif %}
+
+<p>
+  <a href="{{ url_for('designer.portfolio') }}">
+    My portfolio
+  </a>
+</p>
+
+<p>
+  <a href="{{ url_for('designer.home') }}">
+    Back to dashboard
+  </a>
+</p>
+
+{% endblock %}

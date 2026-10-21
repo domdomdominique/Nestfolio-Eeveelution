@@ -1,5 +1,11 @@
 from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 
+from io import BytesIO
+from flask import send_file
+from app.control.update_company_controller import UpdateCompanyController
+
+from app.control.view_idp_photo_controller import ViewIDPPhotoController
+
 from app.boundary import role_required, safe_next
 from app.control.browse_designers_controller import BrowseDesignersController
 from app.control.change_password_controller import ChangePasswordController
@@ -65,7 +71,12 @@ def home():
 def project(idp_id):
     """Boundary: ProjectDetailPage (C-06)."""
     try:
-        page = ViewIDPController().view(idp_id, _customer_id())
+            page = ViewIDPController().view(
+            idp_id,
+            _customer_id(),
+            viewer_role=session.get("role"),
+            record=request.method == "GET",
+        )
     except LookupError:
         # Deleted, or the designer is suspended: C-06 AC4 "Project not available"
         return render_template("customer/project_unavailable.html"), 404
@@ -210,3 +221,44 @@ def send_enquiry(designer_id):
     else:
         flash(f"Your enquiry has been sent to {designer.display_name}.", "success")
     return _back(url_for("customer.designer_profile", designer_id=designer_id))
+
+
+@customer_bp.route("/photos/<int:photo_id>")
+def project_photo(photo_id):
+    try:
+        photo = ViewIDPPhotoController().view(photo_id)
+
+    except LookupError:
+        abort(404)
+
+    response = send_file(
+        BytesIO(photo.data),
+        mimetype=photo.content_type,
+        download_name=photo.filename,
+        max_age=0,
+    )
+
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Cache-Control"] = "no-store"
+
+    return response
+
+
+@customer_bp.route("/designers/<int:designer_id>/company-photo")
+def company_photo(designer_id):
+    try:
+        photo = UpdateCompanyController().view_photo(designer_id)
+    except LookupError:
+        abort(404)
+
+    response = send_file(
+        BytesIO(photo.data),
+        mimetype=photo.content_type,
+        download_name=photo.filename,
+        max_age=0,
+    )
+
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Cache-Control"] = "no-store"
+
+    return response

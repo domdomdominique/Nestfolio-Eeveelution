@@ -45,6 +45,19 @@
 
           <button class="btn btn-primary btn-block" type="submit">Log in</button>
           <p class="auth-switch">New to Nestfolio? <a href="{{ url_for('auth.register') }}">Create an account</a></p>
+          <p class="auth-switch">
+            Are you an interior designer?
+            <a href="{{ url_for('auth.apply_designer') }}">
+              Register your company
+            </a>
+          </p>
+
+          <p class="auth-switch">
+            Already submitted a designer application?
+            <a href="{{ url_for('auth.registration_status') }}">
+              Check registration status
+            </a>
+          </p>
         </form>
       </div>
     </div>

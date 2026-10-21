@@ -1,6 +1,44 @@
 {% extends "base.html" %}
 {% block content %}
+
 <h1>Designer dashboard</h1>
+
+<p>
+  <a href="{{ url_for('designer.profile') }}" role="button">
+    My profile
+  </a>
+</p>
+
+<p>
+  <a href="{{ url_for('designer.statistics') }}" role="button">
+    View project statistics
+  </a>
+</p>
+
+<p>
+  <a href="{{ url_for('designer.portfolio') }}" role="button">
+    My portfolio
+  </a>
+</p>
+
+<p>
+  <a href="{{ url_for('designer.add_company') }}" role="button">
+    Add company information
+  </a>
+</p>
+
+<p>
+  <a href="{{ url_for('designer.company') }}" role="button">
+    View my company information
+  </a>
+</p>
+
+<p>
+  <a href="{{ url_for('designer.add_project') }}" role="button">
+    Add project to portfolio
+  </a>
+</p>
+
 <article>
   <header><strong>Enquiries</strong></header>
   {% if enquiry_count %}
@@ -10,4 +48,11 @@
   {% endif %}
   <a href="{{ url_for('designer.enquiries') }}" role="button">View enquiries</a>
 </article>
+
+<p>
+  <a href="{{ url_for('designer.trends') }}" role="button">
+    View customer trends
+  </a>
+</p>
+
 {% endblock %}

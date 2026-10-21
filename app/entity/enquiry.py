@@ -27,9 +27,14 @@ class Enquiry(db.Model):
 
     @classmethod
     def for_designer(cls, designer_id):
-        """The designer's enquiry list (ID-21), newest first."""
-        return (cls.query.filter_by(designer_id=designer_id)
-                .order_by(cls.created_at.desc(), cls.id.desc()).all())
+        return (
+            cls.query.filter_by(designer_id=designer_id)
+            .order_by(
+                cls.created_at.desc(),
+                cls.id.desc(),
+            )
+            .all()
+        )
 
     @classmethod
     def count_for_designer(cls, designer_id):

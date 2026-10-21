@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Delete company information?</h1>
+
+<p>
+  Remove the public company information for
+  <strong>{{ company.company_name }}</strong>?
+</p>
+
+<p>
+  Your designer account and projects will remain.
+  Your original registration application is kept
+  as an approval record.
+</p>
+
+<form method="post">
+  <input
+    type="hidden"
+    name="csrf_token"
+    value="{{ csrf_token }}"
+  >
+
+  <button type="submit" name="confirm" value="delete">
+    Confirm deletion
+  </button>
+
+  <a
+    href="{{ url_for('designer.company') }}"
+    role="button"
+    class="secondary"
+  >
+    Cancel
+  </a>
+</form>
+
+{% endblock %}

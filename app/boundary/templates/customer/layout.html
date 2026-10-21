@@ -46,12 +46,43 @@
         <a href="{{ url_for('auth.index') }}#how-it-works">How It Works</a>
       </nav>
       <div class="nav-actions">
-        <a class="nav-fav" href="{{ url_for('customer.favourites') }}" {% if nav == 'favourites' %}aria-current="page"{% endif %}>
-          <img src="{{ url_for('static', filename=img ~ ('nav-heart-active.svg' if nav == 'favourites' else 'nav-heart.svg')) }}" width="20" height="20" alt="">
-          <span>My Favourites</span>
-        </a>
-        <a class="btn btn-primary" href="{{ url_for('customer.designers') }}">Find a Designer</a>
-      </div>
+        {% if session.role == 'designer' %}
+
+          <a class="btn btn-outline"
+            href="{{ url_for('designer.company') }}">
+            My company
+          </a>
+
+          <a class="btn btn-outline"
+            href="{{ url_for('designer.portfolio') }}">
+            My portfolio
+          </a>
+
+          <a class="btn btn-primary"
+            href="{{ url_for('designer.home') }}">
+            Dashboard
+          </a>
+
+        {% else %}
+
+          <a class="nav-fav"
+            href="{{ url_for('customer.favourites') }}">
+            <img
+              src="{{ url_for('static', filename=img ~ 'nav-heart.svg') }}"
+              width="20"
+              height="20"
+              alt=""
+            >
+            <span>My Favourites</span>
+          </a>
+
+          <a class="btn btn-primary"
+            href="{{ url_for('customer.designers') }}">
+            Find a Designer
+          </a>
+
+        {% endif %}
+</div>
     </div>
   </header>
 

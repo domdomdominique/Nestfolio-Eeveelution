@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Delete project?</h1>
+
+<p>
+  Are you sure you want to delete
+  <strong>{{ project.title }}</strong>?
+</p>
+
+<p>
+  The project will be removed from your portfolio.
+  Its saved favourites and reports will also be removed.
+  Existing enquiry messages will be kept.
+</p>
+
+<form method="post">
+  <input
+    type="hidden"
+    name="csrf_token"
+    value="{{ csrf_token }}"
+  >
+
+  <button type="submit" name="confirm" value="delete">
+    Confirm deletion
+  </button>
+
+  <a
+    href="{{ url_for('customer.project', idp_id=project.id) }}"
+    role="button"
+    class="secondary"
+  >
+    Cancel
+  </a>
+</form>
+
+{% endblock %}

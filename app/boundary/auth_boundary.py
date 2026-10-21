@@ -1,3 +1,10 @@
+import secrets
+from hmac import compare_digest
+
+from flask import abort, make_response
+
+from app.control.view_registration_status_controller import ViewRegistrationStatusController
+
 from flask import Blueprint, flash, redirect, render_template, request, session, url_for
 
 from app.boundary import safe_next
@@ -54,8 +61,12 @@ def login():
             session["name"] = account.name
             next_url = safe_next(request.args.get("next"))
             return redirect(next_url or url_for(HOME_BY_ROLE[account.role]))
-        status = controller.application_status(request.form["email"])
-        flash(APPLICATION_MESSAGES.get(status, "Invalid email or password."), "error")
+        message = controller.failure_message(
+            request.form.get("email"),
+            request.form.get("password"),
+            role,
+        )
+        flash(message, "error")
     return render_template("auth/login.html", roles=LOGIN_ROLES, form=request.form)
 
 
@@ -99,17 +110,93 @@ def apply_designer():
         except ValueError as error:
             flash(str(error), "error")
         else:
-            flash("Application submitted! An admin will review it, "
-                  "and you can log in once it is approved.", "success")
+            flash(
+                "Your designer application was submitted successfully. "
+                "Your registration status is Pending. "
+                "You can log in after an administrator approves it.",
+                "success",
+            )
+
             return redirect(url_for("auth.login"))
     return render_template("auth/register.html", account_type="designer", form=request.form)
 
 
 @auth_bp.route("/logout")
 def logout():
-    """Boundary: Log out (C-03). The confirm dialog is shown by the page before this link."""
+    was_designer = session.get("role") == "designer"
     was_logged_in = "user_id" in session
+
     session.clear()
+
     if was_logged_in:
-        flash("You have logged out. See you again soon!", "success")
-    return redirect(url_for("auth.index"))
+        flash("You have logged out successfully.", "success")
+
+    return redirect(
+        url_for("auth.login" if was_designer else "auth.index")
+    )
+def _registration_token():
+    if "designer_csrf" not in session:
+        session["designer_csrf"] = secrets.token_hex(32)
+
+    return session["designer_csrf"]
+
+
+@auth_bp.route(
+    "/registration-status",
+    methods=["GET", "POST"],
+)
+def registration_status():
+    controller = ViewRegistrationStatusController()
+
+    if request.method == "POST":
+        expected = session.get("designer_csrf", "")
+        supplied = request.form.get("csrf_token", "")
+
+        if not expected or not compare_digest(
+            expected.encode(),
+            supplied.encode(),
+        ):
+            abort(
+                400,
+                description="Form expired. Reload the page and try again.",
+            )
+
+        try:
+            application = controller.authenticate(
+                request.form.get("email"),
+                request.form.get("password"),
+            )
+
+        except ValueError as error:
+            session.pop("application_id", None)
+            flash(str(error), "error")
+
+        else:
+            session["application_id"] = application.id
+
+            return redirect(
+                url_for("auth.registration_status")
+            )
+
+    application = None
+
+    if session.get("application_id"):
+        try:
+            application = controller.view(
+                session["application_id"]
+            )
+
+        except LookupError:
+            session.pop("application_id", None)
+
+    response = make_response(
+        render_template(
+            "auth/registration_status.html",
+            application=application,
+            csrf_token=_registration_token(),
+        )
+    )
+
+    response.headers["Cache-Control"] = "no-store"
+
+    return response

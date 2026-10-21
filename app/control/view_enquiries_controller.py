@@ -1,15 +1,22 @@
 from app.entity.enquiry import Enquiry
+from app.entity.user_account import UserAccount
 
 
 class ViewEnquiriesController:
-    """Control: handles the Interior Designer 'View enquiries' use case (ID-21).
+    def _check_designer(self, designer_id):
+        account = UserAccount.get(designer_id)
 
-    Customers send enquiries through SendEnquiryController (C-16); this is
-    where they show up for the designer.
-    """
+        if (
+            account is None
+            or account.role != "designer"
+            or account.is_suspended
+        ):
+            raise LookupError("Designer account not found.")
 
     def view(self, designer_id):
+        self._check_designer(designer_id)
         return Enquiry.for_designer(designer_id)
 
     def count(self, designer_id):
+        self._check_designer(designer_id)
         return Enquiry.count_for_designer(designer_id)
