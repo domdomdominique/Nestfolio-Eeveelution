@@ -10,14 +10,14 @@ Built for **CSIT314 Software Development Methodologies** (UOW, SIM S4 2026) with
 
 ## Team Eeveelution
 
-| Member     | Role |
-|------------|------|
-| Jeremiah   |      |
-| Dominique  |      |
-| Bryan      |      |
-| Thiri      |      |
-| Bingxuan   |      |
-| Xi Ze      |      |
+| Member     | Role                        |
+|------------|-----------------------------|
+| Jeremiah   | Backend programmer          |
+| Dominique  | Project Manager, Documenter |
+| Bryan      | Frontend programmer         |
+| Thiri      | Designer                    |
+| Bingxuan   | Designer                    |
+| Xi Ze      | Backend programmer          |
 
 ---
 
