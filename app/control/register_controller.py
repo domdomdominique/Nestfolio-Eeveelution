@@ -1,4 +1,5 @@
 from app.control.signup_validation import check_password, clean_email, clean_name, clean_phone
+from app.control.phone_check import ensure_phone_free
 from app.entity.designer_application import DesignerApplication
 from app.entity.user_account import UserAccount
 
@@ -13,4 +14,5 @@ class RegisterController:
         check_password(password, confirm_password)
         if UserAccount.email_exists(email) or DesignerApplication.has_pending(email):
             raise ValueError("Email already registered.")
+        ensure_phone_free(phone)
         return UserAccount.create(email, password, "customer", name=name, phone=phone)

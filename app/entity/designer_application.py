@@ -1,9 +1,10 @@
 from datetime import datetime
 
+from sqlalchemy.orm import validates
 from werkzeug.security import generate_password_hash
 
 from app.entity.db import db
-from app.entity.encryption import EncryptedString
+from app.entity.encryption import EncryptedString, phone_digest
 from app.entity.user_account import UserAccount
 
 
@@ -20,6 +21,7 @@ class DesignerApplication(db.Model):
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), nullable=False)
     phone = db.Column(EncryptedString, nullable=False)  # encrypted in the database
+    phone_hash = db.Column(db.String(64), index=True)  # keyed fingerprint (see UserAccount)
     password_hash = db.Column(db.String(256), nullable=False)
     company_name = db.Column(db.String(150), nullable=False)
     uen = db.Column(db.String(20), nullable=False)
@@ -38,6 +40,19 @@ class DesignerApplication(db.Model):
         "UserAccount", foreign_keys=[account_id],
         backref=db.backref("designer_application", uselist=False),
     )
+
+    @validates("phone")
+    def _fingerprint_phone(self, key, value):
+        self.phone_hash = phone_digest(value)
+        return value
+
+    @classmethod
+    def phone_pending(cls, phone):
+        """Is a pending application already using this phone?"""
+        digest = phone_digest(phone)
+        if digest is None:
+            return False
+        return cls.query.filter_by(phone_hash=digest, status="pending").first() is not None
 
     @classmethod
     def submit(cls, name, email, phone, password, company_name, uen,
@@ -78,6 +93,8 @@ class DesignerApplication(db.Model):
             raise ValueError("This application has already been reviewed.")
         if UserAccount.email_exists(self.email):
             raise ValueError("An account with this email already exists.")
+        if UserAccount.phone_exists(self.phone):
+            raise ValueError("Phone number already registered.")
         account = UserAccount(
             name=self.name, email=self.email, phone=self.phone,
             password_hash=self.password_hash, role="designer",

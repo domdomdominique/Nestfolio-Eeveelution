@@ -1,0 +1,117 @@
+{% extends "designer/layout.html" %}
+{% set inline_errors = true %}
+{% set editing = idp is not none %}
+{% block title %}{{ 'Edit project' if editing else 'Add project' }} — Nestfolio{% endblock %}
+{% block content %}
+<form method="post" action="{{ url_for('designer.edit_project', idp_id=idp.id) if editing else url_for('designer.add_project') }}" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="dash-header">
+    <div>
+      <p class="breadcrumb"><a href="{{ url_for('designer.portfolio') }}">My portfolio</a> <span>/</span> <span aria-current="page">{{ 'Edit project' if editing else 'Add project' }}</span></p>
+      <h1 class="dash-title">{{ 'Edit project' if editing else 'Add new project' }}</h1>
+    </div>
+    <div class="dash-header-actions">
+      <a class="btn btn-outline" href="{{ url_for('designer.portfolio') }}">Cancel</a>
+      <button class="btn btn-primary" type="submit">{{ 'Save changes' if editing else 'Publish project' }}</button>
+    </div>
+  </div>
+  {% if editing %}
+  <p class="hint" style="margin-top:12px">Added {{ idp.created_at|ago }} · {{ '{:,}'.format(idp.view_count or 0) }} views · {{ '{:,}'.format(idp.shortlist_count or 0) }} shortlists</p>
+  {% endif %}
+
+  {% for message in get_flashed_messages(category_filter=['error']) %}
+    <p class="form-error" role="alert" style="margin-top:16px">{{ message }}</p>
+  {% endfor %}
+
+  <div class="form-layout" style="margin-top:24px">
+    <div class="form-stack">
+      <section class="form-card-dash">
+        <div><h2>Project details</h2><p class="hint">What customers will see on the project page.</p></div>
+        <label class="field">
+          <span>Project title</span>
+          <input name="title" value="{{ form.get('title', '') }}" maxlength="150" required>
+        </label>
+        <label class="field">
+          <span>Description</span>
+          <textarea name="description" rows="5" maxlength="1000" id="description">{{ form.get('description', '') }}</textarea>
+          <span class="hint"><span id="desc-count">{{ (form.get('description', '') or '')|length }}</span> / 1000 characters</span>
+        </label>
+        <label class="field">
+          <span>Category</span>
+          <select name="category" required>
+            <option value="" disabled {{ 'selected' if not form.get('category') }}>Choose a category</option>
+            {% for c in categories %}<option value="{{ c }}" {{ 'selected' if c == form.get('category') }}>{{ c }}</option>{% endfor %}
+          </select>
+        </label>
+        <fieldset class="field" style="border:0;padding:0;margin:0">
+          <span style="font-size:14px;font-weight:500;color:var(--espresso-deep)">Project status</span>
+          <div class="radio-cards">
+            <label class="radio-card"><input type="radio" name="status" value="current" {{ 'checked' if form.get('status', 'current') == 'current' }}><span><strong>Current project</strong><span>Work is still in progress</span></span></label>
+            <label class="radio-card"><input type="radio" name="status" value="past" {{ 'checked' if form.get('status') == 'past' }}><span><strong>Past project</strong><span>Work is completed and handed over</span></span></label>
+          </div>
+        </fieldset>
+      </section>
+    </div>
+
+    <aside class="form-stack">
+      <section class="form-card-dash">
+        <div><h2>Card preview</h2><p class="hint">How your project appears in search.</p></div>
+        <div class="preview">
+          <div class="preview-photo"></div>
+          <div class="preview-body">
+            <small id="pv-cat">{{ form.get('category') or 'Category' }}</small>
+            <strong id="pv-title">{{ form.get('title') or 'Project title' }}</strong>
+            <span class="hint">by {{ session.name }}</span>
+          </div>
+        </div>
+      </section>
+      <section class="tips">
+        <h3>Tips for a great project</h3>
+        <ul>
+          <li>Use a bright, wide shot as the cover photo.</li>
+          <li>Pick the category customers would search for.</li>
+          <li>Mark the project as Past once it is handed over.</li>
+        </ul>
+      </section>
+      {% if editing %}
+      <section class="danger-card">
+        <h3>Delete project</h3>
+        <p>Removes it from your portfolio and customers’ favourites.</p>
+        <button class="link-action link-danger" type="button" data-open="delete-dialog"
+                data-action="{{ url_for('designer.delete_project', idp_id=idp.id) }}" data-title="{{ idp.title }}">{{ i.icon('trash') }}Delete this project</button>
+      </section>
+      {% endif %}
+    </aside>
+  </div>
+</form>
+
+{% if editing %}
+<dialog class="modal modal-sm" id="delete-dialog" aria-labelledby="delete-title">
+  <div class="modal-header">
+    <span class="modal-icon">{{ i.icon('trash') }}</span>
+    <div class="modal-titles">
+      <h2 id="delete-title">Delete this project?</h2>
+      <p>“<span data-project-title></span>” will be removed from your portfolio and from customers’ favourites. This cannot be undone.</p>
+    </div>
+    <form method="dialog"><button class="modal-close" aria-label="Close"><img src="{{ url_for('static', filename='img/ui/modal-close.svg') }}" width="20" height="20" alt=""></button></form>
+  </div>
+  <form class="modal-actions" method="post" data-delete-form action="">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline" type="submit" formmethod="dialog" formaction="">Cancel</button>
+    <button class="btn btn-primary btn-danger" type="submit">Delete project</button>
+  </form>
+</dialog>
+{% endif %}
+{% endblock %}
+{% block scripts %}
+<script>
+  // Live character count and card preview
+  (function () {
+    var q = function (s) { return document.querySelector(s); };
+    var d = q('#description'), t = q('[name=title]'), c = q('[name=category]');
+    d.addEventListener('input', function () { q('#desc-count').textContent = d.value.length; });
+    t.addEventListener('input', function () { q('#pv-title').textContent = t.value || 'Project title'; });
+    c.addEventListener('change', function () { q('#pv-cat').textContent = c.value; });
+  })();
+</script>
+{% endblock %}

@@ -1,7 +1,8 @@
+from sqlalchemy.orm import validates
 from werkzeug.security import check_password_hash, generate_password_hash
 
 from app.entity.db import db
-from app.entity.encryption import EncryptedString
+from app.entity.encryption import EncryptedString, phone_digest
 
 
 class UserAccount(db.Model):
@@ -13,9 +14,26 @@ class UserAccount(db.Model):
     name = db.Column(db.String(100), default="")
     email = db.Column(db.String(120), unique=True, nullable=False)
     phone = db.Column(EncryptedString, default="")  # encrypted in the database
+    phone_hash = db.Column(db.String(64), unique=True)  # keyed fingerprint, lets us find a taken number
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), nullable=False)
     is_suspended = db.Column(db.Boolean, default=False)
+
+    @validates("phone")
+    def _fingerprint_phone(self, key, value):
+        self.phone_hash = phone_digest(value)
+        return value
+
+    @classmethod
+    def phone_exists(cls, phone, exclude_id=None):
+        """Is this phone already on an account (other than exclude_id)?"""
+        digest = phone_digest(phone)
+        if digest is None:
+            return False
+        query = cls.query.filter_by(phone_hash=digest)
+        if exclude_id is not None:
+            query = query.filter(cls.id != exclude_id)
+        return query.first() is not None
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)

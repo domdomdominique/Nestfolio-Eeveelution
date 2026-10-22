@@ -42,7 +42,9 @@ def test_enquiries_page_shows_messages_newest_first(client, app):
     controller.send(customer.id, designer.id, "Sarah", "sarah@mail.com", "First message")
     controller.send(customer.id, designer.id, "Sarah", "sarah@mail.com", "Second message", loft.id)
     login(client, "des@test.com")
-    assert "2 enquiries" in client.get("/designer/").get_data(as_text=True)
+    dashboard = client.get("/designer/").get_data(as_text=True)
+    assert "Recent enquiries" in dashboard and "Second message" in dashboard
+    assert '<span class="stat-value">2</span>' in dashboard
     page = client.get("/designer/enquiries").get_data(as_text=True)
     assert page.index("Second message") < page.index("First message")
     assert "Scandinavian Loft" in page and "sarah@mail.com" in page
