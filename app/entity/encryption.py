@@ -15,6 +15,8 @@ Encrypted columns cannot be searched with filter_by(), because the same
 value encrypts differently every time. Only encrypt fields you never
 search on.
 """
+import hashlib
+import hmac
 from functools import lru_cache
 
 from cryptography.fernet import Fernet, InvalidToken
@@ -44,6 +46,19 @@ def decrypt(token):
             "with a different ENCRYPTION_KEY or before encryption was added. "
             "Delete instance/eeveelution.db and run: python seed.py"
         ) from None
+
+
+def phone_digest(value):
+    """Searchable fingerprint of a phone number, so 'is this number taken?' can be answered.
+
+    Encrypted columns cannot be searched, so each phone also stores this keyed hash
+    (HMAC-SHA256 with the ENCRYPTION_KEY). Without the key the digests cannot be turned
+    back into phone numbers, even though phone numbers have few possible values.
+    """
+    if not value:
+        return None
+    key = current_app.config["ENCRYPTION_KEY"].encode()
+    return hmac.new(key, value.encode(), hashlib.sha256).hexdigest()
 
 
 class EncryptedString(TypeDecorator):

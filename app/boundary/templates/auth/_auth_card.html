@@ -21,3 +21,11 @@
     <p class="form-error" role="alert">{{ message }}</p>
   {% endfor %}
 {% endmacro %}
+
+{# "Show password" tick box: the script in customer/layout.html flips every password field in the same form. #}
+{% macro show_password() %}
+  <label class="checkbox">
+    <input type="checkbox" data-toggle-password>
+    <span>Show password</span>
+  </label>
+{% endmacro %}

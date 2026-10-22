@@ -2,6 +2,8 @@ from functools import wraps
 
 from flask import abort, redirect, request, session, url_for
 
+from app.control.validate_session_controller import ValidateSessionController
+
 
 def role_required(role):
     """Only let logged-in users with this role open the page."""
@@ -26,3 +28,12 @@ def safe_next(url):
     if url and url.startswith("/") and not url.startswith(("//", "/\\")):
         return url
     return None
+
+
+def drop_stale_login():
+    """Run before every request: forget a login that no longer matches an active account."""
+    if request.endpoint == "static" or "user_id" not in session:
+        return
+    if not ValidateSessionController().is_valid(
+            session.get("user_id"), session.get("role"), session.get("auth")):
+        session.clear()

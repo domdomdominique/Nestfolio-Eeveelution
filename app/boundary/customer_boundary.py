@@ -10,6 +10,8 @@ from app.control.search_favourites_controller import SearchFavouritesController
 from app.control.search_idp_controller import SearchIDPController
 from app.control.send_enquiry_controller import SendEnquiryController
 from app.control.update_profile_controller import UpdateProfileController
+from app.control.validate_session_controller import ValidateSessionController
+from app.entity.user_account import UserAccount
 from app.control.view_designer_profile_controller import ViewDesignerProfileController
 from app.control.view_favourites_controller import ViewFavouritesController
 from app.control.view_idp_controller import ViewIDPController
@@ -147,10 +149,11 @@ def profile():
         f = request.form
         try:
             UpdateProfileController().update(account.id, f.get("first_name"), f.get("last_name"),
-                                             f.get("email"), f.get("phone"))
+                                             f.get("email"), f.get("phone"),
+                                             f.get("current_password"))
         except ValueError as error:
             flash(str(error), "error")
-            form = f  # keep what they typed
+            form = f  # keep what they typed (the password field is never filled back in)
         else:
             session["name"] = account.name
             return redirect(url_for("customer.profile", updated=1))
@@ -169,6 +172,8 @@ def change_password():
     except ValueError as error:
         flash(str(error), "password-error")
     else:
+        # The new password changes the session fingerprint; keep this browser logged in
+        session["auth"] = ValidateSessionController().token_for(UserAccount.get(session["user_id"]))
         flash("Password updated.", "success")
     return redirect(url_for("customer.profile") + "#password")
 
