@@ -1,6 +1,7 @@
 from app.control.signup_validation import (
     check_password, clean_email, clean_name, clean_phone, clean_uen,
 )
+from app.control.phone_check import ensure_phone_free
 from app.entity.designer_application import DesignerApplication
 from app.entity.user_account import UserAccount
 
@@ -33,6 +34,7 @@ class ApplyDesignerController:
             raise ValueError("Email already registered.")
         if DesignerApplication.has_pending(email):
             raise ValueError("You already have an application waiting for review.")
+        ensure_phone_free(phone)
 
         return DesignerApplication.submit(
             name, email, phone, password, company_name, uen,

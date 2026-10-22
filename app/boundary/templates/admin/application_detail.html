@@ -31,10 +31,10 @@
 
 {% if application.status == 'pending' %}
 <div class="grid">
-  <form method="post" action="{{ url_for('admin.approve_application', application_id=application.id) }}">
+  <form method="post" action="{{ url_for('admin.approve_application', application_id=application.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit">Approve and create account</button>
   </form>
-  <form method="post" action="{{ url_for('admin.reject_application', application_id=application.id) }}">
+  <form method="post" action="{{ url_for('admin.reject_application', application_id=application.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label for="reason">Reason for rejecting (optional)</label>
     <textarea id="reason" name="reason" rows="2"></textarea>
     <button type="submit" class="secondary">Reject</button>

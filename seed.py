@@ -32,8 +32,16 @@ def random_name():
     return f"{random.choice(FIRST_NAMES)} {random.choice(LAST_NAMES)}"
 
 
+_used_phones = set()
+
+
 def random_phone():
-    return f"+65 {random.choice('89')}{random.randint(0, 9999999):07d}"
+    """A made-up Singapore number. Phone numbers must be unique, so never repeat one."""
+    while True:
+        phone = f"+65 {random.choice('89')}{random.randint(0, 9999999):07d}"
+        if phone not in _used_phones:
+            _used_phones.add(phone)
+            return phone
 
 
 app = create_app()

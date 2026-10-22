@@ -39,11 +39,9 @@ def test_designer_application_phone_is_encrypted(app):
 
 
 def test_same_phone_encrypts_differently_each_time(app):
-    register_amy()
-    RegisterController().register("Bob Ng", "bob@test.com", "9123 4567",
-                                  "password123", "password123")
-    first, second = db.session.execute(db.text("SELECT phone FROM user_account")).scalars()
-    assert first != second
+    # Two accounts can no longer share a number, so compare the encryption itself
+    from app.entity.encryption import encrypt
+    assert encrypt("+65 91234567") != encrypt("+65 91234567")
 
 
 def test_wrong_key_cannot_read_phone(app):

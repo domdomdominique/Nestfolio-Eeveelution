@@ -21,6 +21,11 @@ class IDP(db.Model):
     designer = db.relationship("UserAccount")
 
     @classmethod
+    def categories(cls):
+        """The categories a designer may pick (ID-12). One place to swap in a Category table later."""
+        return cls.CATEGORIES
+
+    @classmethod
     def get(cls, idp_id):
         return db.session.get(cls, idp_id)
 
@@ -130,3 +135,89 @@ class IDP(db.Model):
     @classmethod
     def count_for_designer(cls, designer_id):
         return cls.query.filter_by(designer_id=designer_id).count()
+
+    # --- Designer portfolio (ID-06 to ID-11) -----------------------------------
+    # Every query below is scoped to the owning designer, so one designer can
+    # never read or change another designer's project.
+
+    @classmethod
+    def get_owned(cls, idp_id, designer_id):
+        """The designer's own IDP, or None (also None when it belongs to someone else)."""
+        return cls.query.filter_by(id=idp_id, designer_id=designer_id).first()
+
+    @classmethod
+    def create(cls, designer_id, title, description, category, is_current):
+        idp = cls(designer_id=designer_id, title=title, description=description,
+                  category=category, is_current=is_current)
+        db.session.add(idp)
+        db.session.commit()
+        return idp
+
+    def update(self, title, description, category, is_current):
+        self.title, self.description = title, description
+        self.category, self.is_current = category, is_current
+        db.session.commit()
+
+    def set_current(self, is_current):
+        self.is_current = is_current
+        db.session.commit()
+
+    def delete(self):
+        """Remove the IDP, the favourites and reports that point at it, and unlink enquiries."""
+        from app.entity.enquiry import Enquiry
+        from app.entity.favourite import Favourite
+        from app.entity.report import Report
+
+        Favourite.query.filter_by(idp_id=self.id).delete()
+        Report.query.filter_by(idp_id=self.id).delete()
+        Enquiry.query.filter_by(idp_id=self.id).update({"idp_id": None})
+        db.session.delete(self)
+        db.session.commit()
+
+    @classmethod
+    def _portfolio_query(cls, designer_id, keyword="", status=None, category=None):
+        query = cls.query.filter_by(designer_id=designer_id)
+        if keyword:
+            escaped = keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+            query = query.filter(cls.title.ilike(f"%{escaped}%", escape="\\"))
+        if status in ("current", "past"):
+            query = query.filter(cls.is_current == (status == "current"))
+        if category:
+            query = query.filter(cls.category == category)
+        return query
+
+    @classmethod
+    def portfolio(cls, designer_id, keyword="", status=None, category=None, limit=None, offset=0):
+        """A designer's own projects, newest first, filtered by title keyword, status and category."""
+        query = (cls._portfolio_query(designer_id, keyword, status, category)
+                 .order_by(cls.created_at.desc(), cls.id.desc()).offset(offset))
+        return (query.limit(limit) if limit else query).all()
+
+    @classmethod
+    def portfolio_count(cls, designer_id, keyword="", status=None, category=None):
+        return cls._portfolio_query(designer_id, keyword, status, category).count()
+
+    @classmethod
+    def top_for_designer(cls, designer_id, limit=5):
+        """A designer's most viewed projects."""
+        return (cls.query.filter_by(designer_id=designer_id)
+                .order_by(cls.view_count.desc(), cls.id.desc()).limit(limit).all())
+
+    @classmethod
+    def added_since(cls, designer_id, since):
+        return cls.query.filter(cls.designer_id == designer_id, cls.created_at >= since).count()
+
+    @classmethod
+    def status_counts_for_designer(cls, designer_id):
+        total = cls.count_for_designer(designer_id)
+        current = cls.query.filter_by(designer_id=designer_id, is_current=True).count()
+        return {"all": total, "current": current, "past": total - current}
+
+    @classmethod
+    def totals_for_designer(cls, designer_id):
+        """Summed views and shortlists across a designer's projects (ID-13, ID-14)."""
+        views, shortlists = db.session.query(
+            db.func.coalesce(db.func.sum(cls.view_count), 0),
+            db.func.coalesce(db.func.sum(cls.shortlist_count), 0),
+        ).filter(cls.designer_id == designer_id).one()
+        return {"views": int(views), "shortlists": int(shortlists)}

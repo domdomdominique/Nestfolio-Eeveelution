@@ -114,11 +114,11 @@ def test_enquiry_rejects_empty_message_and_non_designers(app):
 def test_update_profile_saves_and_checks_email(app):
     customer, designer, _, _, _ = setup_data()
     controller = UpdateProfileController()
-    controller.update(customer.id, "Sarah", "Lim", "sarah@new.com", "8123 4567")
+    controller.update(customer.id, "Sarah", "Lim", "sarah@new.com", "8123 4567", "password123")
     assert (customer.name, customer.email, customer.phone) == ("Sarah Lim", "sarah@new.com", "+65 81234567")
     assert (customer.first_name, customer.last_name) == ("Sarah", "Lim")
     with pytest.raises(ValueError, match="already used"):
-        controller.update(customer.id, "Sarah", "Lim", "des@test.com", "8123 4567")
+        controller.update(customer.id, "Sarah", "Lim", "des@test.com", "8123 4567", "password123")
 
 
 def test_profile_page_shows_and_updates_details(client, app):
@@ -127,6 +127,7 @@ def test_profile_page_shows_and_updates_details(client, app):
     assert "cus@test.com" in client.get("/customer/profile").get_data(as_text=True)
     response = client.post("/customer/profile", data={
         "first_name": "Sarah", "last_name": "Lim", "email": "cus@test.com", "phone": "91234567",
+        "current_password": "password123",
     }, follow_redirects=True)
     page = response.get_data(as_text=True)
     assert "Profile updated" in page and "Sarah Lim" in page
