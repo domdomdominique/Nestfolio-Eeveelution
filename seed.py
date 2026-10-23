@@ -32,6 +32,21 @@ def random_name():
     return f"{random.choice(FIRST_NAMES)} {random.choice(LAST_NAMES)}"
 
 
+_used_emails = set()
+
+
+def email_for(name):
+    """The whole name run together, e.g. "Wei Ming Tan" -> weimingtan@test.com.
+    Emails must be unique, so a repeated name gets a number: weimingtan2@test.com."""
+    base = name.replace(" ", "").lower()
+    email, n = f"{base}@test.com", 1
+    while email in _used_emails:
+        n += 1
+        email = f"{base}{n}@test.com"
+    _used_emails.add(email)
+    return email
+
+
 _used_phones = set()
 
 
@@ -55,21 +70,21 @@ with app.app_context():
         UserAccount.create(f"{role}@demo.com", "password123", role,
                            name=f"Demo {role.title()}", phone=random_phone())
 
-    for i in range(1, 101):
-        UserAccount.create(f"customer{i}@test.com", "password123", "customer",
-                           name=random_name(), phone=random_phone())
-    for i in range(1, 101):
-        UserAccount.create(f"designer{i}@test.com", "password123", "designer",
-                           name=random_name(), phone=random_phone())
+    for role in ("customer", "designer"):
+        for _ in range(100):
+            name = random_name()
+            UserAccount.create(email_for(name), "password123", role,
+                               name=name, phone=random_phone())
 
     # 100 designer applications: 60 pending, 25 approved, 15 rejected
     admin = UserAccount.query.filter_by(email="admin@demo.com").first()
     password_hash = generate_password_hash("password123")  # hash once, it's slow
     applications = []
-    for i in range(1, 101):
+    for _ in range(100):
         company = " ".join(random.sample(COMPANY_WORDS, 2) + [random.choice(COMPANY_TYPES)])
+        name = random_name()
         application = DesignerApplication(
-            name=random_name(), email=f"applicant{i}@test.com", phone=random_phone(),
+            name=name, email=email_for(name), phone=random_phone(),
             password_hash=password_hash, company_name=company,
             uen=f"20{random.randint(10, 25)}{random.randint(10000, 99999)}"
                 f"{random.choice('ABCDEFGHKMNRWZ')}",
@@ -165,4 +180,4 @@ with app.app_context():
           f"({DesignerApplication.count_pending()} pending)")
     print("Demo logins: admin@demo.com / designer@demo.com / customer@demo.com / "
           "platform@demo.com  (password: password123)")
-    print("Pending applicant example: applicant1@test.com (cannot log in until approved)")
+    print(f"Pending applicant example: {applications[0].email} (cannot log in until approved)")
