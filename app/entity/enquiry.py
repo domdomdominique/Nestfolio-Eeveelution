@@ -27,10 +27,20 @@ class Enquiry(db.Model):
 
     @classmethod
     def for_designer(cls, designer_id, limit=None):
-        """The designer's enquiry list (ID-21), newest first."""
-        query = (cls.query.filter_by(designer_id=designer_id)
-                 .order_by(cls.created_at.desc(), cls.id.desc()))
-        return (query.limit(limit) if limit else query).all()
+        """Return this designer's enquiries, newest first."""
+        query = (
+            cls.query.filter_by(designer_id=designer_id)
+            .order_by(
+                cls.created_at.desc(),
+                cls.id.desc(),
+            )
+        )
+
+        if limit is not None:
+            query = query.limit(limit)
+
+        return query.all()
+
 
     @classmethod
     def count_for_designer(cls, designer_id):

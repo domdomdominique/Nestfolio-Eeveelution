@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>Customer trends</h1>
+
+<p>
+  See which categories and projects customers view
+  most across the platform.
+</p>
+
+<form method="get">
+  <label for="days">Time period</label>
+
+  <select id="days" name="days">
+    <option value="7" {% if days == 7 %}selected{% endif %}>
+      Last 7 days
+    </option>
+    <option value="30" {% if days == 30 %}selected{% endif %}>
+      Last 30 days
+    </option>
+  </select>
+
+  <button type="submit">Show trends</button>
+</form>
+
+{% if categories %}
+
+<h2>Most viewed categories</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Category</th>
+      <th>Views</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for category, count in categories %}
+    <tr>
+      <td>{{ category }}</td>
+      <td>{{ count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>Most viewed projects</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Project</th>
+      <th>Company</th>
+      <th>Views</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for project, count in projects %}
+    <tr>
+      <td>
+        <a href="{{ url_for('customer.project', idp_id=project.id) }}">
+          {{ project.title }}
+        </a>
+      </td>
+      <td>{{ project.designer.display_name }}</td>
+      <td>{{ count }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% else %}
+
+<p>No trend data for the last {{ days }} days yet.</p>
+
+{% endif %}
+
+<p>
+  <a href="{{ url_for('designer.home') }}">
+    Back to dashboard
+  </a>
+</p>
+
+{% endblock %}

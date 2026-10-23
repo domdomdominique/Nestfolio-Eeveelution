@@ -1,102 +1,166 @@
 {% extends "designer/layout.html" %}
 {% block title %}Dashboard — Nestfolio{% endblock %}
+
 {% block content %}
 <div class="dash-header">
   <div>
-    <h1 class="dash-title">Welcome back, {{ account.display_name }}</h1>
+    <h1 class="dash-title">
+      Welcome back, {{ account.display_name }}
+    </h1>
     <p class="dash-sub">Here is how your projects are doing.</p>
   </div>
-  <div class="dash-header-actions">
-    <a class="btn btn-outline" href="{{ url_for('customer.designer_profile', designer_id=account.id) }}">View public profile</a>
-    <a class="btn btn-primary" href="{{ url_for('designer.add_project') }}">+ Add new project</a>
-  </div>
+
+  <a class="btn btn-primary"
+     href="{{ url_for('designer.add_project') }}">
+    Add new project
+  </a>
 </div>
 
-<p class="banner" role="status">{{ i.icon('check') }}<span><strong>Your designer account is approved.</strong> Customers can now see and save your projects.</span></p>
+<nav aria-label="Designer shortcuts"
+     style="display:flex; flex-wrap:wrap; gap:12px; margin:20px 0;">
+  <a class="btn btn-outline"
+     href="{{ url_for('designer.profile') }}">My profile</a>
+  <a class="btn btn-outline"
+     href="{{ url_for('designer.company') }}">My company</a>
+  <a class="btn btn-outline"
+     href="{{ url_for('designer.portfolio') }}">My portfolio</a>
+  <a class="btn btn-outline"
+     href="{{ url_for('designer.statistics') }}">Project statistics</a>
+  <a class="btn btn-outline"
+     href="{{ url_for('designer.trends') }}">Customer trends</a>
+</nav>
 
 <section class="stats" aria-label="Summary">
   <div class="stat">
     <span class="stat-label">Total projects</span>
-    <span class="stat-value">{{ '{:,}'.format(project_count) }}</span>
-    <span class="stat-note">{{ '+%d added this month'|format(added_this_month) if added_this_month else 'None added this month' }}</span>
+    <span class="stat-value">{{ project_count }}</span>
+    <span class="stat-note">{{ added_this_month }} added this month</span>
   </div>
+
   <div class="stat">
     <span class="stat-label">Total views</span>
     <span class="stat-value">{{ '{:,}'.format(views) }}</span>
-    <span class="stat-note">Across all projects</span>
   </div>
+
   <div class="stat">
     <span class="stat-label">Total shortlists</span>
     <span class="stat-value">{{ '{:,}'.format(shortlists) }}</span>
-    <span class="stat-note">Saved to favourites</span>
   </div>
+
   <div class="stat">
     <span class="stat-label">Enquiries</span>
-    <span class="stat-value">{{ '{:,}'.format(enquiry_count) }}</span>
-    <span class="stat-note"><a href="{{ url_for('designer.enquiries') }}">View all</a></span>
+    <span class="stat-value">{{ enquiry_count }}</span>
   </div>
 </section>
 
 <div class="dash-grid">
   <section class="card">
     <div class="card-head">
-      <div><h2>My projects</h2><p class="hint">{{ project_count }} project{{ '' if project_count == 1 else 's' }} · sorted by views</p></div>
+      <h2>My projects</h2>
     </div>
+
     {% if projects %}
-    <div class="table-wrap">
-      <table class="ptable">
-        <thead><tr><th scope="col">Project</th><th scope="col">Status</th><th scope="col">Views</th><th scope="col">Shortlists</th><th scope="col"><span class="visually-hidden">Actions</span></th></tr></thead>
-        <tbody>
-        {% for p in projects %}
-          <tr>
-            <td><div class="proj"><span class="proj-thumb"></span><span><a class="proj-title" href="{{ url_for('customer.project', idp_id=p.id) }}">{{ p.title }}</a><span class="proj-cat">{{ p.category }}</span></span></div></td>
-            <td><span class="pill {{ 'pill-current' if p.is_current else 'pill-past' }}">{{ 'Current' if p.is_current else 'Past' }}</span></td>
-            <td class="num">{{ '{:,}'.format(p.view_count or 0) }}</td>
-            <td class="num">{{ '{:,}'.format(p.shortlist_count or 0) }}</td>
-            <td><div class="row-actions"><a class="link-action" href="{{ url_for('designer.edit_project', idp_id=p.id) }}">{{ i.icon('edit') }}Edit</a></div></td>
-          </tr>
-        {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <p class="table-foot"><a class="link-action" href="{{ url_for('designer.portfolio') }}">View full portfolio →</a></p>
+      <div class="table-wrap">
+        <table class="ptable">
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Status</th>
+              <th>Views</th>
+              <th>Shortlists</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for p in projects %}
+              <tr>
+                <td>
+                  <a href="{{ url_for('customer.project', idp_id=p.id) }}">
+                    {{ p.title }}
+                  </a>
+                  <br>
+                  <small>{{ p.category }}</small>
+                </td>
+                <td>{{ 'Current' if p.is_current else 'Past' }}</td>
+                <td>{{ '{:,}'.format(p.view_count or 0) }}</td>
+                <td>{{ '{:,}'.format(p.shortlist_count or 0) }}</td>
+                <td>
+                  <a href="{{ url_for('designer.edit_project', idp_id=p.id) }}">
+                    Edit
+                  </a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <p>
+        <a href="{{ url_for('designer.portfolio') }}">
+          View full portfolio
+        </a>
+      </p>
     {% else %}
-    <p class="empty-row">You have no projects yet. <a class="link-action" href="{{ url_for('designer.add_project') }}">Add your first project</a></p>
+      <p>No projects yet.</p>
     {% endif %}
   </section>
 
-  <div style="display:flex;flex-direction:column;gap:24px">
+  <div>
     <section class="card">
-      <div class="card-head"><h2>Company info</h2></div>
-      <div class="company-head">
-        <span class="initials initials-sm">{{ account.initials }}</span>
-        <div><strong>{{ account.display_name }}</strong>{% if company %}<p class="hint">UEN {{ company.uen }}</p>{% endif %}</div>
+      <div class="card-head">
+        <h2>Company information</h2>
       </div>
-      <dl class="kv">
-        <div><dt>Phone</dt><dd>{{ account.phone or '—' }}</dd></div>
-        <div><dt>Email</dt><dd>{{ account.email }}</dd></div>
-        {% if company and company.portfolio_url %}<div><dt>Website</dt><dd>{{ company.portfolio_url }}</dd></div>{% endif %}
-      </dl>
+
+      {% if company %}
+        <p><strong>{{ company.company_name }}</strong></p>
+
+        {% if company.profile_photo %}
+          <img
+            src="{{ url_for('customer.company_photo', designer_id=account.id) }}"
+            alt="Company profile picture"
+            style="width:80px; height:80px; object-fit:cover; border-radius:50%;"
+          >
+        {% endif %}
+
+        <p>
+          <a href="{{ url_for('designer.company') }}">View company</a>
+          ·
+          <a href="{{ url_for('designer.edit_company') }}">Edit company</a>
+        </p>
+      {% else %}
+        <p>No company information added yet.</p>
+        <a href="{{ url_for('designer.add_company') }}">
+          Add company information
+        </a>
+      {% endif %}
     </section>
 
     <section class="card">
-      <div class="card-head"><h2>Recent enquiries</h2><a href="{{ url_for('designer.enquiries') }}">View all</a></div>
-      {% if recent_enquiries %}
-      <div class="enq-list">
-        {% for e in recent_enquiries %}
-        <div class="enq-item">
-          <span class="initials initials-xs">{{ (e.name.split()|map('first')|join)[:2]|upper }}</span>
-          <div>
-            <div class="enq-top"><strong>{{ e.name }}</strong><small>{{ e.created_at|ago }}</small></div>
-            {% if e.idp %}<p class="enq-ref">Re: {{ e.idp.title }}</p>{% endif %}
-            <p>{{ e.message|truncate(90) }}</p>
-          </div>
-        </div>
-        {% endfor %}
+      <div class="card-head">
+        <h2>Recent enquiries</h2>
       </div>
+
+      {% if enquiry_count %}
+        <p>
+          You have {{ enquiry_count }}
+          enquir{{ 'ies' if enquiry_count != 1 else 'y' }}.
+        </p>
       {% else %}
-      <p class="hint">No enquiries yet. They will appear here when customers contact you.</p>
+        <p>No enquiries yet.</p>
       {% endif %}
+
+      {% for e in recent_enquiries %}
+        <article>
+          <strong>{{ e.name }}</strong>
+          <small>{{ e.created_at.strftime('%d %b %Y, %H:%M') }}</small>
+          <p>{{ e.message|truncate(90) }}</p>
+        </article>
+      {% endfor %}
+
+      <a href="{{ url_for('designer.enquiries') }}">
+        View enquiries
+      </a>
     </section>
   </div>
 </div>

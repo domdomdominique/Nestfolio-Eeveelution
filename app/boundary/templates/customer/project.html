@@ -27,6 +27,20 @@
         </div>
       </div>
       <div class="project-actions">
+        {% if session.get('role') == 'designer'
+          and session.get('user_id') == idp.designer_id %}
+
+        <a class="btn btn-outline"
+          href="{{ url_for('designer.edit_project', idp_id=idp.id) }}">
+          Edit project
+        </a>
+
+        <a class="btn btn-outline"
+          href="{{ url_for('designer.confirm_delete_project', idp_id=idp.id) }}">
+          Delete project
+        </a>
+
+        {% endif %}
         <button class="btn btn-share" type="button" id="share-btn">
           <img src="{{ url_for('static', filename=img ~ 'share.svg') }}" width="18" height="18" alt="">
           <span>Share</span>
@@ -50,17 +64,36 @@
 
     {# Photos are added by designers later (ID-19); until then show placeholders in the gallery layout #}
     <div class="gallery">
-      <div class="photo gallery-main" style="background: {{ photo_colours[idp.id % 5] }}">
-        <img src="{{ url_for('static', filename=img ~ 'cover-image.svg') }}" width="64" height="64" alt="">
-        <span class="gallery-count"><img src="{{ url_for('static', filename=img ~ 'photos.svg') }}" width="16" height="16" alt="">No photos yet</span>
-      </div>
-      <div class="gallery-thumbs">
-        {% for i in range(1, 5) %}
-          <div class="photo" style="background: {{ photo_colours[(idp.id + i) % 5] }}">
-            <img src="{{ url_for('static', filename=img ~ 'idp-image.svg') }}" width="42" height="42" alt="">
-          </div>
-        {% endfor %}
-      </div>
+      {% if idp.photos %}
+        <div style="
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+          gap: 12px;
+          margin: 24px 0;
+        ">
+          {% for photo in idp.photos %}
+            <a
+              href="{{ url_for('customer.project_photo', photo_id=photo.id) }}"
+              target="_blank"
+              rel="noopener"
+            >
+              <img
+                src="{{ url_for('customer.project_photo', photo_id=photo.id) }}"
+                alt="{{ idp.title }} photo {{ loop.index }}"
+                loading="lazy"
+                style="
+                  width: 100%;
+                  height: 260px;
+                  object-fit: cover;
+                  border-radius: 12px;
+                "
+              >
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p>No photos have been uploaded for this project.</p>
+      {% endif %}
     </div>
 
     <div class="project-body">

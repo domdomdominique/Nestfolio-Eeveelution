@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>My company information</h1>
+
+{% if company %}
+  <article>
+    <h2>{{ company.company_name }}</h2>
+    <p>
+        <a href="{{ url_for('designer.edit_company') }}" role="button">
+            Edit company
+        </a>
+
+        <a
+            href="{{ url_for('designer.delete_company') }}"
+            role="button"
+            class="secondary"
+        >
+            Delete company
+        </a>
+    </p>
+
+    <dl>
+      <dt>Description</dt>
+      <dd style="white-space: pre-line">{{ company.description or 'Not provided' }}</dd>
+
+      <dt>Address</dt>
+      <dd>{{ company.address|default('') or 'Not provided' }}</dd>
+
+      <dt>Contact number</dt>
+      <dd>{{ company.phone or 'Not provided' }}</dd>
+
+      <dt>Company email</dt>
+      <dd>{{ company.email or 'Not provided' }}</dd>
+
+      {% if company.uen %}
+        <dt>UEN</dt>
+        <dd>{{ company.uen }}</dd>
+      {% endif %}
+
+      {% if company.portfolio_url %}
+        <dt>Website</dt>
+        <dd>{{ company.portfolio_url }}</dd>
+      {% endif %}
+
+      <dt>Years of experience</dt>
+      <dd>{{ company.experience_years }}</dd>
+    </dl>
+  </article>
+
+{% else %}
+  <p>No company information has been added yet.</p>
+
+  <a href="{{ url_for('designer.add_company') }}" role="button">
+    Add company information
+  </a>
+{% endif %}
+
+<p>
+  <a href="{{ url_for('designer.home') }}">
+    Back to dashboard
+  </a>
+</p>
+
+{% endblock %}

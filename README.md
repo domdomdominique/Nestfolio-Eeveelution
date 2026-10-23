@@ -84,12 +84,27 @@ venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-**macOS / Linux / Git Bash**
+**macOS / Linux / Git Bash / Codespaces**
 ```bash
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
+
+### Designer login checks
+
+Select **Interior Designer** on the login page.
+
+The suspended, pending and rejected accounts below are manually created
+test fixtures. They may not exist in a fresh database.
+
+| Scenario | Email | Password | Expected result |
+|----------|-------|----------|-----------------|
+| Approved | designer@demo.com | password123 | Designer dashboard opens |
+| Suspended | suspended-test@example.com | password123 | Account suspended message; login blocked |
+| Pending | pending-only@example.com | password123 | Application still being reviewed; login blocked |
+| Rejected | rejected-only@example.com | password123 | Application not approved; login blocked |
+| Incorrect password | Any existing account above | wrongpassword | Invalid email or password |
 
 ### 3. Generate the test data
 

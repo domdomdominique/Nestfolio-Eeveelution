@@ -1,9 +1,14 @@
 {% extends "designer/layout.html" %}
 {% set inline_errors = true %}
 {% block title %}My profile — Nestfolio{% endblock %}
+
 {% block content %}
-{% set f = form or {'name': account.name, 'email': account.email, 'phone': account.phone} %}
-{% set reg = account.company.status if account.company else 'approved' %}
+{% set f = form or {
+  'name': account.name,
+  'email': account.email,
+  'phone': account.phone or ''
+} %}
+
 <div>
   <h1 class="dash-title">My profile</h1>
   <p class="dash-sub">Your personal login details.</p>
@@ -11,30 +16,112 @@
 
 <div class="profile-grid">
   <section class="card profile-card">
-    <span class="initials initials-lg">{{ (account.name.split()|map('first')|join)[:2]|upper or '?' }}</span>
+    <span class="initials initials-lg">
+      {{ (account.name.split()|map('first')|join)[:2]|upper or '?' }}
+    </span>
+
     <h2>{{ account.name }}</h2>
-    <p class="hint">Interior Designer{% if account.company %} · {{ account.company.company_name }}{% endif %}</p>
-    {# ID-17: registration status #}
-    <span class="pill pill-{{ 'current' if reg == 'approved' else reg }}">Registration {{ reg }}</span>
+
+    <p class="hint">
+      Interior Designer
+      {% if account.company %}
+        · {{ account.company.company_name }}
+      {% endif %}
+    </p>
+
+    {% set application = account.designer_application %}
+    {% set reg = application.status if application else 'approved' %}
+
+    <p>Registration {{ reg }}</p>
   </section>
 
-  <form class="card form-card-dash" method="post" action="{{ url_for('designer.profile') }}" novalidate>
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    {% if updated %}<p class="banner" role="status">{{ i.icon('check') }}<span>Profile updated</span></p>{% endif %}
+  <form
+    class="card form-card-dash"
+    method="post"
+    action="{{ url_for('designer.profile') }}"
+    novalidate
+  >
+    <input
+      type="hidden"
+      name="csrf_token"
+      value="{{ csrf_token() }}"
+    >
+
+    {% if updated %}
+      <p class="banner" role="status">
+        <span>Profile updated successfully.</span>
+      </p>
+    {% endif %}
+
     <h2>Personal details</h2>
+
     {% for message in get_flashed_messages(category_filter=['error']) %}
       <p class="form-error" role="alert">{{ message }}</p>
     {% endfor %}
+
     <div class="field-row">
-      <label class="field"><span>Full name</span><input name="name" value="{{ f.get('name', '') }}" autocomplete="name" required></label>
-      <label class="field"><span>Phone number</span><input name="phone" value="{{ f.get('phone', '') }}" autocomplete="tel" inputmode="tel" required></label>
+      <label class="field">
+        <span>Full name</span>
+        <input
+          name="name"
+          value="{{ f.get('name', '') }}"
+          autocomplete="name"
+          required
+        >
+      </label>
+
+      <label class="field">
+        <span>Phone number</span>
+        <input
+          name="phone"
+          value="{{ f.get('phone', '') }}"
+          autocomplete="tel"
+          inputmode="tel"
+          required
+        >
+      </label>
     </div>
-    <label class="field"><span>Email address</span><input name="email" type="email" value="{{ f.get('email', '') }}" autocomplete="email" required></label>
-    <label class="field"><span>Current password</span><input name="current_password" type="password" autocomplete="current-password" placeholder="Enter your password to confirm these changes" required></label>
+
+    <label class="field">
+      <span>Email address</span>
+      <input
+        name="email"
+        type="email"
+        value="{{ f.get('email', '') }}"
+        autocomplete="email"
+        required
+      >
+    </label>
+
+    <label class="field">
+      <span>Current password</span>
+      <input
+        name="current_password"
+        type="password"
+        autocomplete="current-password"
+        placeholder="Enter your password to confirm these changes"
+        required
+      >
+    </label>
+
     <div class="form-actions">
-      <a class="btn btn-outline" href="{{ url_for('designer.profile') }}">Cancel</a>
-      <button class="btn btn-primary" type="submit">Save changes</button>
+      <a
+        class="btn btn-outline"
+        href="{{ url_for('designer.profile') }}"
+      >
+        Cancel
+      </a>
+
+      <button class="btn btn-primary" type="submit">
+        Save changes
+      </button>
     </div>
   </form>
 </div>
+
+<p>
+  <a href="{{ url_for('designer.home') }}">
+    Back to dashboard
+  </a>
+</p>
 {% endblock %}

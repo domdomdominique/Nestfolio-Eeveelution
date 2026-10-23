@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h1>
+  {{ 'Edit project' if editing|default(false) else 'Add project to portfolio' }}
+</h1>
+
+<form method="post" enctype="multipart/form-data">
+  <input
+    type="hidden"
+    name="csrf_token"
+    value="{{ csrf_token() }}"
+  >
+
+  <label>
+    Project title *
+    <input
+      name="title"
+      required
+      maxlength="150"
+      value="{{ form.get('title', '') }}"
+    >
+  </label>
+
+  <label>
+    Description
+    <textarea
+      name="description"
+      maxlength="5000"
+      rows="5"
+    >{{ form.get('description', '') }}</textarea>
+  </label>
+
+  <label>
+    Category *
+    <select name="category" required>
+      <option value="">Select a category</option>
+
+      {% for category in categories %}
+        <option
+          value="{{ category }}"
+          {% if form.get('category') == category %}selected{% endif %}
+        >
+          {{ category }}
+        </option>
+      {% endfor %}
+    </select>
+  </label>
+
+  <label>
+    Project status *
+    <select name="status" required>
+      <option
+        value="current"
+        {% if form.get('status', 'current') == 'current' %}selected{% endif %}
+      >
+        Current
+      </option>
+
+      <option
+        value="past"
+        {% if form.get('status') == 'past' %}selected{% endif %}
+      >
+        Past
+      </option>
+    </select>
+  </label>
+
+<label>
+  Project photos
+  <input
+    type="file"
+    name="photos"
+    accept="image/jpeg,image/png"
+    multiple
+  >
+</label>
+
+<p>
+  JPG or PNG only. Maximum 5 MB per photo,
+  20 megapixels, and 10 photos per project.
+  Photos are optional.
+</p>
+
+<p>
+  If validation fails, select your photos again before submitting.
+</p>
+
+  <button type="submit">
+  {{ 'Save changes' if editing|default(false) else 'Add project' }}
+</button>
+
+  <a href="{{ url_for('designer.home') }}">
+    Cancel
+  </a>
+</form>
+
+{% if editing|default(false) %}
+  <h2>Existing photos</h2>
+
+  {% for photo in project.photos %}
+    <article>
+      <img
+        src="{{ url_for('customer.project_photo', photo_id=photo.id) }}"
+        alt="Project photo {{ loop.index }}"
+        style="max-height: 220px; max-width: 100%;"
+      >
+
+      <form
+        method="post"
+        action="{{ url_for('designer.remove_project_photo', idp_id=project.id, photo_id=photo.id) }}"
+      >
+        <input
+          type="hidden"
+          name="csrf_token"
+          value="{{ csrf_token() }}"
+        >
+
+        <button type="submit" class="secondary">
+          Remove photo
+        </button>
+      </form>
+    </article>
+
+  {% else %}
+    <p>No photos uploaded yet.</p>
+  {% endfor %}
+{% endif %}
+
+{% endblock %}

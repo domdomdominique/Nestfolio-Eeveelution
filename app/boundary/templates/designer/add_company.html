@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Add company information</h1>
+
+<form method="post">
+  <input
+  type="hidden"
+  name="csrf_token"
+  value="{{ csrf_token() }}"
+  >
+  <label>
+    Company name *
+    <input
+      name="company_name"
+      maxlength="150"
+      required
+      value="{{ form.get('company_name', '') }}"
+    >
+  </label>
+
+  <label>
+    Description
+    <textarea
+      name="description"
+      maxlength="5000"
+      rows="5"
+    >{{ form.get('description', '') }}</textarea>
+  </label>
+
+  <label>
+    Address
+    <input
+      name="address"
+      maxlength="255"
+      value="{{ form.get('address', '') }}"
+    >
+  </label>
+
+  <label>
+    Contact number
+    <input
+      name="phone"
+      type="tel"
+      placeholder="+65 91234567"
+      value="{{ form.get('phone', '') }}"
+    >
+  </label>
+
+  <label>
+    Company email
+    <input
+      name="email"
+      type="email"
+      maxlength="120"
+      value="{{ form.get('email', '') }}"
+    >
+  </label>
+
+  <button type="submit">Save company information</button>
+
+  <a href="{{ url_for('designer.home') }}">Cancel</a>
+</form>
+{% endblock %}

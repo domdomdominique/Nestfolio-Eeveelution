@@ -19,6 +19,16 @@ class IDP(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     designer = db.relationship("UserAccount")
+    view_events = db.relationship(
+        "IDPView",
+        cascade="all, delete-orphan",
+    )
+    photos = db.relationship(
+        "IDPPhoto",
+        cascade="all, delete-orphan",
+        order_by="IDPPhoto.id",
+        backref="idp",
+    )
 
     @classmethod
     def categories(cls):
@@ -99,7 +109,19 @@ class IDP(db.Model):
         )
 
     def record_view(self):
-        self.view_count = (self.view_count or 0) + 1
+        from app.entity.idp_view import IDPView
+
+        self.view_count = (
+            db.func.coalesce(IDP.view_count, 0) + 1
+        )
+
+        db.session.add(
+            IDPView(
+                idp_id=self.id,
+                category=self.category,
+            )
+        )
+
         db.session.commit()
 
     @classmethod
@@ -136,50 +158,144 @@ class IDP(db.Model):
     def count_for_designer(cls, designer_id):
         return cls.query.filter_by(designer_id=designer_id).count()
 
-    # --- Designer portfolio (ID-06 to ID-11) -----------------------------------
-    # Every query below is scoped to the owning designer, so one designer can
-    # never read or change another designer's project.
+
+    @classmethod
+    def create_for_designer(
+        cls,
+        designer_id,
+        title,
+        description,
+        category,
+        is_current,
+        photos=(),
+    ):
+        project = cls(
+            designer_id=designer_id,
+            title=title,
+            description=description,
+            category=category,
+            is_current=is_current,
+        )
+
+        db.session.add(project)
+        project._attach_photos(photos)
+        db.session.commit()
+
+        return project
+
+    def _attach_photos(self, photos):
+        from app.entity.idp_photo import IDPPhoto
+
+        self.photos.extend(
+            IDPPhoto(**photo)
+            for photo in photos
+        )
+
+    def update_details(
+        self,
+        title,
+        description,
+        category,
+        is_current,
+        photos=(),
+    ):
+        self.title = title
+        self.description = description
+        self.category = category
+        self.is_current = is_current
+
+        self._attach_photos(photos)
+        db.session.commit()
+
+    def delete_project(self):
+        from app.entity.enquiry import Enquiry
+        from app.entity.favourite import Favourite
+        from app.entity.report import Report
+
+        # Keep enquiries, but remove their deleted-project link.
+        Enquiry.query.filter_by(idp_id=self.id).update(
+            {"idp_id": None},
+            synchronize_session="fetch",
+        )
+
+        Favourite.query.filter_by(idp_id=self.id).delete(
+            synchronize_session="fetch"
+        )
+
+        Report.query.filter_by(idp_id=self.id).delete(
+            synchronize_session="fetch"
+        )
+
+        db.session.delete(self)
+        db.session.commit()
+
+
+    @classmethod
+    def search_for_designer(cls, designer_id, keyword):
+        keyword = (keyword or "").strip()
+
+        query = cls.query.filter_by(
+            designer_id=designer_id
+        )
+
+        if keyword:
+            query = query.filter(
+                db.or_(
+                    cls.title.icontains(
+                        keyword,
+                        autoescape=True,
+                    ),
+                    cls.category.icontains(
+                        keyword,
+                        autoescape=True,
+                    ),
+                    cls.description.icontains(
+                        keyword,
+                        autoescape=True,
+                    ),
+                )
+            )
+
+        return query.order_by(
+            cls.is_current.desc(),
+            cls.view_count.desc(),
+            cls.id.desc(),
+        ).all()
 
     @classmethod
     def get_owned(cls, idp_id, designer_id):
-        """The designer's own IDP, or None (also None when it belongs to someone else)."""
-        return cls.query.filter_by(id=idp_id, designer_id=designer_id).first()
+        return cls.query.filter_by(
+            id=idp_id,
+            designer_id=designer_id,
+        ).first()
 
     @classmethod
     def create(cls, designer_id, title, description, category, is_current):
-        idp = cls(designer_id=designer_id, title=title, description=description,
-                  category=category, is_current=is_current)
-        db.session.add(idp)
-        db.session.commit()
-        return idp
+        return cls.create_for_designer(
+            designer_id, title, description, category, is_current
+        )
 
     def update(self, title, description, category, is_current):
-        self.title, self.description = title, description
-        self.category, self.is_current = category, is_current
-        db.session.commit()
+        self.update_details(title, description, category, is_current)
 
     def set_current(self, is_current):
         self.is_current = is_current
         db.session.commit()
 
     def delete(self):
-        """Remove the IDP, the favourites and reports that point at it, and unlink enquiries."""
-        from app.entity.enquiry import Enquiry
-        from app.entity.favourite import Favourite
-        from app.entity.report import Report
-
-        Favourite.query.filter_by(idp_id=self.id).delete()
-        Report.query.filter_by(idp_id=self.id).delete()
-        Enquiry.query.filter_by(idp_id=self.id).update({"idp_id": None})
-        db.session.delete(self)
-        db.session.commit()
+        self.delete_project()
 
     @classmethod
     def _portfolio_query(cls, designer_id, keyword="", status=None, category=None):
         query = cls.query.filter_by(designer_id=designer_id)
         if keyword:
-            escaped = keyword.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-            query = query.filter(cls.title.ilike(f"%{escaped}%", escape="\\"))
+            query = query.filter(
+                db.or_(
+                    cls.title.icontains(keyword, autoescape=True),
+                    cls.category.icontains(keyword, autoescape=True),
+                    cls.description.icontains(keyword, autoescape=True),
+                )
+            )
         if status in ("current", "past"):
             query = query.filter(cls.is_current == (status == "current"))
         if category:
@@ -188,7 +304,7 @@ class IDP(db.Model):
 
     @classmethod
     def portfolio(cls, designer_id, keyword="", status=None, category=None, limit=None, offset=0):
-        """A designer's own projects, newest first, filtered by title keyword, status and category."""
+        """A designer's own projects, newest first, filtered by keyword, status and category."""
         query = (cls._portfolio_query(designer_id, keyword, status, category)
                  .order_by(cls.created_at.desc(), cls.id.desc()).offset(offset))
         return (query.limit(limit) if limit else query).all()

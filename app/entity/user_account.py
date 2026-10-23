@@ -88,6 +88,16 @@ class UserAccount(db.Model):
 
     @property
     def company(self):
+        from app.entity.designer_company import DesignerCompany
+
+        company = DesignerCompany.for_account(self.id)
+
+        if company:
+            return company
+
+        if DesignerCompany.was_removed(self.id):
+            return None
+
         return getattr(self, "designer_application", None)
 
     @property
@@ -108,6 +118,10 @@ class UserAccount(db.Model):
         return cls.query.filter_by(email=email).first() is not None
 
     @classmethod
+    def find_by_email(cls, email):
+        return cls.query.filter_by(email=email).first()
+
+    @classmethod
     def login(cls, email, password):
         """Return the account if the credentials are valid and active, else None."""
         account = cls.query.filter_by(email=email).first()
@@ -116,3 +130,5 @@ class UserAccount(db.Model):
         if not check_password_hash(account.password_hash, password):
             return None
         return account
+
+    

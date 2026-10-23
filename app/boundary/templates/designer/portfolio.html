@@ -14,7 +14,7 @@
 
 <section class="card">
   <form class="toolbar" method="get" action="{{ url_for('designer.portfolio') }}">
-    <label class="search">{{ i.icon('search') }}<input type="search" name="q" value="{{ keyword }}" placeholder="Search by project name…" aria-label="Search by project name" maxlength="100"></label>
+    <label class="search">{{ i.icon('search') }}<input type="search" name="q" value="{{ keyword }}" placeholder="Search title, category or description…" aria-label="Search title, category or description" maxlength="100"></label>
     {% if status %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
     <select name="category" aria-label="Category" onchange="this.form.submit()">
       <option value="">Category: All</option>
@@ -25,7 +25,7 @@
       <a href="{{ link(status='current') }}" {% if status == 'current' %}aria-current="true"{% endif %}>Current ({{ counts.current }})</a>
       <a href="{{ link(status='past') }}" {% if status == 'past' %}aria-current="true"{% endif %}>Past ({{ counts.past }})</a>
     </nav>
-    <noscript><button class="btn btn-outline" type="submit">Search</button></noscript>
+    <button class="btn btn-outline" type="submit">Search</button>
   </form>
 
   {% if projects %}
@@ -92,6 +92,7 @@
     <form method="dialog"><button class="modal-close" aria-label="Close"><img src="{{ url_for('static', filename='img/ui/modal-close.svg') }}" width="20" height="20" alt=""></button></form>
   </div>
   <form class="modal-actions" method="post" data-delete-form action="">
+    <input type="hidden" name="confirm" value="delete">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button class="btn btn-outline" type="submit" formmethod="dialog" formaction="">Cancel</button>
     <button class="btn btn-primary btn-danger" type="submit">Delete project</button>

@@ -1,27 +1,63 @@
 {% extends "designer/layout.html" %}
 {% block title %}Enquiries — Nestfolio{% endblock %}
+
 {% block content %}
 <div>
   <h1 class="dash-title">Enquiries</h1>
-  <p class="dash-sub">Messages customers have sent you from your profile and project pages.</p>
+  <p class="dash-sub">
+    Customer messages, newest first.
+  </p>
 </div>
 
 <section class="card">
   {% if enquiries %}
-  <div class="enq-list">
-    {% for e in enquiries %}
-    <article class="enq-item">
-      <span class="initials initials-xs">{{ (e.name.split()|map('first')|join)[:2]|upper }}</span>
-      <div style="flex:1">
-        <div class="enq-top"><strong>{{ e.name }} <span class="hint">· {{ e.contact }}</span></strong><small>{{ e.created_at.strftime('%d %b %Y, %H:%M') }}</small></div>
-        {% if e.idp %}<p class="enq-ref">About <a href="{{ url_for('customer.project', idp_id=e.idp_id) }}" target="_blank" rel="noopener">{{ e.idp.title }}</a></p>{% endif %}
-        <p style="white-space: pre-line">{{ e.message }}</p>
-      </div>
-    </article>
-    {% endfor %}
-  </div>
+    <div class="enq-list">
+      {% for e in enquiries %}
+        <article class="enq-item">
+          <span class="initials initials-xs">
+            {{ (e.name.split()|map('first')|join)[:2]|upper }}
+          </span>
+
+          <div style="flex:1; min-width:0;">
+            <div class="enq-top">
+              <strong>{{ e.name }}</strong>
+              <small>
+                {{ e.created_at.strftime('%d %b %Y, %H:%M') }}
+              </small>
+            </div>
+
+            <p>
+              <strong>Contact:</strong>
+              {{ e.contact }}
+            </p>
+
+            <p class="enq-ref">
+              <strong>Related project:</strong>
+              {% if e.idp %}
+                <a href="{{ url_for('customer.project', idp_id=e.idp_id) }}">
+                  {{ e.idp.title }}
+                </a>
+              {% else %}
+                General company enquiry or project no longer available.
+              {% endif %}
+            </p>
+
+            <p style="white-space:pre-wrap; overflow-wrap:anywhere;">{{ e.message }}</p>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
   {% else %}
-  <p class="empty-row">No enquiries yet. They will appear here when customers contact you.</p>
+    <p class="empty-row">
+      No enquiries yet. Messages will appear here
+      when customers contact you.
+    </p>
   {% endif %}
 </section>
+
+<p>
+  <a href="{{ url_for('designer.home') }}">
+    Back to dashboard
+  </a>
+</p>
 {% endblock %}
