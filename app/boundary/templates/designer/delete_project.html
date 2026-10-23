@@ -14,11 +14,14 @@
   Existing enquiry messages will be kept.
 </p>
 
-<form method="post">
+<form
+  method="post"
+  action="{{ url_for('designer.delete_project', idp_id=project.id) }}"
+>
   <input
     type="hidden"
     name="csrf_token"
-    value="{{ csrf_token }}"
+    value="{{ csrf_token() }}"
   >
 
   <button type="submit" name="confirm" value="delete">

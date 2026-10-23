@@ -27,7 +27,7 @@
         </div>
 
         {# C-11 view + C-12 update #}
-        <form class="form-card" method="post" action="{{ url_for('customer.profile') }}">
+        <form class="form-card" method="post" action="{{ url_for('customer.profile') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="form-card-header">
             <h2>Personal details</h2>
             <p>This is what designers see when you send an enquiry.</p>
@@ -62,6 +62,10 @@
               <input name="phone" type="tel" value="{{ f.get('phone', '') }}" placeholder="+65 9123 4567" autocomplete="tel" required>
             </label>
           </div>
+          <label class="field">
+            <span>Current password</span>
+            <input name="current_password" type="password" autocomplete="current-password" placeholder="Enter your password to confirm these changes" required>
+          </label>
           <div class="form-actions">
             <a class="btn btn-outline" href="{{ url_for('customer.profile') }}">Cancel</a>
             <button class="btn btn-primary" type="submit">Save changes</button>
@@ -69,7 +73,7 @@
         </form>
 
         {# C-14 change password #}
-        <form class="form-card" id="password" method="post" action="{{ url_for('customer.change_password') }}">
+        <form class="form-card" id="password" method="post" action="{{ url_for('customer.change_password') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <div class="form-card-header">
             <h2>Change password</h2>
             <p>Use at least 8 characters with a mix of letters and numbers.</p>

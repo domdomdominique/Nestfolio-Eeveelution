@@ -11,7 +11,7 @@
                             'Browse real projects, save the ones you love and reach out when you are ready.',
                             ['Every designer is verified', 'Real projects to explore', 'Free for homeowners']) }}
 
-        <form class="auth-form" method="post">
+        <form class="auth-form" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <h1>Log in</h1>
           <p class="auth-lead">Welcome back. Log in to see your saved projects and favourite designers.</p>
           {{ auth.errors() }}
@@ -37,6 +37,7 @@
           </label>
 
           <div class="auth-options">
+            {{ auth.show_password() }}
             <label class="checkbox">
               <input type="checkbox" name="remember" value="1" {% if form.get('remember') %}checked{% endif %}>
               <span>Remember me</span>

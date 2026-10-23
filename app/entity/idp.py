@@ -31,6 +31,11 @@ class IDP(db.Model):
     )
 
     @classmethod
+    def categories(cls):
+        """The categories a designer may pick (ID-12). One place to swap in a Category table later."""
+        return cls.CATEGORIES
+
+    @classmethod
     def get(cls, idp_id):
         return db.session.get(cls, idp_id)
 
@@ -256,3 +261,79 @@ class IDP(db.Model):
             cls.view_count.desc(),
             cls.id.desc(),
         ).all()
+
+    @classmethod
+    def get_owned(cls, idp_id, designer_id):
+        return cls.query.filter_by(
+            id=idp_id,
+            designer_id=designer_id,
+        ).first()
+
+    @classmethod
+    def create(cls, designer_id, title, description, category, is_current):
+        return cls.create_for_designer(
+            designer_id, title, description, category, is_current
+        )
+
+    def update(self, title, description, category, is_current):
+        self.update_details(title, description, category, is_current)
+
+    def set_current(self, is_current):
+        self.is_current = is_current
+        db.session.commit()
+
+    def delete(self):
+        self.delete_project()
+
+    @classmethod
+    def _portfolio_query(cls, designer_id, keyword="", status=None, category=None):
+        query = cls.query.filter_by(designer_id=designer_id)
+        if keyword:
+            query = query.filter(
+                db.or_(
+                    cls.title.icontains(keyword, autoescape=True),
+                    cls.category.icontains(keyword, autoescape=True),
+                    cls.description.icontains(keyword, autoescape=True),
+                )
+            )
+        if status in ("current", "past"):
+            query = query.filter(cls.is_current == (status == "current"))
+        if category:
+            query = query.filter(cls.category == category)
+        return query
+
+    @classmethod
+    def portfolio(cls, designer_id, keyword="", status=None, category=None, limit=None, offset=0):
+        """A designer's own projects, newest first, filtered by keyword, status and category."""
+        query = (cls._portfolio_query(designer_id, keyword, status, category)
+                 .order_by(cls.created_at.desc(), cls.id.desc()).offset(offset))
+        return (query.limit(limit) if limit else query).all()
+
+    @classmethod
+    def portfolio_count(cls, designer_id, keyword="", status=None, category=None):
+        return cls._portfolio_query(designer_id, keyword, status, category).count()
+
+    @classmethod
+    def top_for_designer(cls, designer_id, limit=5):
+        """A designer's most viewed projects."""
+        return (cls.query.filter_by(designer_id=designer_id)
+                .order_by(cls.view_count.desc(), cls.id.desc()).limit(limit).all())
+
+    @classmethod
+    def added_since(cls, designer_id, since):
+        return cls.query.filter(cls.designer_id == designer_id, cls.created_at >= since).count()
+
+    @classmethod
+    def status_counts_for_designer(cls, designer_id):
+        total = cls.count_for_designer(designer_id)
+        current = cls.query.filter_by(designer_id=designer_id, is_current=True).count()
+        return {"all": total, "current": current, "past": total - current}
+
+    @classmethod
+    def totals_for_designer(cls, designer_id):
+        """Summed views and shortlists across a designer's projects (ID-13, ID-14)."""
+        views, shortlists = db.session.query(
+            db.func.coalesce(db.func.sum(cls.view_count), 0),
+            db.func.coalesce(db.func.sum(cls.shortlist_count), 0),
+        ).filter(cls.designer_id == designer_id).one()
+        return {"views": int(views), "shortlists": int(shortlists)}

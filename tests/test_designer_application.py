@@ -105,7 +105,7 @@ def test_pending_list_and_count(app):
     admin = make_admin()
     controller = ReviewDesignerApplicationController()
     first = apply()
-    apply(email="cara@studio.com")
+    apply(email="cara@studio.com", phone="+65 9123 4567")  # phone numbers must be unique
     controller.approve(first.id, admin.id)
 
     assert controller.pending_count() == 1

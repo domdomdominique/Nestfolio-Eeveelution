@@ -7,7 +7,7 @@
   {% set here = request.full_path.rstrip('?') %}
   {% if session.role == 'customer' %}
     <form class="save-form" method="post"
-          action="{{ url_for('customer.remove_favourite' if saved else 'customer.save_favourite', idp_id=p.id) }}">
+          action="{{ url_for('customer.remove_favourite' if saved else 'customer.save_favourite', idp_id=p.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="next" value="{{ here }}">
       <button class="save-btn{{ ' saved' if saved }}" type="submit"
               aria-label="{{ 'Remove from favourites' if saved else 'Save to favourites' }}" aria-pressed="{{ 'true' if saved else 'false' }}">

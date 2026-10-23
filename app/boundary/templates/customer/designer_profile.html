@@ -188,7 +188,7 @@
         </h2>
         <p class="designer-about">Send {{ designer.display_name }} a message to start a renovation discussion.</p>
         {% if session.role == 'customer' %}
-          <form class="enquiry-form" method="post" action="{{ url_for('customer.send_enquiry', designer_id=designer.id) }}">
+          <form class="enquiry-form" method="post" action="{{ url_for('customer.send_enquiry', designer_id=designer.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}#contact">
             <input name="name" placeholder="Your name" aria-label="Your name" required value="{{ session.name or '' }}">
             <input name="contact" placeholder="Email or phone" aria-label="Email or phone" required>

@@ -4,6 +4,11 @@
 <h1>Add company information</h1>
 
 <form method="post">
+  <input
+  type="hidden"
+  name="csrf_token"
+  value="{{ csrf_token() }}"
+  >
   <label>
     Company name *
     <input

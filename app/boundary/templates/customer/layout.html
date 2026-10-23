@@ -136,7 +136,7 @@
       {% endif %}
       <span>{{ message.text if message is mapping else message }}</span>
       {% if message is mapping and message.undo_idp %}
-        <form method="post" action="{{ url_for('customer.save_favourite', idp_id=message.undo_idp) }}">
+        <form method="post" action="{{ url_for('customer.save_favourite', idp_id=message.undo_idp) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}">
           <button type="submit">Undo</button>
         </form>
@@ -176,6 +176,14 @@
       if (!dialog || !dialog.showModal) return;
       e.preventDefault();
       dialog.showModal();
+    });
+    // "Show password" tick boxes: show or hide every password field in the same form
+    document.addEventListener('change', function (e) {
+      if (!e.target.matches('[data-toggle-password]')) return;
+      var form = e.target.closest('form');
+      form.querySelectorAll('input[name$="password"]').forEach(function (input) {
+        input.type = e.target.checked ? 'text' : 'password';
+      });
     });
     // Clicking the dark backdrop closes a dialog
     document.querySelectorAll('dialog.modal').forEach(function (d) {

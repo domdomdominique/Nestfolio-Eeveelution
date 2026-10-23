@@ -1,51 +1,63 @@
-{% extends "base.html" %}
+{% extends "designer/layout.html" %}
+{% block title %}Enquiries — Nestfolio{% endblock %}
+
 {% block content %}
-
-<h1>My enquiries</h1>
-<p>Customer messages, newest first.</p>
-
-{% for enquiry in enquiries %}
-<article>
-  <header>
-    <strong>{{ enquiry.name }}</strong>
-    <br>
-    <small>
-      {{ enquiry.created_at.strftime('%d %b %Y, %H:%M') }}
-    </small>
-  </header>
-
-  <p>
-    <strong>Contact:</strong>
-    {{ enquiry.contact }}
+<div>
+  <h1 class="dash-title">Enquiries</h1>
+  <p class="dash-sub">
+    Customer messages, newest first.
   </p>
+</div>
 
-  <p>
-    <strong>Related project:</strong>
+<section class="card">
+  {% if enquiries %}
+    <div class="enq-list">
+      {% for e in enquiries %}
+        <article class="enq-item">
+          <span class="initials initials-xs">
+            {{ (e.name.split()|map('first')|join)[:2]|upper }}
+          </span>
 
-    {% if enquiry.idp %}
-      <a href="{{ url_for('customer.project', idp_id=enquiry.idp_id) }}">
-        {{ enquiry.idp.title }}
-      </a>
-    {% else %}
-      General company enquiry or project no longer available.
-    {% endif %}
-  </p>
+          <div style="flex:1; min-width:0;">
+            <div class="enq-top">
+              <strong>{{ e.name }}</strong>
+              <small>
+                {{ e.created_at.strftime('%d %b %Y, %H:%M') }}
+              </small>
+            </div>
 
-  <p><strong>Message:</strong></p>
-  <p style="white-space: pre-wrap; overflow-wrap: anywhere;">{{ enquiry.message }}</p>
-</article>
+            <p>
+              <strong>Contact:</strong>
+              {{ e.contact }}
+            </p>
 
-{% else %}
-<article>
-  <p>No enquiries yet.</p>
-  <p>Messages will appear here when customers contact you.</p>
-</article>
-{% endfor %}
+            <p class="enq-ref">
+              <strong>Related project:</strong>
+              {% if e.idp %}
+                <a href="{{ url_for('customer.project', idp_id=e.idp_id) }}">
+                  {{ e.idp.title }}
+                </a>
+              {% else %}
+                General company enquiry or project no longer available.
+              {% endif %}
+            </p>
+
+            <p style="white-space:pre-wrap; overflow-wrap:anywhere;">{{ e.message }}</p>
+          </div>
+        </article>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="empty-row">
+      No enquiries yet. Messages will appear here
+      when customers contact you.
+    </p>
+  {% endif %}
+</section>
 
 <p>
   <a href="{{ url_for('designer.home') }}">
     Back to dashboard
   </a>
 </p>
-
 {% endblock %}

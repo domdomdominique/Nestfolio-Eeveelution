@@ -9,7 +9,7 @@
   <input
     type="hidden"
     name="csrf_token"
-    value="{{ csrf_token }}"
+    value="{{ csrf_token() }}"
   >
 
   <label>
@@ -113,7 +113,7 @@
         <input
           type="hidden"
           name="csrf_token"
-          value="{{ csrf_token }}"
+          value="{{ csrf_token() }}"
         >
 
         <button type="submit" class="secondary">

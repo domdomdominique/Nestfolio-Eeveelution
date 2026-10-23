@@ -36,7 +36,7 @@
         </a>
 
         <a class="btn btn-outline"
-          href="{{ url_for('designer.delete_project', idp_id=idp.id) }}">
+          href="{{ url_for('designer.confirm_delete_project', idp_id=idp.id) }}">
           Delete project
         </a>
 
@@ -47,7 +47,7 @@
         </button>
         {# C-07 save / C-10 remove #}
         {% if session.role == 'customer' %}
-          <form method="post" action="{{ url_for('customer.remove_favourite' if saved else 'customer.save_favourite', idp_id=idp.id) }}">
+          <form method="post" action="{{ url_for('customer.remove_favourite' if saved else 'customer.save_favourite', idp_id=idp.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="next" value="{{ here }}">
             <button class="btn btn-save{{ ' saved' if saved }}" type="submit" aria-pressed="{{ 'true' if saved else 'false' }}">
               <img src="{{ url_for('static', filename=img ~ ('idp-heart-saved.svg' if saved else 'idp-heart.svg')) }}" width="18" height="18" alt="">
@@ -137,7 +137,7 @@
           </h2>
           <p class="designer-about">Send {{ designer.display_name }} a message to start a renovation discussion.</p>
           {% if session.role == 'customer' %}
-            <form class="enquiry-form" method="post" action="{{ url_for('customer.send_enquiry', designer_id=designer.id) }}">
+            <form class="enquiry-form" method="post" action="{{ url_for('customer.send_enquiry', designer_id=designer.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <input type="hidden" name="idp_id" value="{{ idp.id }}">
               <input type="hidden" name="next" value="{{ here }}">
               <input name="name" placeholder="Your name" aria-label="Your name" required value="{{ session.name or '' }}">
@@ -184,7 +184,7 @@
         </div>
         <form method="dialog"><button class="modal-close" aria-label="Close"><img src="{{ url_for('static', filename=img ~ 'modal-close.svg') }}" width="20" height="20" alt=""></button></form>
       </div>
-      <form class="modal-body" method="post" action="{{ url_for('customer.report_project', idp_id=idp.id) }}">
+      <form class="modal-body" method="post" action="{{ url_for('customer.report_project', idp_id=idp.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <fieldset class="reasons">
           <legend class="visually-hidden">Reason</legend>
           {% for reason in reasons %}

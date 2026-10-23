@@ -11,6 +11,7 @@ from app.boundary import safe_next
 from app.control.apply_designer_controller import ApplyDesignerController
 from app.control.login_controller import LoginController
 from app.control.register_controller import RegisterController
+from app.control.validate_session_controller import ValidateSessionController
 from app.control.view_landing_page_controller import ViewLandingPageController
 
 auth_bp = Blueprint("auth", __name__)
@@ -59,6 +60,7 @@ def login():
             session["user_id"] = account.id
             session["role"] = account.role
             session["name"] = account.name
+            session["auth"] = ValidateSessionController().token_for(account)
             next_url = safe_next(request.args.get("next"))
             return redirect(next_url or url_for(HOME_BY_ROLE[account.role]))
         message = controller.failure_message(

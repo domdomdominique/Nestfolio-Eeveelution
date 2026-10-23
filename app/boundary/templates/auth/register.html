@@ -17,7 +17,7 @@
                               ['Save projects to your favourites', 'Search your saved list any time', 'Message designers directly']) }}
         {% endif %}
 
-        <form class="auth-form" method="post" action="{{ url_for('auth.apply_designer' if designer else 'auth.register') }}">
+        <form class="auth-form" method="post" action="{{ url_for('auth.apply_designer' if designer else 'auth.register') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           {% if designer %}
             <h1>Register your company</h1>
             <p class="auth-lead">Designer accounts are checked by our admin team. You can log in once your application is approved.</p>
@@ -53,6 +53,7 @@
             <span>Confirm password</span>
             <input name="confirm_password" type="password" minlength="8" placeholder="Re-enter your password" autocomplete="new-password" required>
           </label>
+          {{ auth.show_password() }}
 
           {% if designer %}
             <p class="form-section">Company details</p>
