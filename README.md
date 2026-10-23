@@ -142,7 +142,7 @@ All demo accounts use the password `password123`.
 | Customer | `customer@demo.com` |
 | Platform Management | `platform@demo.com` |
 
-Generated accounts (`customer1@test.com` … `customer100@test.com`, `designer1@test.com` …) also use `password123`. Pending applicants such as `applicant1@test.com` cannot log in until an admin approves them.
+Generated accounts use the full name run together (e.g. `weimingkoh@test.com`; repeated names get a number, like `weimingkoh2@test.com`) and also use `password123`. Pending applicants cannot log in until an admin approves them; `python seed.py` prints one to try.
 
 ---
 
