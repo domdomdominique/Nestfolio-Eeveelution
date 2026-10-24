@@ -23,9 +23,9 @@ def project_details(form):
             "Title is required and must be 150 characters or fewer."
         )
 
-    if len(description) > 5000:
+    if len(description) > 1000:
         raise ValueError(
-            "Description must be 5000 characters or fewer."
+            "Description must be 1000 characters or fewer."
         )
 
     if category not in IDP.CATEGORIES:

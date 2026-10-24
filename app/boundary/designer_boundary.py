@@ -469,51 +469,7 @@ def profile():
 )
 @role_required("designer")
 def edit_profile():
-    try:
-        account = ViewDesignerAccountController().view(
-            session["user_id"]
-        )
-
-        if request.method == "POST":
-            _check_company_token()
-
-            try:
-                account = UpdateDesignerAccountController().update(
-                    session["user_id"],
-                    request.form,
-                )
-
-            except ValueError as error:
-                flash(str(error), "error")
-
-            else:
-                session["name"] = account.name
-
-                flash(
-                    "Your profile has been updated successfully.",
-                    "success",
-                )
-
-                return redirect(
-                    url_for("designer.profile")
-                )
-
-    except LookupError:
-        abort(404)
-
-    if request.method == "POST":
-        form = request.form
-    else:
-        form = {
-            "name": account.name or "",
-            "email": account.email,
-            "phone": account.phone or "",
-        }
-
-    return render_template(
-        "designer/edit_profile.html",
-        form=form,
-    )
+    return profile()
 
 @designer_bp.route(
     "/portfolio/<int:idp_id>/photos/<int:photo_id>/delete",
