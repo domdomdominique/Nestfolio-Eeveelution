@@ -66,31 +66,66 @@ class IDP(db.Model):
 
     @classmethod
     def browse(cls, keyword="", categories=(), status=None, sort="views"):
-        """Search, filter and sort projects for the Browse Projects page.
-
-        keyword matches title, description, category or the designer's
-        company/personal name; categories is a list of category names
-        (empty = all); status is None, 'current' or 'past'; sort is 'views'
-        (most viewed) or 'newest'. Suspended designers' IDPs are never returned.
-        """
+        """Search projects using the current company information."""
         from app.entity.designer_application import DesignerApplication
+        from app.entity.designer_company import DesignerCompany, CompanyRemoval
         from app.entity.user_account import UserAccount
 
         query = cls.visible()
+
         if keyword:
             pattern = f"%{keyword}%"
-            query = (
-                query.outerjoin(DesignerApplication, DesignerApplication.account_id == UserAccount.id)
-                .filter(db.or_(cls.title.ilike(pattern), cls.description.ilike(pattern),
-                               cls.category.ilike(pattern),
-                               UserAccount.name.ilike(pattern),
-                               DesignerApplication.company_name.ilike(pattern)))
+
+            company_name = db.case(
+                (
+                    DesignerCompany.id.isnot(None),
+                    DesignerCompany.company_name,
+                ),
+                (
+                    CompanyRemoval.account_id.isnot(None),
+                    None,
+                ),
+                else_=DesignerApplication.company_name,
             )
+
+            query = (
+                query.outerjoin(
+                    DesignerApplication,
+                    DesignerApplication.account_id == UserAccount.id,
+                )
+                .outerjoin(
+                    DesignerCompany,
+                    DesignerCompany.account_id == UserAccount.id,
+                )
+                .outerjoin(
+                    CompanyRemoval,
+                    CompanyRemoval.account_id == UserAccount.id,
+                )
+                .filter(
+                    db.or_(
+                        cls.title.ilike(pattern),
+                        cls.description.ilike(pattern),
+                        cls.category.ilike(pattern),
+                        UserAccount.name.ilike(pattern),
+                        company_name.ilike(pattern),
+                    )
+                )
+            )
+
         if categories:
             query = query.filter(cls.category.in_(categories))
+
         if status in ("current", "past"):
-            query = query.filter(cls.is_current == (status == "current"))
-        order = cls.created_at.desc() if sort == "newest" else cls.view_count.desc()
+            query = query.filter(
+                cls.is_current == (status == "current")
+            )
+
+        order = (
+            cls.created_at.desc()
+            if sort == "newest"
+            else cls.view_count.desc()
+        )
+
         return query.order_by(order, cls.id.desc()).all()
 
     @classmethod

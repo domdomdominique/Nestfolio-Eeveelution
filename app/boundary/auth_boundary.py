@@ -136,11 +136,7 @@ def logout():
     return redirect(
         url_for("auth.login" if was_designer else "auth.index")
     )
-def _registration_token():
-    if "designer_csrf" not in session:
-        session["designer_csrf"] = secrets.token_hex(32)
 
-    return session["designer_csrf"]
 
 
 @auth_bp.route(
@@ -151,18 +147,6 @@ def registration_status():
     controller = ViewRegistrationStatusController()
 
     if request.method == "POST":
-        expected = session.get("designer_csrf", "")
-        supplied = request.form.get("csrf_token", "")
-
-        if not expected or not compare_digest(
-            expected.encode(),
-            supplied.encode(),
-        ):
-            abort(
-                400,
-                description="Form expired. Reload the page and try again.",
-            )
-
         try:
             application = controller.authenticate(
                 request.form.get("email"),
@@ -195,7 +179,6 @@ def registration_status():
         render_template(
             "auth/registration_status.html",
             application=application,
-            csrf_token=_registration_token(),
         )
     )
 
