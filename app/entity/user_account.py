@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from sqlalchemy.orm import validates
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -18,6 +20,8 @@ class UserAccount(db.Model):
     password_hash = db.Column(db.String(256), nullable=False)
     role = db.Column(db.String(20), nullable=False)
     is_suspended = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)  # shown in UA-04, counted in PM-08
+    must_change_password = db.Column(db.Boolean, default=False)  # set by a User Admin reset (UA-16)
 
     @validates("phone")
     def _fingerprint_phone(self, key, value):
@@ -43,6 +47,7 @@ class UserAccount(db.Model):
 
     def change_password(self, new_password):
         self.set_password(new_password)
+        self.must_change_password = False
         db.session.commit()
 
     def update_details(self, name, email, phone):
@@ -65,7 +70,9 @@ class UserAccount(db.Model):
 
     @classmethod
     def create(cls, email, password, role, name="", phone=""):
-        if role not in cls.ROLES:
+        from app.entity.user_profile import UserProfile
+
+        if role not in cls.ROLES and UserProfile.by_key(role) is None:
             raise ValueError(f"Unknown role: {role}")
         account = cls(email=email, role=role, name=name, phone=phone)
         account.set_password(password)
@@ -125,10 +132,62 @@ class UserAccount(db.Model):
     def login(cls, email, password):
         """Return the account if the credentials are valid and active, else None."""
         account = cls.query.filter_by(email=email).first()
-        if account is None or account.is_suspended:
+        if account is None or account.is_blocked:
             return None
         if not check_password_hash(account.password_hash, password):
             return None
         return account
 
-    
+
+    # --- User Admin account management (UA-03 to UA-07, UA-11, UA-13, UA-16) ----
+
+    @property
+    def profile(self):
+        """The UserProfile (role) this account is assigned to."""
+        from app.entity.user_profile import UserProfile
+
+        return UserProfile.by_key(self.role)
+
+    @property
+    def profile_name(self):
+        return self.profile.name if self.profile else self.role.title()
+
+    @property
+    def is_blocked(self):
+        """Cannot log in: the account (UA-06) or its whole profile (UA-11) is suspended."""
+        from app.entity.user_profile import UserProfile
+
+        return bool(self.is_suspended) or UserProfile.is_key_suspended(self.role)
+
+    @property
+    def status(self):
+        return "Suspended" if self.is_suspended else "Active"
+
+    @classmethod
+    def email_taken_by_other(cls, email, account_id):
+        return cls.query.filter(cls.email == email, cls.id != account_id).first() is not None
+
+    @classmethod
+    def search(cls, keyword="", role=None, status=None):
+        query = cls.query
+        if keyword:
+            pattern = f"%{keyword}%"
+            query = query.filter(db.or_(cls.name.ilike(pattern), cls.email.ilike(pattern)))
+        if role:
+            query = query.filter(cls.role == role)
+        if status in ("active", "suspended"):
+            query = query.filter(cls.is_suspended.is_(status == "suspended"))
+        return query.order_by(cls.name, cls.email).all()
+
+    def update_by_admin(self, name, email, phone, role):
+        self.name, self.email, self.phone, self.role = name, email, phone, role
+        db.session.commit()
+
+    def set_suspended(self, suspended):
+        self.is_suspended = suspended
+        db.session.commit()
+
+    def reset_password(self, temporary_password):
+        self.set_password(temporary_password)
+        self.must_change_password = True
+        db.session.commit()

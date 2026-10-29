@@ -7,7 +7,10 @@ from app.entity.user_account import UserAccount
 
 
 class EditProjectController:
-    CATEGORIES = IDP.CATEGORIES
+    @property
+    def CATEGORIES(self):
+        """Current categories from Platform Management (PM-03 to PM-06)."""
+        return IDP.categories()
 
     def get_project(self, account_id, idp_id):
         account = UserAccount.get(account_id)
@@ -41,4 +44,4 @@ class EditProjectController:
             photos=photos,
         )
 
-        return project
+        return project

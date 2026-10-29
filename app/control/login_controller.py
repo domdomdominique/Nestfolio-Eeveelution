@@ -37,7 +37,7 @@ class LoginController:
             correct_password = account.check_password(password)
             correct_role = not role or account.role == role
 
-            if correct_password and correct_role and account.is_suspended:
+            if correct_password and correct_role and account.is_blocked:
                 return (
                     "Your account is suspended. "
                     "Please contact the administrator."
@@ -67,4 +67,4 @@ class LoginController:
                         "Please contact the administrator for details."
                     )
 
-        return "Invalid email or password."
+        return "Invalid email or password."

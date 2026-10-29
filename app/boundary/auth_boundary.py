@@ -62,7 +62,7 @@ def login():
             session["name"] = account.name
             session["auth"] = ValidateSessionController().token_for(account)
             next_url = safe_next(request.args.get("next"))
-            return redirect(next_url or url_for(HOME_BY_ROLE[account.role]))
+            return redirect(next_url or url_for(HOME_BY_ROLE.get(account.role, "auth.index")))
         message = controller.failure_message(
             request.form.get("email"),
             request.form.get("password"),
@@ -184,4 +184,4 @@ def registration_status():
 
     response.headers["Cache-Control"] = "no-store"
 
-    return response
+    return response

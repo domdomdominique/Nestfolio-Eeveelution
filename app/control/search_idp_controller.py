@@ -12,9 +12,10 @@ class SearchIDPController:
         return IDP.search(keyword)
 
     def browse(self, keyword="", categories=(), status=None, sort="views"):
+        known = set(IDP.categories())
         return IDP.browse(
             keyword=(keyword or "").strip(),
-            categories=[c for c in categories if c in IDP.CATEGORIES],
+            categories=[c for c in categories if c in known],
             status=status if status in self.STATUSES else None,
             sort=self.clean_sort(sort),
         )
@@ -24,7 +25,7 @@ class SearchIDPController:
 
     def category_counts(self):
         counts = IDP.count_by_category()
-        return [(name, counts.get(name, 0)) for name in IDP.CATEGORIES]
+        return [(name, counts.get(name, 0)) for name in IDP.categories()]
 
     def status_counts(self):
         counts = IDP.count_by_status()

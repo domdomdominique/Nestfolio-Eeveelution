@@ -28,7 +28,7 @@ def project_details(form):
             "Description must be 1000 characters or fewer."
         )
 
-    if category not in IDP.CATEGORIES:
+    if category not in IDP.categories():
         raise ValueError("Please select an existing category.")
 
     if status not in ("current", "past"):
@@ -116,4 +116,4 @@ def validated_photos(files, existing=0):
             "data": data,
         })
 
-    return photos
+    return photos

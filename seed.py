@@ -8,13 +8,17 @@ from datetime import datetime, timedelta
 from werkzeug.security import generate_password_hash
 
 from app import create_app
+from app.entity.announcement import Announcement
 from app.entity.db import db
 from app.entity.designer_application import DesignerApplication
 from app.entity.enquiry import Enquiry
 from app.entity.favourite import Favourite
 from app.entity.idp import IDP
+from app.entity.idp_category import IDPCategory
+from app.entity.idp_view import IDPView
 from app.entity.report import Report
 from app.entity.user_account import UserAccount
+from app.entity.user_profile import UserProfile
 
 STYLES = ["Scandinavian", "Industrial", "Modern", "Minimalist", "Japandi", "Classic", "Tropical"]
 PLACES = ["HDB 4-room", "HDB 5-room", "Condo", "Landed House", "Loft", "Shophouse"]
@@ -64,6 +68,8 @@ app = create_app()
 with app.app_context():
     db.drop_all()
     db.create_all()
+    IDPCategory.ensure_defaults()   # PM-04 category list
+    UserProfile.ensure_defaults()   # UA-09 profile list
 
     # One known account per role for demos (password: password123)
     for role in UserAccount.ROLES:
@@ -135,6 +141,35 @@ with app.app_context():
 
     customers = UserAccount.query.filter_by(role="customer").all()
 
+    # Platform reports (PM-08 to PM-10) need activity spread over time:
+    # account "date created" over the last 90 days ...
+    for account in UserAccount.query.filter(~UserAccount.email.like("%@demo.com")):
+        account.created_at = datetime.now() - timedelta(days=random.randint(0, 90),
+                                                        minutes=random.randint(0, 1439))
+    # ... 3,000 logged IDP views over the last 60 days, favouring popular projects ...
+    for idp in random.choices(idps, weights=[i.view_count + 1 for i in idps], k=3000):
+        db.session.add(IDPView(idp_id=idp.id, category=idp.category, viewed_at=datetime.now() - timedelta(
+            days=random.randint(0, 60), minutes=random.randint(0, 1439))))
+    # ... and 120 customer shortlists over the last 60 days
+    for customer in random.sample(customers, 40):
+        for idp in random.sample(idps, 3):
+            if Favourite.add(customer.id, idp):
+                Favourite.find(customer.id, idp.id).saved_at = datetime.now() - timedelta(
+                    days=random.randint(0, 60), minutes=random.randint(0, 1439))
+
+    # 5 suspended customers for the UA-06 / UA-13 demos (never the demo login)
+    for account in random.sample([c for c in customers if c.email != "customer@demo.com"], 5):
+        account.is_suspended = True
+
+    # UA-18 announcements
+    for days_ago, title, message in [
+        (20, "Welcome to Nestfolio", "Browse projects, save your favourites and contact designers directly."),
+        (6, "Scheduled maintenance", "Nestfolio will be down on Sunday from 2am to 4am."),
+        (1, "New: download reports", "Platform reports can now be downloaded as PDF or CSV."),
+    ]:
+        db.session.add(Announcement(admin_id=admin.id, title=title, message=message,
+                                    sent_at=datetime.now() - timedelta(days=days_ago)))
+
     # 100 reports for the User Admin's review list (C-15 / UA-17): 70 open, 30 resolved.
     # Each customer reports each project at most once.
     pairs = random.sample([(c, i) for c in customers for i in idps], 100)
@@ -175,7 +210,9 @@ with app.app_context():
     print(f"Accounts: {UserAccount.query.count()}, IDPs: {IDP.query.count()}, "
           f"Favourites: {Favourite.query.count()}, "
           f"Reports: {Report.query.count()} ({Report.count_open()} open), "
-          f"Enquiries: {Enquiry.query.count()}, "
+          f"Enquiries: {Enquiry.query.count()}, IDP views logged: {IDPView.query.count()}, "
+          f"Categories: {IDPCategory.query.count()}, Profiles: {UserProfile.query.count()}, "
+          f"Announcements: {Announcement.query.count()}, "
           f"Designer applications: {DesignerApplication.query.count()} "
           f"({DesignerApplication.count_pending()} pending)")
     print("Demo logins: admin@demo.com / designer@demo.com / customer@demo.com / "

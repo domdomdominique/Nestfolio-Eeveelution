@@ -7,7 +7,10 @@ from app.entity.user_account import UserAccount
 
 
 class AddIDPController:
-    CATEGORIES = IDP.CATEGORIES
+    @property
+    def CATEGORIES(self):
+        """Current categories from Platform Management (PM-03 to PM-06)."""
+        return IDP.categories()
 
     def categories(self):
         return IDP.categories()
@@ -63,4 +66,4 @@ class AddIDPController:
             clean_category,
             is_current,
             photos=photos,
-        )
+        )
