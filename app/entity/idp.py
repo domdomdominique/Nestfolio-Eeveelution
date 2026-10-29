@@ -17,6 +17,7 @@ class IDP(db.Model):
     shortlist_count = db.Column(db.Integer, default=0)
     is_current = db.Column(db.Boolean, default=False)  # current (in progress) vs past project
     created_at = db.Column(db.DateTime, default=datetime.now)
+    is_removed = db.Column(db.Boolean, default=False)  # hidden by a User Admin (UA-17)
 
     designer = db.relationship("UserAccount")
     view_events = db.relationship(
@@ -32,8 +33,14 @@ class IDP(db.Model):
 
     @classmethod
     def categories(cls):
-        """The categories a designer may pick (ID-12). One place to swap in a Category table later."""
-        return cls.CATEGORIES
+        """The categories a designer may pick (ID-12) and customers filter by (C-05).
+
+        Managed by Platform Management (PM-03 to PM-06); CATEGORIES above are
+        only the defaults created on first run.
+        """
+        from app.entity.idp_category import IDPCategory
+
+        return IDPCategory.names()
 
     @classmethod
     def get(cls, idp_id):
@@ -41,16 +48,16 @@ class IDP(db.Model):
 
     @classmethod
     def visible(cls, query=None):
-        """Only IDPs whose designer is active (not suspended) — what customers may see (C-04)."""
+        """Only IDPs customers may see: designer active (C-04) and not removed by an admin (UA-17)."""
         from app.entity.user_account import UserAccount
 
         query = cls.query if query is None else query
         return (query.join(UserAccount, cls.designer_id == UserAccount.id)
-                .filter(UserAccount.is_suspended.isnot(True)))
+                .filter(UserAccount.is_suspended.isnot(True), cls.is_removed.isnot(True)))
 
     @property
     def is_visible(self):
-        return not (self.designer and self.designer.is_suspended)
+        return not (self.is_removed or (self.designer and self.designer.is_suspended))
 
     @classmethod
     def search(cls, keyword):
@@ -157,6 +164,11 @@ class IDP(db.Model):
             )
         )
 
+        db.session.commit()
+
+    def remove(self):
+        """Hide from customers after a report (UA-17); the designer still has it."""
+        self.is_removed = True
         db.session.commit()
 
     @classmethod

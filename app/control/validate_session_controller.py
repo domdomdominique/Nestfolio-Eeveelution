@@ -20,5 +20,5 @@ class ValidateSessionController:
         if not isinstance(user_id, int) or not role or not token:
             return False
         account = UserAccount.get(user_id)
-        return (account is not None and not account.is_suspended and account.role == role
+        return (account is not None and not account.is_blocked and account.role == role
                 and token == self.token_for(account))

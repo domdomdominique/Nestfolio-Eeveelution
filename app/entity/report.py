@@ -24,6 +24,7 @@ class Report(db.Model):
     status = db.Column(db.String(20), default="open", nullable=False)  # open / resolved
     created_at = db.Column(db.DateTime, default=datetime.now)
     resolved_at = db.Column(db.DateTime)
+    resolution = db.Column(db.String(20))  # dismissed (IDP stays) / removed (IDP hidden) - UA-17
     resolved_by = db.Column(db.Integer, db.ForeignKey("user_account.id"))  # the User Admin
 
     idp = db.relationship("IDP")
@@ -56,10 +57,11 @@ class Report(db.Model):
         """Reports for the User Admin's review list (UA-17), newest first."""
         return cls.query.filter_by(status=status).order_by(cls.created_at.desc(), cls.id.desc()).all()
 
-    def resolve(self, admin_id):
+    def resolve(self, admin_id, resolution="dismissed"):
         if self.status != "open":
             raise ValueError("This report has already been resolved.")
         self.status = "resolved"
+        self.resolution = resolution
         self.resolved_by = admin_id
         self.resolved_at = datetime.now()
         db.session.commit()

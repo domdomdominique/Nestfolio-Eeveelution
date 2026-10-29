@@ -45,6 +45,9 @@ def create_app(test_config=None):
     from app.entity.designer_company import DesignerCompany
     from app.entity.idp_photo import IDPPhoto
     from app.entity.idp_view import IDPView
+    from app.entity import activity_report, announcement  # noqa: F401  (PM-08, UA-18)
+    from app.entity.idp_category import IDPCategory
+    from app.entity.user_profile import UserProfile
 
     @app.after_request
     def add_security_headers(response):
@@ -83,5 +86,7 @@ def create_app(test_config=None):
 
     with app.app_context():
         db.create_all()
+        IDPCategory.ensure_defaults()
+        UserProfile.ensure_defaults()
 
-    return app
+    return app
