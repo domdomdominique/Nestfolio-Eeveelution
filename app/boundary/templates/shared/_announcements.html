@@ -1,0 +1,13 @@
+{# UA-18: latest announcements from the User Admin, shown on every actor's home page #}
+{% if announcements %}
+<section class="card" aria-label="Announcements">
+  <div class="card-head"><h2>Announcements</h2></div>
+  {% for a in announcements %}
+    <article>
+      <strong>{{ a.title }}</strong>
+      <small>{{ a.sent_at.strftime('%d %b %Y') }}</small>
+      <p style="white-space:pre-wrap; overflow-wrap:anywhere;">{{ a.message }}</p>
+    </article>
+  {% endfor %}
+</section>
+{% endif %}
