@@ -1,0 +1,61 @@
+{% extends "admin/layout.html" %}
+{% block title %}User Profiles — Nestfolio{% endblock %}
+{% block content %}
+<div class="dash-header">
+  <div>
+    <h1 class="dash-title">User Profiles</h1>
+    <p class="dash-sub">{{ total }} profile{{ 's' if total != 1 }}. Every account belongs to one.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('admin.create_profile') }}">Create profile</a>
+</div>
+
+<section class="card">
+  <form class="dash-search" role="search" method="get" style="width:100%; max-width:380px; margin-bottom:16px;">
+    {{ i.icon('search') }}
+    <input type="search" name="q" value="{{ keyword }}" placeholder="Search profiles…" aria-label="Search profiles" maxlength="50">
+  </form>
+  {% if profiles %}
+  <div class="table-wrap">
+    <table class="ptable">
+      <thead><tr><th>Profile</th><th>Description</th><th>Accounts</th><th>Status</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for p in profiles %}
+        <tr>
+          <td><strong>{{ p.name }}</strong></td>
+          <td>{{ p.description or '—' }}</td>
+          <td class="num">{{ p.account_count }}</td>
+          <td>{{ p.status|capitalize }}</td>
+          <td class="num">
+            <a href="{{ url_for('admin.edit_profile', profile_id=p.id) }}">Edit</a>
+            {% if p.is_active and p.key != 'admin' %}
+            · <a href="#" data-open="suspend-dialog"
+                 data-action="{{ url_for('admin.suspend_profile', profile_id=p.id) }}"
+                 data-title="{{ p.name }}">Suspend</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% elif keyword %}
+  <p class="empty-row">No results found for “{{ keyword }}”.</p>
+  {% else %}
+  <p class="empty-row">No profiles yet.</p>
+  {% endif %}
+</section>
+
+<dialog class="modal modal-sm" id="suspend-dialog" aria-labelledby="suspend-title">
+  <div class="modal-header">
+    <div class="modal-titles">
+      <h2 id="suspend-title">Suspend profile?</h2>
+      <p>Everyone on “<span data-project-title></span>” will be unable to log in, and the profile cannot be given to new accounts.</p>
+    </div>
+  </div>
+  <form class="modal-actions" method="post" data-delete-form>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline" type="submit" formmethod="dialog" formaction="">Cancel</button>
+    <button class="btn btn-primary btn-danger" type="submit">Suspend</button>
+  </form>
+</dialog>
+{% endblock %}

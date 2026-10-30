@@ -106,6 +106,7 @@ def enquiries():
 
     return render_template(
         "designer/enquiries.html",
+        nav="enquiries",
         enquiries=messages,
     )
 

@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from app.entity.announcement import Announcement
 from app.entity.enquiry import Enquiry
 from app.entity.idp import IDP
 from app.entity.user_account import UserAccount
@@ -16,6 +17,7 @@ class ViewDesignerDashboardController:
         totals = IDP.totals_for_designer(designer_id)
         return {
             "account": account,
+            "announcements": Announcement.latest(3),
             "company": account.company,
             "project_count": IDP.count_for_designer(designer_id),
             "added_this_month": IDP.added_since(designer_id, month_start),

@@ -141,3 +141,16 @@ def test_pdf_is_a_valid_pdf_with_the_figures(app):
 def test_unknown_download_format_is_rejected(app):
     with pytest.raises(ValueError, match="PDF or CSV"):
         DownloadReportController().download(GenerateReportController().daily(DAY), "xlsx")
+
+
+def test_csv_does_not_let_a_project_title_run_as_a_formula(app):
+    designer = UserAccount.create("des@test.com", "password123", "designer", name="Des")
+    evil = IDP(title='=HYPERLINK("http://evil","x")', category="Kitchen", designer_id=designer.id)
+    db.session.add(evil)
+    db.session.commit()
+    db.session.add(IDPView(idp_id=evil.id, category="Kitchen", viewed_at=datetime.now()))
+    db.session.commit()
+    report = GenerateReportController().daily(date.today())
+    _, _, data = DownloadReportController().download(report, "csv")
+    assert "\n=HYPERLINK" not in data.decode("utf-8-sig")
+    assert "'=HYPERLINK" in data.decode("utf-8-sig")

@@ -1,5 +1,43 @@
-{% extends "base.html" %}
+{% extends "platform/layout.html" %}
+{% block title %}Dashboard — Nestfolio{% endblock %}
 {% block content %}
-<h1>Platform dashboard</h1>
-<p>Add this actor's pages here.</p>
+<div class="dash-header">
+  <div>
+    <h1 class="dash-title">Welcome back, {{ session.name or 'Platform Management' }}</h1>
+    <p class="dash-sub">Today so far, {{ today.generated_at.strftime('%d %b %Y') }}.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('platform.reports') }}">View reports</a>
+</div>
+
+<section class="stats" aria-label="Today">
+  {% for label, value in today.summary_rows() %}
+  <div class="stat">
+    <span class="stat-label">{{ label }}</span>
+    <span class="stat-value">{{ '{:,}'.format(value) }}</span>
+  </div>
+  {% endfor %}
+</section>
+
+{% include "shared/_announcements.html" %}
+
+<section class="card">
+  <div class="card-head">
+    <h2>IDP categories</h2>
+    <a href="{{ url_for('platform.categories') }}">Manage categories</a>
+  </div>
+  {% if categories %}
+  <div class="table-wrap">
+    <table class="ptable">
+      <thead><tr><th>Category</th><th>Projects</th></tr></thead>
+      <tbody>
+        {% for c in categories %}
+        <tr><td>{{ c.name }}</td><td class="num">{{ c.idp_count }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="empty-row">No categories yet.</p>
+  {% endif %}
+</section>
 {% endblock %}

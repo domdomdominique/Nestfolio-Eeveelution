@@ -1,0 +1,50 @@
+{% extends "admin/layout.html" %}
+{% block title %}User Accounts — Nestfolio{% endblock %}
+{% block content %}
+<div class="dash-header">
+  <div>
+    <h1 class="dash-title">User Accounts</h1>
+    <p class="dash-sub">{{ total }} account{{ 's' if total != 1 }}. Search by name or email.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('admin.create_account') }}">Create account</a>
+</div>
+
+<section class="card">
+  <form method="get" class="filter-row">
+    <label class="field"><span>Name or email</span>
+      <input type="search" name="q" value="{{ keyword }}" maxlength="100" placeholder="Search…"></label>
+    <label class="field"><span>Profile</span>
+      <select name="profile"><option value="">All</option>
+        {% for key, name in profiles %}<option value="{{ key }}" {{ 'selected' if role == key }}>{{ name }}</option>{% endfor %}
+      </select></label>
+    <label class="field"><span>Status</span>
+      <select name="status"><option value="">All</option>
+        {% for key, name in statuses.items() %}<option value="{{ key }}" {{ 'selected' if status == key }}>{{ name }}</option>{% endfor %}
+      </select></label>
+    <button class="btn btn-primary" type="submit">Search</button>
+  </form>
+
+  {% if accounts %}
+  <div class="table-wrap">
+    <table class="ptable">
+      <thead><tr><th>Name</th><th>Email</th><th>Profile</th><th>Status</th><th>Created</th><th></th></tr></thead>
+      <tbody>
+        {% for a in accounts %}
+        <tr>
+          <td><strong>{{ a.name or '—' }}</strong></td>
+          <td>{{ a.email }}</td>
+          <td>{{ a.profile_name }}</td>
+          <td>{{ a.status }}</td>
+          <td class="num">{{ a.created_at.strftime('%d %b %Y') if a.created_at else '—' }}</td>
+          <td class="num"><a href="{{ url_for('admin.account', account_id=a.id) }}">View</a></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "shared/_pager.html" %}
+  {% else %}
+  <p class="empty-row">No results found.</p>
+  {% endif %}
+</section>
+{% endblock %}

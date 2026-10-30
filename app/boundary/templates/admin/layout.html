@@ -1,0 +1,13 @@
+{% extends "shared/dash_layout.html" %}
+{% import "designer/_icons.html" as i %}
+{% set role_label = 'User Admin' %}
+{% set home_url = url_for('admin.home') %}
+{% block title %}Admin — Nestfolio{% endblock %}
+{% block sidebar_nav %}
+      <a href="{{ url_for('admin.home') }}" {% if nav == 'dashboard' %}aria-current="page"{% endif %}>{{ i.icon('dashboard') }}Dashboard</a>
+      <a href="{{ url_for('admin.accounts') }}" {% if nav == 'accounts' %}aria-current="page"{% endif %}>{{ i.icon('users') }}User Accounts</a>
+      <a href="{{ url_for('admin.profiles') }}" {% if nav == 'profiles' %}aria-current="page"{% endif %}>{{ i.icon('shield') }}User Profiles</a>
+      <a href="{{ url_for('admin.applications') }}" {% if nav == 'applications' %}aria-current="page"{% endif %}>{{ i.icon('portfolio') }}Applications</a>
+      <a href="{{ url_for('admin.reports') }}" {% if nav == 'reports' %}aria-current="page"{% endif %}>{{ i.icon('flag') }}Reported Projects</a>
+      <a href="{{ url_for('admin.announcements') }}" {% if nav == 'announcements' %}aria-current="page"{% endif %}>{{ i.icon('megaphone') }}Announcements</a>
+{% endblock %}

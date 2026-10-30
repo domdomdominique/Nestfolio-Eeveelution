@@ -71,9 +71,10 @@ def create_app(test_config=None):
     from app.boundary.designer_boundary import designer_bp
     from app.boundary.platform_boundary import platform_bp
 
-    from app.boundary import drop_stale_login
+    from app.boundary import drop_stale_login, force_password_change
 
     app.before_request(drop_stale_login)
+    app.before_request(force_password_change)
 
     for bp in (
         auth_bp,

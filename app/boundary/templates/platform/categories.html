@@ -1,0 +1,61 @@
+{% extends "platform/layout.html" %}
+{% block title %}IDP Categories — Nestfolio{% endblock %}
+{% block content %}
+<div class="dash-header">
+  <div>
+    <h1 class="dash-title">IDP Categories</h1>
+    <p class="dash-sub">{{ total }} categor{{ 'ies' if total != 1 else 'y' }}. Designers pick one for each project.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('platform.create_category') }}">Add category</a>
+</div>
+
+<section class="card">
+  <form class="dash-search" role="search" method="get" style="width:100%; max-width:380px; margin-bottom:16px;">
+    {{ i.icon('search') }}
+    <input type="search" name="q" value="{{ keyword }}" placeholder="Search categories…" aria-label="Search categories" maxlength="50">
+  </form>
+
+  {% if categories %}
+  <div class="table-wrap">
+    <table class="ptable">
+      <thead><tr><th>Category</th><th>Description</th><th>Projects</th><th>Actions</th></tr></thead>
+      <tbody>
+        {% for c in categories %}
+        <tr>
+          <td><strong>{{ c.name }}</strong></td>
+          <td>{{ c.description or '—' }}</td>
+          <td class="num">{{ c.idp_count }}</td>
+          <td class="num">
+            <a href="{{ url_for('platform.edit_category', category_id=c.id) }}">Edit</a>
+            ·
+            <a href="#" data-open="delete-dialog"
+               data-action="{{ url_for('platform.delete_category', category_id=c.id) }}"
+               data-title="{{ c.name }}">Delete</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% elif keyword %}
+  <p class="empty-row">No results found for “{{ keyword }}”.</p>
+  {% else %}
+  <p class="empty-row">No categories yet. Add the first one.</p>
+  {% endif %}
+</section>
+
+<dialog class="modal modal-sm" id="delete-dialog" aria-labelledby="delete-title">
+  <div class="modal-header">
+    <div class="modal-titles">
+      <h2 id="delete-title">Delete category?</h2>
+      <p>“<span data-project-title></span>” will be removed. A category that projects still use cannot be deleted.</p>
+    </div>
+    <form method="dialog"><button class="modal-close" aria-label="Close"><img src="{{ url_for('static', filename='img/ui/modal-close.svg') }}" width="20" height="20" alt=""></button></form>
+  </div>
+  <form class="modal-actions" method="post" data-delete-form>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline" type="submit" formmethod="dialog" formaction="">Cancel</button>
+    <button class="btn btn-primary btn-danger" type="submit">Delete</button>
+  </form>
+</dialog>
+{% endblock %}

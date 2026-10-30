@@ -2,6 +2,7 @@ from functools import wraps
 
 from flask import abort, redirect, request, session, url_for
 
+from app.control.reset_password_controller import ResetPasswordController
 from app.control.validate_session_controller import ValidateSessionController
 
 
@@ -37,3 +38,11 @@ def drop_stale_login():
     if not ValidateSessionController().is_valid(
             session.get("user_id"), session.get("role"), session.get("auth")):
         session.clear()
+
+
+def force_password_change():
+    """Run before every request: after a User Admin reset (UA-16) the user must pick a new password first."""
+    if request.endpoint in (None, "static", "auth.change_password", "auth.logout") or "user_id" not in session:
+        return
+    if ResetPasswordController().must_change_password(session["user_id"]):
+        return redirect(url_for("auth.change_password"))

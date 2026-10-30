@@ -1,0 +1,65 @@
+{% extends "admin/layout.html" %}
+{% block title %}{{ a.name or a.email }} — Nestfolio{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('admin.accounts') }}">&larr; All accounts</a></p>
+<div class="dash-header">
+  <div>
+    <h1 class="dash-title">{{ a.name or a.email }}</h1>
+    <p class="dash-sub">{{ a.profile }} · {{ a.status }}</p>
+  </div>
+  <div class="dash-header-actions">
+    <a class="btn btn-outline" href="{{ url_for('admin.edit_account', account_id=a.id) }}">Edit</a>
+  </div>
+</div>
+
+{% if temporary_password %}
+<section class="card card-stack" role="alert">
+  <h2>Temporary password</h2>
+  <p>Give this to the user now. It is not shown again, and they must change it when they next log in.</p>
+  <p><code style="font-size:20px; user-select:all;">{{ temporary_password }}</code></p>
+</section>
+{% endif %}
+
+<section class="card">
+  <dl class="kv kv-flush">
+    <div><dt>Email</dt><dd>{{ a.email }}</dd></div>
+    <div><dt>Phone</dt><dd>{{ a.phone or '—' }}</dd></div>
+    <div><dt>User profile</dt><dd>{{ a.profile }}</dd></div>
+    <div><dt>Status</dt><dd>{{ a.status }}</dd></div>
+    <div><dt>Created</dt><dd>{{ a.created_at.strftime('%d %b %Y, %H:%M') if a.created_at else '—' }}</dd></div>
+    {% if a.must_change_password %}<div><dt>Password</dt><dd>Must be changed at next login</dd></div>{% endif %}
+  </dl>
+</section>
+
+<section class="card">
+  <div class="card-head"><h2>Actions</h2></div>
+  <div class="dash-header-actions" style="flex-wrap:wrap;">
+    <button class="btn btn-outline" type="button" data-open="reset-dialog">Reset password</button>
+    {% if a.status == 'Suspended' %}
+    <button class="btn btn-primary" type="button" data-open="reactivate-dialog">Reactivate account</button>
+    {% elif not is_self %}
+    <button class="btn btn-primary btn-danger" type="button" data-open="suspend-dialog">Suspend account</button>
+    {% endif %}
+  </div>
+  {% if is_self %}<p class="hint" style="margin-top:12px;">This is your own account, so it cannot be suspended.</p>{% endif %}
+</section>
+
+{% macro confirm(id, title, text, action, label, danger=false) %}
+<dialog class="modal modal-sm" id="{{ id }}" aria-labelledby="{{ id }}-title">
+  <div class="modal-header">
+    <div class="modal-titles"><h2 id="{{ id }}-title">{{ title }}</h2><p>{{ text }}</p></div>
+  </div>
+  <form class="modal-actions" method="post" action="{{ action }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline" type="submit" formmethod="dialog" formaction="">Cancel</button>
+    <button class="btn btn-primary{{ ' btn-danger' if danger }}" type="submit">{{ label }}</button>
+  </form>
+</dialog>
+{% endmacro %}
+{{ confirm('reset-dialog', 'Reset password?', 'A temporary password is created and the old one stops working. The user must change it at next login.',
+           url_for('admin.reset_password', account_id=a.id), 'Reset password') }}
+{{ confirm('suspend-dialog', 'Suspend this account?', 'The user will not be able to log in. Their data is kept.',
+           url_for('admin.suspend_account', account_id=a.id), 'Suspend', true) }}
+{{ confirm('reactivate-dialog', 'Reactivate this account?', 'The user will be able to log in again.',
+           url_for('admin.reactivate_account', account_id=a.id), 'Reactivate') }}
+{% endblock %}

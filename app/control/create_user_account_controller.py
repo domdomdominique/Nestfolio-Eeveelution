@@ -8,4 +8,6 @@ class CreateUserAccountController:
     def create(self, name, email, phone, password, role):
         name, email, phone, role = clean_account(name, email, phone, role)
         check_new_password(password)
-        return UserAccount.create(email, password, role, name=name, phone=phone)  # created Active
+        # Active, but the user must pick their own password at first login
+        return UserAccount.create(email, password, role, name=name, phone=phone,
+                                  must_change_password=True)

@@ -1,0 +1,67 @@
+{% extends "platform/layout.html" %}
+{% block title %}Reports — Nestfolio{% endblock %}
+{% block content %}
+<div>
+  <h1 class="dash-title">Reports</h1>
+  <p class="dash-sub">Platform activity for a day, a week (Monday to Sunday) or a month.</p>
+</div>
+
+<section class="card">
+  <nav class="tabs" aria-label="Report type" style="margin-bottom:16px; width:max-content; max-width:100%;">
+    {% for k in ('daily', 'weekly', 'monthly') %}
+    <a href="{{ url_for('platform.reports', kind=k) }}" {% if kind == k %}aria-current="true"{% endif %}>{{ k|capitalize }}</a>
+    {% endfor %}
+  </nav>
+  <form method="get" class="filter-row">
+    <input type="hidden" name="kind" value="{{ kind }}">
+    <label class="field" style="max-width:240px;">
+      <span>{{ 'Month' if kind == 'monthly' else ('Any day in the week' if kind == 'weekly' else 'Date') }}</span>
+      <input type="{{ 'month' if kind == 'monthly' else 'date' }}" name="value" value="{{ value }}" required>
+    </label>
+    <button class="btn btn-primary" type="submit">Generate</button>
+  </form>
+  {% if error %}<p class="form-error" role="alert" style="margin-top:16px;">{{ error }}</p>{% endif %}
+</section>
+
+{% if report %}
+<section class="card">
+  <div class="card-head">
+    <div>
+      <h2>{{ report.title }}</h2>
+      <small class="hint">Generated {{ report.generated_at.strftime('%d %b %Y, %H:%M') }}</small>
+    </div>
+    <div class="dash-header-actions">
+      <a class="btn btn-outline" href="{{ url_for('platform.download_report', kind=kind, value=value, format='pdf') }}">{{ i.icon('download') }}PDF</a>
+      <a class="btn btn-outline" href="{{ url_for('platform.download_report', kind=kind, value=value, format='csv') }}">{{ i.icon('download') }}CSV</a>
+    </div>
+  </div>
+  <div class="stats">
+    {% for label, count in report.summary_rows() %}
+    <div class="stat"><span class="stat-label">{{ label }}</span><span class="stat-value">{{ '{:,}'.format(count) }}</span></div>
+    {% endfor %}
+  </div>
+</section>
+
+<div class="dash-grid dash-grid-even">
+  {% for heading, columns, rows in report.sections() %}
+  <section class="card">
+    <div class="card-head"><h2>{{ heading }}</h2></div>
+    {% if rows %}
+    <div class="table-wrap">
+      <table class="ptable">
+        <thead><tr><th>#</th>{% for c in columns %}<th>{{ c }}</th>{% endfor %}</tr></thead>
+        <tbody>
+          {% for row in rows %}
+          <tr><td class="num">{{ loop.index }}</td>{% for cell in row %}<td{% if loop.last %} class="num"{% endif %}>{{ cell }}</td>{% endfor %}</tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="empty-row">No activity.</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

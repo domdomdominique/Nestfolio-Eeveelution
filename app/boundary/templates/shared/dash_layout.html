@@ -1,0 +1,97 @@
+{% import "designer/_icons.html" as i %}
+{# Shared dashboard shell (sidebar + top bar) for the Designer, Platform Management and User Admin areas. #}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Nestfolio{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Roboto:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/ui/nestfolio-logo.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/site.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/designer.css') }}">
+</head>
+<body class="designer-app">
+{% set nav = nav|default('') %}
+{% set display = session.name or role_label %}
+{% set initials = (display.split()|map('first')|join)[:2]|upper %}
+
+  <aside class="sidebar">
+    <a class="sidebar-brand" href="{{ home_url }}">
+      <img src="{{ url_for('static', filename='img/ui/logo-emblem-footer.svg') }}" width="34" height="36" alt="">
+      <span>Nestfolio</span>
+    </a>
+    <span class="role-badge">{{ role_label }}</span>
+    <nav class="sidebar-nav" aria-label="{{ role_label }}">
+      {% block sidebar_nav %}{% endblock %}
+    </nav>
+    {# ID-02: Log out is on every page; it asks first, and still works without JavaScript #}
+    <a class="sidebar-logout" href="{{ url_for('auth.logout') }}" data-logout>{{ i.icon('logout') }}Log out</a>
+  </aside>
+
+  <div class="dash-main">
+    <header class="dash-top">
+      {% block topbar_left %}<span></span>{% endblock %}
+      <a class="dash-user" href="{{ account_url|default(home_url) }}">
+        <span class="initials initials-xs">{{ initials or '?' }}</span>
+        <span><strong>{{ display }}</strong><small>{{ role_label }}</small></span>
+      </a>
+    </header>
+
+    <main class="dash-content">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  {% for category, message in get_flashed_messages(with_categories=true)
+        if not (inline_errors|default(false) and category == 'error') %}
+    <div class="toast{{ ' toast-error' if category == 'error' }}" role="status">
+      {% if category == 'success' %}<img src="{{ url_for('static', filename='img/ui/success.svg') }}" width="22" height="22" alt="">{% endif %}
+      <span>{{ message }}</span>
+    </div>
+  {% endfor %}
+
+  <dialog class="modal modal-sm" id="logout-dialog" aria-labelledby="logout-title">
+    <div class="modal-header">
+      <span class="modal-icon"><img src="{{ url_for('static', filename='img/ui/modal-logout.svg') }}" width="20" height="20" alt=""></span>
+      <div class="modal-titles">
+        <h2 id="logout-title">Log out of your account?</h2>
+        <p>You will need to log in again to continue.</p>
+      </div>
+      <form method="dialog"><button class="modal-close" aria-label="Close"><img src="{{ url_for('static', filename='img/ui/modal-close.svg') }}" width="20" height="20" alt=""></button></form>
+    </div>
+    <form class="modal-actions" method="dialog">
+      <button class="btn btn-outline" type="submit">Cancel</button>
+      <a class="btn btn-primary" href="{{ url_for('auth.logout') }}">Log out</a>
+    </form>
+  </dialog>
+
+  <script>
+    setTimeout(function () {
+      document.querySelectorAll('.toast').forEach(function (t) { t.classList.add('toast-hide'); });
+    }, 6000);
+    // data-open="dialog-id" opens a dialog; data-logout opens the log out confirmation
+    document.addEventListener('click', function (e) {
+      var opener = e.target.closest('[data-open], [data-logout]');
+      if (!opener) return;
+      var dialog = document.getElementById(opener.dataset.open || 'logout-dialog');
+      if (!dialog || !dialog.showModal) return;
+      e.preventDefault();
+      // Fill the delete dialog with the project that was clicked
+      if (opener.dataset.action) {
+        var form = dialog.querySelector('form[data-delete-form]');
+        if (form) form.action = opener.dataset.action;
+        var name = dialog.querySelector('[data-project-title]');
+        if (name) name.textContent = opener.dataset.title || '';
+      }
+      dialog.showModal();
+    });
+    document.querySelectorAll('dialog.modal').forEach(function (d) {
+      d.addEventListener('click', function (e) { if (e.target === d) d.close(); });
+    });
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
