@@ -42,6 +42,7 @@ def project_details(form):
     }
 
 
+# ID-19 Photo rules: JPG or PNG, 5 MB each, at most 10, checked as real images.
 def validated_photos(files, existing=0):
     files = [
         upload for upload in files

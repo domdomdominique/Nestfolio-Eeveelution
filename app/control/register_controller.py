@@ -4,6 +4,7 @@ from app.entity.designer_application import DesignerApplication
 from app.entity.user_account import UserAccount
 
 
+# C-01 Create customer account: unique email, password rules, created as an active Customer.
 class RegisterController:
     """Control: handles the Customer 'Register account' use case."""
 

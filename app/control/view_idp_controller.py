@@ -2,6 +2,7 @@ from app.entity.favourite import Favourite
 from app.entity.idp import IDP
 
 
+# C-06 View an IDP: counts the view (ID-13); a deleted or hidden IDP is "Project not available".
 class ViewIDPController:
     def view(
         self,

@@ -6,6 +6,7 @@ from app.entity.designer_application import DesignerApplication
 from app.entity.user_account import UserAccount
 
 
+# ID-15 Register as an interior designer: creates a Pending application for the User Admin (UA-14, UA-15).
 class ApplyDesignerController:
     """Control: handles the Interior Designer 'Apply for account' use case."""
 

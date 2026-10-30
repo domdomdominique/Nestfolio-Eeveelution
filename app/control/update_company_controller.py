@@ -4,6 +4,7 @@ from app.entity.designer_company import DesignerCompany
 from app.entity.user_account import UserAccount
 
 
+# ID-05 Update company information: same checks as ID-03, own record only.
 class UpdateCompanyController:
     def update(self, account_id, form, photo=None):
         account = UserAccount.get(account_id)

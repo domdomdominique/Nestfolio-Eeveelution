@@ -2,6 +2,7 @@ from app.entity.enquiry import Enquiry
 from app.entity.user_account import UserAccount
 
 
+# ID-21 Designer's enquiry list, newest first (replies are not built yet).
 class ViewEnquiriesController:
     def _check_designer(self, designer_id):
         account = UserAccount.get(designer_id)

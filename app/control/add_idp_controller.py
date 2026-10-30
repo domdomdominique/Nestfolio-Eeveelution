@@ -6,6 +6,7 @@ from app.entity.idp import IDP
 from app.entity.user_account import UserAccount
 
 
+# ID-06 Add IDP to portfolio, with ID-12 category and ID-19 photos.
 class AddIDPController:
     @property
     def CATEGORIES(self):

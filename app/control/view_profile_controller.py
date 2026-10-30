@@ -1,6 +1,7 @@
 from app.entity.user_account import UserAccount
 
 
+# C-11 customer and ID-17 designer: view own profile (the password is never returned).
 class ViewProfileController:
     """Control: handles the Customer 'View Customer Profile' use case (C-11)."""
 

@@ -116,6 +116,7 @@ def prevent_designer_page_caching(response):
     return response
 
 
+# ID-03 Add company information.
 @designer_bp.route("/company/add", methods=["GET", "POST"])
 @role_required("designer")
 def add_company():
@@ -158,6 +159,7 @@ def add_company():
     )
 
 
+# ID-04 View company information.
 @designer_bp.route("/company")
 @role_required("designer")
 def company():
@@ -196,6 +198,7 @@ def _check_company_token():
         )
 
 
+# ID-05 Update company information.
 @designer_bp.route("/company/edit", methods=["GET", "POST"])
 @role_required("designer")
 def edit_company():
@@ -249,6 +252,7 @@ def edit_company():
     )
 
 
+# ID-05 Delete company information (asks to confirm first).
 @designer_bp.route("/company/delete", methods=["GET", "POST"])
 @role_required("designer")
 def delete_company():
@@ -285,6 +289,7 @@ def delete_company():
         company=existing,
     )
 
+# ID-06 Add IDP to portfolio (with ID-19 photos).
 @designer_bp.route("/portfolio/new", methods=["GET", "POST"])
 @designer_bp.route("/portfolio/add", methods=["GET", "POST"])
 @role_required("designer")
@@ -327,6 +332,7 @@ def add_project():
         form=request.form,
     )
 
+# ID-09 Edit IDP (own IDPs only; add photos here, ID-19).
 @designer_bp.route(
     "/portfolio/<int:idp_id>/edit",
     methods=["GET", "POST"],
@@ -386,6 +392,7 @@ def edit_project(idp_id):
         project=project,
     )
 
+# ID-10 Delete IDP: the confirm page first, then the delete itself.
 @designer_bp.route(
     "/portfolio/<int:idp_id>/delete/confirm",
     methods=["GET"],
@@ -426,6 +433,7 @@ def delete_project(idp_id):
     )
 
 
+# ID-13 view counts and ID-14 shortlist counts.
 @designer_bp.route("/statistics")
 @role_required("designer")
 def statistics():
@@ -472,6 +480,7 @@ def profile():
 def edit_profile():
     return profile()
 
+# ID-19 AC5 Remove a photo from an IDP.
 @designer_bp.route(
     "/portfolio/<int:idp_id>/photos/<int:photo_id>/delete",
     methods=["POST"],
@@ -510,6 +519,7 @@ def photo_upload_too_large(error):
 
     return redirect(url_for("designer.portfolio"))
 
+# ID-20 Trends: most viewed categories and IDPs, last 7 or 30 days.
 @designer_bp.route("/trends")
 @role_required("designer")
 def trends():

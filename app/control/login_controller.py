@@ -4,6 +4,7 @@ from app.entity.designer_application import DesignerApplication
 from app.entity.user_account import UserAccount
 
 
+# C-02, ID-01, PM-01, UA-01 Log in for every role: same error for a wrong email or password, suspended accounts refused.
 class LoginController:
     """Handles login for customers, designers, admins and platform managers."""
 
