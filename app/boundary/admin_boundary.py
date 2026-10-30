@@ -271,6 +271,19 @@ def resolve_report(report_id):
     return redirect(url_for("admin.reports"))
 
 
+@admin_bp.route("/reports/<int:report_id>/remove", methods=["POST"])
+@role_required("admin")
+def remove_reported_project(report_id):
+    """Boundary: Remove project button on ReportedProjectsPage (UA-17): hides it from customers."""
+    try:
+        report = ReviewReportsController().remove_idp(report_id, session["user_id"])
+    except ValueError as error:
+        flash(str(error), "error")
+    else:
+        flash(f"“{report.idp.title}” was removed from customers' view.", "success")
+    return redirect(url_for("admin.reports"))
+
+
 # --- Designer applications ------------------------------------------------------
 
 

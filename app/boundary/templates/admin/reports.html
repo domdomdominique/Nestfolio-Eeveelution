@@ -1,5 +1,19 @@
 {% extends "admin/layout.html" %}
-{% block title %}Reported Projects — Nestfolio{% endblock %}
+{% block title %}Reported Projects — Nestfolio
+<dialog class="modal modal-sm" id="remove-dialog" aria-labelledby="remove-title">
+  <div class="modal-header">
+    <div class="modal-titles">
+      <h2 id="remove-title">Remove this project?</h2>
+      <p>“<span data-project-title></span>” will be hidden from customers and every open report on it will be closed. The designer keeps their copy.</p>
+    </div>
+  </div>
+  <form class="modal-actions" method="post" data-delete-form>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline" type="submit" formmethod="dialog" formaction="">Cancel</button>
+    <button class="btn btn-primary btn-danger" type="submit">Remove</button>
+  </form>
+</dialog>
+{% endblock %}
 {% block content %}
 <div>
   <h1 class="dash-title">Reported projects</h1>
@@ -30,6 +44,9 @@
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
               <button type="submit" class="btn btn-outline">Mark resolved</button>
             </form>
+            <a href="#" data-open="remove-dialog" style="display:inline-block; margin-top:6px;"
+               data-action="{{ url_for('admin.remove_reported_project', report_id=r.id) }}"
+               data-title="{{ r.idp.title }}">Remove project</a>
             {% else %}
             Resolved {{ r.resolved_at.strftime('%d %b %Y') }}
             {% endif %}
