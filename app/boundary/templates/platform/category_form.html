@@ -1,0 +1,27 @@
+{% extends "platform/layout.html" %}
+{% block title %}{{ 'Edit' if category else 'Add' }} category — Nestfolio{% endblock %}
+{% block content %}
+<div>
+  <h1 class="dash-title">{{ 'Edit category' if category else 'Add category' }}</h1>
+  {% if category %}
+  <p class="dash-sub">Renaming also renames it on the {{ category.idp_count }} project{{ 's' if category.idp_count != 1 }} that use it.</p>
+  {% endif %}
+</div>
+
+<form class="form-card-dash" method="post" style="max-width:560px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
+  <label class="field">
+    <span>Name *</span>
+    <input name="name" required maxlength="50" value="{{ form.get('name', '') }}">
+  </label>
+  <label class="field">
+    <span>Description</span>
+    <textarea name="description" rows="3" maxlength="500">{{ form.get('description', '') }}</textarea>
+  </label>
+  <div class="form-actions">
+    <a class="btn btn-outline" href="{{ url_for('platform.categories') }}">Cancel</a>
+    <button class="btn btn-primary" type="submit">{{ 'Save changes' if category else 'Add category' }}</button>
+  </div>
+</form>
+{% endblock %}
