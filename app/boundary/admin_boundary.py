@@ -298,6 +298,7 @@ def remove_reported_project(report_id):
 # --- Designer applications ------------------------------------------------------
 
 
+# UA-14 / UA-15 Pending designer registrations, with approve and reject.
 @admin_bp.route("/applications")
 @role_required("admin")
 def applications():

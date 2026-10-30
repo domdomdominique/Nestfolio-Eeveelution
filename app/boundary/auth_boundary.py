@@ -74,6 +74,7 @@ def login():
     return render_template("auth/login.html", roles=LOGIN_ROLES, form=request.form)
 
 
+# C-01 Create customer account.
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     """Boundary: RegisterPage (C-01 customer sign-up, account is active immediately)."""
@@ -99,6 +100,7 @@ def _full_name(form):
     return f"{form.get('first_name', '').strip()} {form.get('last_name', '').strip()}".strip()
 
 
+# ID-15 Register as an interior designer (application goes to the User Admin).
 @auth_bp.route("/register/designer", methods=["GET", "POST"])
 def apply_designer():
     """Boundary: ApplyDesignerPage (application goes to the User Admin for approval)."""
@@ -125,6 +127,7 @@ def apply_designer():
     return render_template("auth/register.html", account_type="designer", form=request.form)
 
 
+# C-03, ID-02, PM-02, UA-02 Log out: ends the session and returns to the login page.
 @auth_bp.route("/logout")
 def logout():
     was_logged_in = "user_id" in session
@@ -138,6 +141,7 @@ def logout():
 
 
 
+# ID-16 View registration status (pending, approved or rejected designers).
 @auth_bp.route(
     "/registration-status",
     methods=["GET", "POST"],

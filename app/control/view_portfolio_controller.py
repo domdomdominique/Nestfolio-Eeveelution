@@ -7,6 +7,7 @@ from app.entity.user_account import UserAccount
 PER_PAGE = 8
 
 
+# ID-07 View portfolio list and ID-08 search it: only the designer's own IDPs.
 class ViewPortfolioController:
     def _check_designer(self, designer_id):
         account = UserAccount.get(designer_id)

@@ -6,6 +6,7 @@ from app.entity.idp import IDP
 from app.entity.user_account import UserAccount
 
 
+# ID-09 Edit IDP: own IDPs only; also adds photos (ID-19).
 class EditProjectController:
     @property
     def CATEGORIES(self):

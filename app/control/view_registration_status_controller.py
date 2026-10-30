@@ -3,6 +3,7 @@ from werkzeug.security import check_password_hash
 from app.entity.designer_application import DesignerApplication
 
 
+# ID-16 View registration status: Pending, Approved or Rejected (with the reason).
 class ViewRegistrationStatusController:
     def authenticate(self, email, password):
         email = (email or "").strip().lower()

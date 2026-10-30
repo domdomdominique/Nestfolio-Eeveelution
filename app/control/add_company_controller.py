@@ -3,6 +3,7 @@ from app.entity.designer_company import DesignerCompany
 from app.entity.user_account import UserAccount
 
 
+# ID-03 Add company information: name required, one record per designer.
 class AddCompanyController:
     def has_company(self, account_id):
         account = UserAccount.get(account_id)
