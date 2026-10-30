@@ -9,9 +9,11 @@ from flask import Blueprint, flash, redirect, render_template, request, session,
 
 from app.boundary import safe_next
 from app.control.apply_designer_controller import ApplyDesignerController
+from app.control.change_password_controller import ChangePasswordController
 from app.control.login_controller import LoginController
 from app.control.register_controller import RegisterController
 from app.control.validate_session_controller import ValidateSessionController
+from app.entity.user_account import UserAccount
 from app.control.view_landing_page_controller import ViewLandingPageController
 
 auth_bp = Blueprint("auth", __name__)
@@ -185,3 +187,21 @@ def registration_status():
     response.headers["Cache-Control"] = "no-store"
 
     return response
+
+@auth_bp.route("/account/password", methods=["GET", "POST"])
+def change_password():
+    """Boundary: ChangePasswordPage, forced after a User Admin reset (UA-16), open to every role."""
+    if "user_id" not in session:
+        return redirect(url_for("auth.login"))
+    if request.method == "POST":
+        f = request.form
+        try:
+            ChangePasswordController().change(session["user_id"], f.get("current_password"),
+                                              f.get("new_password"), f.get("confirm_password"))
+        except ValueError as error:
+            flash(str(error), "error")
+        else:
+            session["auth"] = ValidateSessionController().token_for(UserAccount.get(session["user_id"]))
+            flash("Password updated.", "success")
+            return redirect(url_for(HOME_BY_ROLE.get(session.get("role"), "auth.index")))
+    return render_template("auth/change_password.html")

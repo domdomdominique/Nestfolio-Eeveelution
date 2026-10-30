@@ -1,24 +1,40 @@
-{% extends "base.html" %}
+{% extends "admin/layout.html" %}
+{% block title %}Dashboard — Nestfolio{% endblock %}
 {% block content %}
-<h1>Admin dashboard</h1>
-<div class="grid">
-  <article>
-    <header><strong>Designer applications</strong></header>
+<div>
+  <h1 class="dash-title">Welcome back, {{ session.name or 'Admin' }}</h1>
+  <p class="dash-sub">What needs your attention.</p>
+</div>
+
+<section class="stats" aria-label="Summary">
+  <div class="stat"><span class="stat-label">User accounts</span><span class="stat-value">{{ accounts }}</span>
+    <span class="stat-note">{{ suspended }} suspended</span></div>
+  <div class="stat"><span class="stat-label">Designer applications</span><span class="stat-value">{{ pending }}</span>
+    <span class="stat-note">{{ 'waiting for review' if pending else 'none waiting' }}</span></div>
+  <div class="stat"><span class="stat-label">Reported projects</span><span class="stat-value">{{ open_reports }}</span>
+    <span class="stat-note">{{ 'waiting for review' if open_reports else 'none waiting' }}</span></div>
+</section>
+
+<div class="dash-grid dash-grid-even">
+  <section class="card">
+    <div class="card-head"><h2>Designer applications</h2></div>
     {% if pending %}
     <p>{{ pending }} application{{ 's' if pending != 1 }} waiting for review.</p>
     {% else %}
     <p>No applications waiting for review.</p>
     {% endif %}
-    <a href="{{ url_for('admin.applications') }}" role="button">Review applications</a>
-  </article>
-  <article>
-    <header><strong>Reported projects</strong></header>
+    <p><a href="{{ url_for('admin.applications') }}">Review applications</a></p>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Reported projects</h2></div>
     {% if open_reports %}
     <p>{{ open_reports }} report{{ 's' if open_reports != 1 }} waiting for review.</p>
     {% else %}
     <p>No reports waiting for review.</p>
     {% endif %}
-    <a href="{{ url_for('admin.reports') }}" role="button">Review reports</a>
-  </article>
+    <p><a href="{{ url_for('admin.reports') }}">Review reports</a></p>
+  </section>
 </div>
+
+{% include "shared/_announcements.html" %}
 {% endblock %}

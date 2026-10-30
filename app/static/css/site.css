@@ -978,3 +978,10 @@ a.page-btn:hover { background: var(--sand); }
   .form-card { padding: 20px; }
   .form-actions { flex-wrap: wrap; }
 }
+
+/* ---------- Announcements from the User Admin (UA-18), on every actor's home page ---------- */
+.announcements { display: flex; flex-direction: column; gap: 12px; padding: 20px 24px; background: var(--cream); border: 1px solid var(--greige); border-radius: 14px; }
+.announcements h2 { font-size: 18px; font-weight: 600; color: var(--espresso-deep); }
+.announcements article + article { padding-top: 12px; border-top: 1px solid var(--line); }
+.announcements small { margin-left: 8px; color: var(--text-muted); }
+.announcements p { margin-top: 4px; font-size: 14px; }

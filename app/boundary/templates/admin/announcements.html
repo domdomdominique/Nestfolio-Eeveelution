@@ -1,0 +1,33 @@
+{% extends "admin/layout.html" %}
+{% block title %}Announcements — Nestfolio{% endblock %}
+{% block content %}
+<div>
+  <h1 class="dash-title">Announcements</h1>
+  <p class="dash-sub">Shown on every user's home page after they log in.</p>
+</div>
+
+<form class="form-card-dash" method="post" style="max-width:640px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <h2>New announcement</h2>
+  {% if error %}<p class="form-error" role="alert">{{ error }}</p>{% endif %}
+  <label class="field"><span>Title *</span>
+    <input name="title" required maxlength="150" value="{{ form.get('title', '') }}"></label>
+  <label class="field"><span>Message *</span>
+    <textarea name="message" rows="4" required>{{ form.get('message', '') }}</textarea></label>
+  <div class="form-actions"><button class="btn btn-primary" type="submit">Send to all users</button></div>
+</form>
+
+<section class="card">
+  <div class="card-head"><h2>Past announcements</h2></div>
+  {% for a in history %}
+  <article class="enq-item">
+    <div style="flex:1; min-width:0;">
+      <div class="enq-top"><strong>{{ a.title }}</strong><small>{{ a.sent_at.strftime('%d %b %Y, %H:%M') }}</small></div>
+      <p style="white-space:pre-wrap; overflow-wrap:anywhere;">{{ a.message }}</p>
+    </div>
+  </article>
+  {% else %}
+  <p class="empty-row">No announcements sent yet.</p>
+  {% endfor %}
+</section>
+{% endblock %}

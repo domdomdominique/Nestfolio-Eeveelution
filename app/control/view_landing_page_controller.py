@@ -1,3 +1,4 @@
+from app.entity.announcement import Announcement
 from app.entity.favourite import Favourite
 from app.entity.idp import IDP
 from app.entity.user_account import UserAccount
@@ -11,6 +12,7 @@ class ViewLandingPageController:
         counts = IDP.count_by_category()
         return {
             "sort": sort,
+            "announcements": Announcement.latest(3) if customer_id else [],
             "popular": IDP.popular(sort),
             "categories": [(name, counts.get(name, 0)) for name in IDP.categories()],
             "featured": [self._designer_card(UserAccount.get(i)) for i in IDP.top_designer_ids()],
