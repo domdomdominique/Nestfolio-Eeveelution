@@ -1,6 +1,7 @@
 from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 
 from app.boundary import role_required
+from app.control.paginate import paginate
 from app.control.create_user_account_controller import CreateUserAccountController
 from app.control.create_user_profile_controller import CreateUserProfileController
 from app.control.reactivate_user_account_controller import ReactivateUserAccountController
@@ -47,8 +48,10 @@ def accounts():
     """Boundary: UserAccountListPage (UA-04 view, UA-07 search by name/email, profile, status)."""
     controller = SearchUserAccountController()
     keyword, role, status = (request.args.get(k, "").strip() for k in ("q", "profile", "status"))
+    found = controller.search(keyword, role, status)
+    shown, page, pages = paginate(found, request.args.get("page", 1, type=int))
     return render_template("admin/accounts.html", nav="accounts",
-                           accounts=controller.search(keyword, role, status),
+                           accounts=shown, total=len(found), page=page, pages=pages,
                            profiles=controller.profile_choices(), statuses=controller.STATUSES,
                            keyword=keyword, role=role, status=status)
 
@@ -277,10 +280,12 @@ def applications():
     """Boundary: DesignerApplicationListPage."""
     controller = ReviewDesignerApplicationController()
     status = request.args.get("status", "pending")
+    found = controller.list_applications(status)
+    shown, page, pages = paginate(found, request.args.get("page", 1, type=int))
     return render_template(
         "admin/applications.html",
         nav="applications",
-        applications=controller.list_applications(status),
+        applications=shown, total=len(found), page=page, pages=pages,
         status=status,
         pending=controller.pending_count(),
     )

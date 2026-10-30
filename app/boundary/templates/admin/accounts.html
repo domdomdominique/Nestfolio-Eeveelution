@@ -4,14 +4,14 @@
 <div class="dash-header">
   <div>
     <h1 class="dash-title">User Accounts</h1>
-    <p class="dash-sub">{{ accounts|length }} shown. Search by name or email.</p>
+    <p class="dash-sub">{{ total }} account{{ 's' if total != 1 }}. Search by name or email.</p>
   </div>
   <a class="btn btn-primary" href="{{ url_for('admin.create_account') }}">Create account</a>
 </div>
 
 <section class="card">
-  <form method="get" class="field-row" style="align-items:flex-end; flex-wrap:wrap; margin-bottom:16px;">
-    <label class="field" style="min-width:220px;"><span>Name or email</span>
+  <form method="get" class="filter-row">
+    <label class="field"><span>Name or email</span>
       <input type="search" name="q" value="{{ keyword }}" maxlength="100" placeholder="Search…"></label>
     <label class="field"><span>Profile</span>
       <select name="profile"><option value="">All</option>
@@ -42,6 +42,7 @@
       </tbody>
     </table>
   </div>
+  {% include "shared/_pager.html" %}
   {% else %}
   <p class="empty-row">No results found.</p>
   {% endif %}

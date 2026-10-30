@@ -16,11 +16,14 @@ class GenerateReportController:
     def generate(self, kind, value):
         if kind not in self.KINDS:
             raise ValueError("Please choose a daily, weekly or monthly report.")
-        if kind == "monthly":
-            year, month = self._parse_month(value)
-            return ActivityReport.monthly(year, month)
-        day = self._parse_day(value)
-        return ActivityReport.daily(day) if kind == "daily" else ActivityReport.weekly(day)
+        try:
+            if kind == "monthly":
+                year, month = self._parse_month(value)
+                return ActivityReport.monthly(year, month)
+            day = self._parse_day(value)
+            return ActivityReport.daily(day) if kind == "daily" else ActivityReport.weekly(day)
+        except OverflowError:  # a range that runs past year 9999
+            raise ValueError("Please choose a valid date.") from None
 
     def daily(self, day):
         return ActivityReport.daily(day)

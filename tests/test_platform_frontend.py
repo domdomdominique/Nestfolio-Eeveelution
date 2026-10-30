@@ -65,3 +65,10 @@ def test_report_page_and_downloads(client, app):
 def test_bad_report_date_shows_message(client, app):
     login_platform(client)
     assert b"valid date" in client.get("/platform/reports?kind=daily&value=nope").data
+
+
+def test_far_future_dates_show_a_message_instead_of_crashing(client, app):
+    login_platform(client)
+    for kind, value in (("daily", "9999-12-31"), ("weekly", "9999-12-30"), ("monthly", "9999-12")):
+        page = client.get(f"/platform/reports?kind={kind}&value={value}")
+        assert page.status_code == 200 and b"valid date" in page.data

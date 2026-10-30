@@ -115,3 +115,44 @@ def test_logged_in_customer_sees_announcement_on_home_page(client, app):
     assert b"Big news" not in client.get("/").data
     login(client, "c@test.com")
     assert b"Big news" in client.get("/").data
+
+
+def test_account_created_by_admin_must_change_password_at_first_login(client, app):
+    admin_client(client)
+    new_account(client)
+    user = app.test_client()
+    login(user, "new@test.com")
+    assert user.get("/customer/").headers["Location"].endswith("/account/password")
+
+
+def test_logout_and_wrong_password_while_a_change_is_pending(client, app):
+    admin_client(client)
+    new_account(client)
+    user = app.test_client()
+    login(user, "new@test.com")
+    wrong = user.post("/account/password", data={
+        "current_password": "nope", "new_password": "BrandNew123", "confirm_password": "BrandNew123"})
+    assert b"current password is incorrect" in wrong.data
+    assert UserAccount.query.filter_by(email="new@test.com").one().must_change_password
+    assert user.get("/logout").status_code == 302
+    assert "/account/password" not in user.get("/customer/profile").headers["Location"]  # logged out: login page
+
+
+def test_change_password_page_has_no_customer_navigation(client, app):
+    admin_client(client)
+    new_account(client, profile="designer")
+    user = app.test_client()
+    login(user, "new@test.com")
+    page = user.get("/account/password").get_data(as_text=True)
+    assert "Choose a new password" in page and "My Favourites" not in page
+
+
+def test_account_list_is_paged_and_keeps_the_search(client, app):
+    admin_client(client)
+    for n in range(30):
+        UserAccount.create(f"u{n}@test.com", "password123", "customer", name=f"User {n:02d}")
+    first = client.get("/admin/accounts?q=u").get_data(as_text=True)
+    assert "User 00" in first and "User 29" not in first
+    assert "q=u&amp;page=2" in first or "page=2&amp;q=u" in first
+    assert "User 29" in client.get("/admin/accounts?q=u&page=2").get_data(as_text=True)
+    assert client.get("/admin/accounts?page=999").status_code == 200  # out of range is clamped

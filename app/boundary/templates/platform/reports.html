@@ -12,7 +12,7 @@
     <a href="{{ url_for('platform.reports', kind=k) }}" {% if kind == k %}aria-current="true"{% endif %}>{{ k|capitalize }}</a>
     {% endfor %}
   </nav>
-  <form method="get" class="field-row" style="align-items:flex-end;">
+  <form method="get" class="filter-row">
     <input type="hidden" name="kind" value="{{ kind }}">
     <label class="field" style="max-width:240px;">
       <span>{{ 'Month' if kind == 'monthly' else ('Any day in the week' if kind == 'weekly' else 'Date') }}</span>

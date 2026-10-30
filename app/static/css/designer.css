@@ -84,6 +84,10 @@
 .banner strong { font-weight: 600; }
 .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start; }
 .dash-grid-even { grid-template-columns: 1fr 1fr; }
+.filter-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; margin-bottom: 16px; }
+.filter-row .field { flex: 1 1 180px; max-width: 260px; }
+.card-stack { display: flex; flex-direction: column; gap: 8px; }
+.kv-flush { margin-top: 0; }
 
 /* ---------- Project tables ---------- */
 .table-wrap { overflow-x: auto; }

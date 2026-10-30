@@ -154,7 +154,6 @@ def add_company():
 
     return render_template(
         "designer/add_company.html",
-        nav="profile",
         form=request.form,
     )
 
@@ -179,7 +178,6 @@ def company():
 
     return render_template(
         "designer/company.html",
-        nav="profile",
         company=None,
     )
 
@@ -247,7 +245,6 @@ def edit_company():
 
     return render_template(
         "designer/edit_company.html",
-        nav="profile",
         form=form,
     )
 
@@ -285,7 +282,6 @@ def delete_company():
 
     return render_template(
         "designer/delete_company.html",
-        nav="profile",
         company=existing,
     )
 
@@ -327,7 +323,6 @@ def add_project():
 
     return render_template(
         "designer/add_project.html",
-        nav="portfolio",
         categories=controller.CATEGORIES,
         form=request.form,
     )
@@ -385,7 +380,6 @@ def edit_project(idp_id):
 
     return render_template(
         "designer/add_project.html",
-        nav="portfolio",
         categories=controller.CATEGORIES,
         form=form,
         editing=True,
@@ -428,7 +422,6 @@ def delete_project(idp_id):
 
     return render_template(
         "designer/delete_project.html",
-        nav="portfolio",
         project=project,
     )
 
@@ -446,7 +439,6 @@ def statistics():
 
     return render_template(
         "designer/statistics.html",
-        nav="portfolio",
         projects=projects,
     )
 
@@ -538,6 +530,5 @@ def trends():
 
     return render_template(
         "designer/trends.html",
-        nav="dashboard",
         **data,
     )

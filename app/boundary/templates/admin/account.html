@@ -13,7 +13,7 @@
 </div>
 
 {% if temporary_password %}
-<section class="card" role="alert">
+<section class="card card-stack" role="alert">
   <h2>Temporary password</h2>
   <p>Give this to the user now. It is not shown again, and they must change it when they next log in.</p>
   <p><code style="font-size:20px; user-select:all;">{{ temporary_password }}</code></p>
@@ -21,7 +21,7 @@
 {% endif %}
 
 <section class="card">
-  <dl class="kv">
+  <dl class="kv kv-flush">
     <div><dt>Email</dt><dd>{{ a.email }}</dd></div>
     <div><dt>Phone</dt><dd>{{ a.phone or '—' }}</dd></div>
     <div><dt>User profile</dt><dd>{{ a.profile }}</dd></div>

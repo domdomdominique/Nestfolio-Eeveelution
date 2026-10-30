@@ -69,12 +69,13 @@ class UserAccount(db.Model):
         return parts[1] if len(parts) == 2 else ""
 
     @classmethod
-    def create(cls, email, password, role, name="", phone=""):
+    def create(cls, email, password, role, name="", phone="", must_change_password=False):
         from app.entity.user_profile import UserProfile
 
         if role not in cls.ROLES and UserProfile.by_key(role) is None:
             raise ValueError(f"Unknown role: {role}")
-        account = cls(email=email, role=role, name=name, phone=phone)
+        account = cls(email=email, role=role, name=name, phone=phone,
+                      must_change_password=must_change_password)
         account.set_password(password)
         db.session.add(account)
         db.session.commit()
