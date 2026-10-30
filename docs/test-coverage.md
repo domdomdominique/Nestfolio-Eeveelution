@@ -1,73 +1,36 @@
 # Test coverage by user story
 
-Run everything with `python -m pytest`. This table says which tests cover each story.
+Source: `User Stories.xlsx` (67 stories, each with acceptance criteria). Run everything with
+`python -m pytest`.
 
-The story sheet is not in the repo, so story titles below come from the code comments, and the
-coverage is judged against how each story is built, not against the sheet's acceptance criteria.
-Check each row against the sheet before the demo.
+Every acceptance criterion (AC) is checked by a page-level test in one of three files. A comment
+beside each assertion names the AC it covers (for example `# C-03 AC3`).
 
-## Customer
+| Area | Stories | Acceptance tests | Other tests that cover the same code |
+|---|---|---|---|
+| Customer | C-01 to C-17 | `tests/test_acceptance_customer.py` | `test_register`, `test_login`, `test_customer_pages`, `test_customer_acceptance`, `test_favourites`, `test_search_idp`, `test_landing_page`, `test_confirm_password_on_profile_change`, `test_designer_profile*` |
+| Interior Designer | ID-01 to ID-21 | `tests/test_acceptance_designer.py`, `tests/test_role_flows.py` | `test_designer_portfolio`, `test_designer_application`, `test_designer_profile_page`, `test_view_enquiries`, `test_designer_frontend` |
+| Platform Management | PM-01 to PM-11 | `tests/test_acceptance_platform_admin.py` | `test_idp_categories`, `test_platform_reports`, `test_platform_frontend` |
+| User Admin | UA-01 to UA-18 | `tests/test_acceptance_platform_admin.py` | `test_user_accounts_admin`, `test_user_profiles`, `test_reset_password`, `test_review_reports*`, `test_announcements`, `test_admin_frontend` |
 
-| Story | What | Tests |
+## Known gaps
+
+| Story | Criterion | State |
 |---|---|---|
-| C-01 | Register | `test_register.py`, `test_customer_pages.py` (register) |
-| C-02 | Log in | `test_login.py`, `test_customer_pages.py` (login as role), `test_role_flows.py` |
-| C-03 | Log out | `test_landing_page.py`, `test_customer_pages.py` (logout), `test_role_flows.py` |
-| C-04 | Search IDPs | `test_search_idp.py`, `test_customer_acceptance.py` |
-| C-05 | Filter by category | `test_customer_pages.py` (browse filters) |
-| C-06 | View an IDP | `test_customer_pages.py` (view count, 404), `test_customer_acceptance.py` (not available) |
-| C-07 | Save to favourites | `test_favourites.py`, `test_customer_acceptance.py` |
-| C-08 | View favourites | `test_favourites.py`, `test_customer_acceptance.py` (empty list) |
-| C-09 | Search favourites | `test_favourites.py`, `test_customer_acceptance.py` |
-| C-10 | Remove favourite | `test_favourites.py` |
-| C-11 | View profile | `test_customer_pages.py` |
-| C-12 | Update profile | `test_customer_pages.py`, `test_confirm_password_on_profile_change.py` |
-| C-13 | View designer profile | `test_designer_profile.py`, `test_designer_profile_page.py` |
-| C-14 | Change password | `test_customer_pages.py`, `test_customer_acceptance.py`, `test_session_validation.py` |
-| C-15 | Report an IDP | `test_customer_pages.py`, `test_customer_acceptance.py` |
-| C-16 | Contact designer | `test_customer_pages.py` (enquiry) |
-| C-17 | Sort IDPs | `test_customer_pages.py`, `test_landing_page.py` |
+| ID-21 | AC3 (designer replies) and AC5 (customer sees the reply) | Not built. Needs the Reply table in `backend-requirements-id.md` section 5. `test_id21_designer_can_reply_and_customer_sees_it` is marked `xfail` and will start failing (`strict`) once replies exist, so remove the mark then. The sheet also says this needs a customer story to view replies. |
+| ID-01 AC5, ID-16 AC4 | Pending or rejected designers cannot use designer features | Met by not creating the account until approval: they cannot log in and are told why. A designer cannot log in to see a "Pending" page. They use the Registration status page (email and password). `backend-requirements-id.md` section 1 describes the alternative. |
+| ID-20 AC2 | "Most viewed categories and IDPs across the platform" | Met by `IDPView.trends`. It counts the whole platform, as asked. |
 
-## Interior Designer
-
-| Story | What | Tests |
-|---|---|---|
-| ID-01 | Log in (pending/rejected message) | `test_role_flows.py`, `test_designer_application.py` (login explains pending) |
-| ID-02 | Log out | `test_role_flows.py` |
-| ID-03 to ID-05 | Company: add, view, edit, delete | `test_role_flows.py` |
-| ID-06 to ID-12 | Add, list, search, edit, delete, status, category | `test_designer_portfolio.py` |
-| ID-13, ID-14 | View and shortlist counts | `test_designer_portfolio.py`, `test_role_flows.py` (statistics page) |
-| ID-15, ID-16 | Application pending / rejected | `test_designer_application.py` |
-| ID-17, ID-18 | View and edit own profile | `test_designer_profile_page.py`, `test_confirm_password_on_profile_change.py` |
-| ID-19 | Project photos | `test_role_flows.py` (upload checks, serving, removal) |
-| ID-20 | Customer trends | `test_role_flows.py` |
-| ID-21 | View enquiries | `test_view_enquiries.py`, `test_designer_frontend.py` |
-
-Not built yet: replying to enquiries (ID-21 AC5) and an account at registration for pending designers.
-See `backend-requirements-id.md`.
-
-## Platform Management
-
-| Story | What | Tests |
-|---|---|---|
-| PM-01, PM-02 | Log in, log out | `test_role_flows.py` |
-| PM-03 to PM-07 | Create, view, update, delete, search categories | `test_idp_categories.py`, `test_platform_frontend.py` |
-| PM-08 to PM-10 | Daily, weekly, monthly reports | `test_platform_reports.py`, `test_platform_frontend.py` |
-| PM-11 | Download PDF / CSV | `test_platform_reports.py` (incl. CSV formula escaping), `test_platform_frontend.py` |
-
-## User Admin
-
-| Story | What | Tests |
-|---|---|---|
-| UA-01, UA-02 | Log in, log out | `test_role_flows.py` |
-| UA-03 to UA-07 | Create, view, update, suspend, search account | `test_user_accounts_admin.py`, `test_admin_frontend.py` |
-| UA-08 to UA-12 | Profiles: create, view, update, suspend, search | `test_user_profiles.py`, `test_admin_frontend.py` |
-| UA-13 | Reactivate account | `test_user_accounts_admin.py`, `test_admin_frontend.py` |
-| UA-14, UA-15 | Approve / reject designer application | `test_designer_application.py` |
-| UA-16 | Reset password (forced change) | `test_reset_password.py`, `test_admin_frontend.py` |
-| UA-17 | Review reports: dismiss or remove project | `test_review_reports.py`, `test_review_reports_actions.py` |
-| UA-18 | Announcements | `test_announcements.py`, `test_admin_frontend.py` |
+## Behaviour changed to meet the sheet
+- **Log out goes to the login page for every role** (C-03, ID-02, PM-02, UA-02 AC2). Customers
+  used to land on the public home page, and platform and admin users did too.
+- **Logged-in customer pages are not cached** (C-03 AC3), so Back after logging out does not show them.
+- **Customer profile shows the date joined** (C-11 AC2).
+- **Project cards show the first uploaded photo** as the thumbnail (C-04 AC3).
+- **Category and profile detail pages** exist (PM-04 AC3, UA-09 AC3).
+- **Reactivate and Suspend dialogs** are only on the page when they apply (UA-13 AC1).
+- **Remove project** is available on the reported projects page (UA-17 AC4).
 
 ## Also covered
-Session and security checks: `test_session_validation.py`, `test_phone_encryption.py`, `test_unique_phone.py`,
-and the CSRF test in `test_designer_profile_page.py`.
+Session and security checks: `test_session_validation.py`, `test_phone_encryption.py`,
+`test_unique_phone.py`, and the CSRF test in `test_designer_profile_page.py`.
