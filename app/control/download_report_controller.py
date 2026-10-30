@@ -4,6 +4,13 @@ import io
 from app.control.simple_pdf import build_pdf
 
 
+def safe_cell(value):
+    """Stop a title like =HYPERLINK(...) running as a formula when the CSV is opened in Excel."""
+    if isinstance(value, str) and value[:1] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + value
+    return value
+
+
 class DownloadReportController:
     """Control: handles the Platform Management 'Download report as PDF or CSV'
     use case (PM-11). Both files hold the same figures as the report on screen.
@@ -32,7 +39,7 @@ class DownloadReportController:
             writer.writerow([])
             writer.writerow([heading])
             writer.writerow(columns)
-            writer.writerows(rows)
+            writer.writerows([safe_cell(cell) for cell in row] for row in rows)
         return buffer.getvalue().encode("utf-8-sig")  # BOM so Excel shows symbols correctly
 
     def to_pdf(self, report):

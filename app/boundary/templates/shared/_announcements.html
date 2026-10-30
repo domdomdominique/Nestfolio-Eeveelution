@@ -2,12 +2,19 @@
 {% if announcements %}
 <section class="card announcements" aria-label="Announcements">
   <div class="card-head"><h2>Announcements</h2></div>
-  {% for a in announcements %}
+  {% macro show(a) %}
     <article>
       <strong>{{ a.title }}</strong>
       <small>{{ a.sent_at.strftime('%d %b %Y') }}</small>
       <p style="white-space:pre-wrap; overflow-wrap:anywhere;">{{ a.message }}</p>
     </article>
-  {% endfor %}
+  {% endmacro %}
+  {{ show(announcements[0]) }}
+  {% if announcements|length > 1 %}
+  <details>
+    <summary>Earlier announcements ({{ announcements|length - 1 }})</summary>
+    {% for a in announcements[1:] %}{{ show(a) }}{% endfor %}
+  </details>
+  {% endif %}
 </section>
 {% endif %}
