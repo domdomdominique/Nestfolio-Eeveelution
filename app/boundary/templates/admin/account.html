@@ -58,8 +58,11 @@
 {% endmacro %}
 {{ confirm('reset-dialog', 'Reset password?', 'A temporary password is created and the old one stops working. The user must change it at next login.',
            url_for('admin.reset_password', account_id=a.id), 'Reset password') }}
-{{ confirm('suspend-dialog', 'Suspend this account?', 'The user will not be able to log in. Their data is kept.',
-           url_for('admin.suspend_account', account_id=a.id), 'Suspend', true) }}
+{% if a.status == 'Suspended' %}
 {{ confirm('reactivate-dialog', 'Reactivate this account?', 'The user will be able to log in again.',
            url_for('admin.reactivate_account', account_id=a.id), 'Reactivate') }}
+{% elif not is_self %}
+{{ confirm('suspend-dialog', 'Suspend this account?', 'The user will not be able to log in. Their data is kept.',
+           url_for('admin.suspend_account', account_id=a.id), 'Suspend', true) }}
+{% endif %}
 {% endblock %}

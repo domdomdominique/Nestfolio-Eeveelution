@@ -21,7 +21,7 @@
       <tbody>
         {% for p in profiles %}
         <tr>
-          <td><strong>{{ p.name }}</strong></td>
+          <td><a href="{{ url_for('admin.view_profile', profile_id=p.id) }}"><strong>{{ p.name }}</strong></a></td>
           <td>{{ p.description or '—' }}</td>
           <td class="num">{{ p.account_count }}</td>
           <td>{{ p.status|capitalize }}</td>

@@ -127,7 +127,6 @@ def apply_designer():
 
 @auth_bp.route("/logout")
 def logout():
-    was_designer = session.get("role") == "designer"
     was_logged_in = "user_id" in session
 
     session.clear()
@@ -135,9 +134,7 @@ def logout():
     if was_logged_in:
         flash("You have logged out successfully.", "success")
 
-    return redirect(
-        url_for("auth.login" if was_designer else "auth.index")
-    )
+    return redirect(url_for("auth.login"))
 
 
 

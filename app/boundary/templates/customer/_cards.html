@@ -24,7 +24,11 @@
 {% macro idp_card(p, saved_ids) %}
   <article class="idp-card">
     <div class="photo" style="background: {{ photo_colours[p.id % photo_colours|length] }}">
-      <img src="{{ url_for('static', filename=img ~ 'idp-image.svg') }}" width="42" height="42" alt="">
+      {% if p.photos %}
+        <img class="thumb" src="{{ url_for('customer.project_photo', photo_id=p.photos[0].id) }}" alt="{{ p.title }}" loading="lazy">
+      {% else %}
+        <img src="{{ url_for('static', filename=img ~ 'idp-image.svg') }}" width="42" height="42" alt="">
+      {% endif %}
       {% if p.is_current %}
         <span class="status status-current">Current project</span>
       {% else %}

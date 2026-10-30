@@ -36,7 +36,7 @@
             <span class="initials initials-md">{{ (account.name.split()|map('first')|join)[:2]|upper or '?' }}</span>
             <div>
               <p class="profile-identity-name">{{ account.name }}</p>
-              <p class="card-meta">Customer account</p>
+              <p class="card-meta">Customer account{% if account.created_at %} · Joined {{ account.created_at.strftime('%d %b %Y') }}{% endif %}</p>
             </div>
           </div>
           {% for message in get_flashed_messages(category_filter=['error']) %}

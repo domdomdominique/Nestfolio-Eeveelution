@@ -1,0 +1,22 @@
+{% extends "platform/layout.html" %}
+{% block title %}{{ category.name }} — Nestfolio{% endblock %}
+{% block content %}
+<p><a href="{{ url_for('platform.categories') }}">&larr; All categories</a></p>
+<div class="dash-header">
+  <div>
+    <h1 class="dash-title">{{ category.name }}</h1>
+    <p class="dash-sub">{{ category.idp_count }} project{{ 's' if category.idp_count != 1 }} use this category.</p>
+  </div>
+  <div class="dash-header-actions">
+    <a class="btn btn-outline" href="{{ url_for('platform.edit_category', category_id=category.id) }}">Edit</a>
+  </div>
+</div>
+<section class="card">
+  <dl class="kv kv-flush">
+    <div><dt>Name</dt><dd>{{ category.name }}</dd></div>
+    <div><dt>Description</dt><dd>{{ category.description or '—' }}</dd></div>
+    <div><dt>Projects using it</dt><dd>{{ category.idp_count }}</dd></div>
+    <div><dt>Created</dt><dd>{{ category.created_at.strftime('%d %b %Y') if category.created_at else '—' }}</dd></div>
+  </dl>
+</section>
+{% endblock %}
