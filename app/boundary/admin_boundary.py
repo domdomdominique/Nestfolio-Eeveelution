@@ -167,6 +167,17 @@ def profiles():
                            total=len(ViewUserProfileController().list_profiles()))
 
 
+@admin_bp.route("/profiles/<int:profile_id>")
+@role_required("admin")
+def view_profile(profile_id):
+    """Boundary: UserProfilePage (UA-09 AC3: open a profile to see its details)."""
+    try:
+        profile = ViewUserProfileController().view(profile_id)
+    except LookupError:
+        abort(404)
+    return render_template("admin/profile_detail.html", nav="profiles", profile=profile)
+
+
 @admin_bp.route("/profiles/new", methods=["GET", "POST"])
 @role_required("admin")
 def create_profile():
@@ -268,6 +279,19 @@ def resolve_report(report_id):
         flash(str(error))
     else:
         flash("Report marked as resolved.")
+    return redirect(url_for("admin.reports"))
+
+
+@admin_bp.route("/reports/<int:report_id>/remove", methods=["POST"])
+@role_required("admin")
+def remove_reported_project(report_id):
+    """Boundary: Remove project button on ReportedProjectsPage (UA-17): hides it from customers."""
+    try:
+        report = ReviewReportsController().remove_idp(report_id, session["user_id"])
+    except ValueError as error:
+        flash(str(error), "error")
+    else:
+        flash(f"“{report.idp.title}” was removed from customers' view.", "success")
     return redirect(url_for("admin.reports"))
 
 

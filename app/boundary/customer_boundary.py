@@ -40,6 +40,14 @@ def _back(default):
 
 # --- Browse projects (C-04 search, C-05 filter, C-17 sort) ----------------------
 
+@customer_bp.after_request
+def no_store_when_logged_in(response):
+    """Back after logging out must not show a logged-in page from the browser cache."""
+    if session.get("user_id"):
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
+
 @customer_bp.route("/")
 def home():
     """Boundary: BrowseProjectsPage (public; also the customer's home after login)."""

@@ -42,7 +42,7 @@ def test_landing_page_renders_for_visitors(client, app):
     assert "/login?next=" in page  # hearts ask visitors to log in
 
 
-def test_logout_returns_to_landing(client, app):
+def test_logout_returns_to_login(client, app):
     UserAccount.create("cus@test.com", "password123", "customer")
     client.post("/login", data={"email": "cus@test.com", "password": "password123"})
-    assert client.get("/logout").headers["Location"] == "/"
+    assert client.get("/logout").headers["Location"].endswith("/login")  # C-03 AC2

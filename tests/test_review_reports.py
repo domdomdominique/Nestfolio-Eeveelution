@@ -75,3 +75,25 @@ def test_only_admins_can_see_reports(client, app):
     setup_data()
     login(client, "cus@test.com")
     assert client.get("/admin/reports").status_code == 403
+
+
+def test_admin_can_remove_a_reported_project_from_the_page(client, app):
+    admin = UserAccount.create("admin@test.com", "password123", "admin", name="Ann")
+    designer = UserAccount.create("des@test.com", "password123", "designer", name="Dana")
+    c1 = UserAccount.create("c1@test.com", "password123", "customer", name="C1")
+    c2 = UserAccount.create("c2@test.com", "password123", "customer", name="C2")
+    idp = IDP(title="Spammy Loft", category="Kitchen", designer_id=designer.id)
+    db.session.add(idp)
+    db.session.commit()
+    first = ReportIDPController().report(c1.id, idp.id, "Spam or advertising")
+    second = ReportIDPController().report(c2.id, idp.id, "Other")
+    client.post("/login", data={"email": "admin@test.com", "password": "password123"})
+
+    assert b"Remove project" in client.get("/admin/reports").data
+    assert client.get(f"/customer/projects/{idp.id}").status_code == 200
+    client.post(f"/admin/reports/{first.id}/remove")
+    assert client.get(f"/customer/projects/{idp.id}").status_code == 404   # hidden from customers
+    assert IDP.get(idp.id) is not None                                     # designer keeps it
+    assert Report.get(second.id).status == "resolved"                      # every open report closed
+    assert b"already been resolved" in client.post(
+        f"/admin/reports/{first.id}/remove", follow_redirects=True).data

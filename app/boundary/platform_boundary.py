@@ -46,6 +46,17 @@ def categories():
                            total=len(ViewCategoryController().list_categories()))
 
 
+@platform_bp.route("/categories/<int:category_id>")
+@role_required("platform")
+def view_category(category_id):
+    """Boundary: CategoryDetailPage (PM-04 AC3: open a category to see its details)."""
+    try:
+        category = ViewCategoryController().view(category_id)
+    except LookupError:
+        abort(404)
+    return render_template("platform/category_detail.html", nav="categories", category=category)
+
+
 @platform_bp.route("/categories/new", methods=["GET", "POST"])
 @role_required("platform")
 def create_category():
