@@ -261,7 +261,7 @@ CSIT314-Eeveelution/
 
 - The SQLite database is created at `instance/eeveelution.db` (git-ignored).
 - Passwords are hashed with Werkzeug; phone numbers are encrypted at rest with Fernet.
-- No secret is written in the code. `SECRET_KEY` and `ENCRYPTION_KEY` come from the environment if set; otherwise they are generated on first run and saved in `instance/` (git-ignored). Back up `instance/encryption_key.key` with the database: without it the encrypted phone numbers and enquiry contacts cannot be read, and deleting it means re-running `python seed.py`. To use your own key:
+- No secret is written in the code. `SECRET_KEY` and `ENCRYPTION_KEY` come from the environment if set; otherwise they are generated on first run and saved in `instance/` (git-ignored). Back up `instance/encryption_key.key` with the database: without it the encrypted phone numbers and enquiry contacts cannot be read, and deleting it means re-running `python seed.py`. If the database exists but the key file is missing, the app refuses to start instead of quietly making a new key. To use your own key:
 
   ```bash
   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"

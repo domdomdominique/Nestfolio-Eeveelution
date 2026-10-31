@@ -25,9 +25,12 @@
       <div class="enq-top"><strong>{{ a.title }}</strong><small>{{ a.sent_at.strftime('%d %b %Y, %H:%M') }}</small></div>
       <p style="white-space:pre-wrap; overflow-wrap:anywhere;">{{ a.message }}</p>
     </div>
-    <button type="button" class="link-action link-danger" data-open="remove-dialog"
-            data-action="{{ url_for('admin.remove_announcement', announcement_id=a.id) }}"
-            data-title="{{ a.title }}">Remove</button>
+    <form method="post" action="{{ url_for('admin.remove_announcement', announcement_id=a.id) }}" class="status-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" class="link-action link-danger" data-open="remove-dialog"
+              data-action="{{ url_for('admin.remove_announcement', announcement_id=a.id) }}"
+              data-title="{{ a.title }}">Remove</button>
+    </form>
   </article>
   {% else %}
   <p class="empty-row">No announcements sent yet.</p>

@@ -15,23 +15,36 @@ TEST_ENCRYPTION_KEY = Fernet.generate_key().decode()
 TEST_SECRET_KEY = "test-only-secret"
 
 
-def _load_secret(app, name, make):
+def _load_secret(app, name, make, database=None):
     """The secret from the environment, else from a git-ignored file in instance/ (made on first run).
 
     No secret is ever written in the source code, so a copy of the repository cannot forge a
-    login or read the encrypted data.
+    login or read the encrypted data. If `database` already exists but its key file is gone, a new
+    key would make the saved data unreadable, so we stop instead of quietly making one.
     """
     if os.environ.get(name):
         return os.environ[name]
     os.makedirs(app.instance_path, exist_ok=True)
     path = os.path.join(app.instance_path, name.lower() + ".key")
-    if os.path.exists(path):
-        with open(path) as handle:
-            return handle.read().strip()
-    value = make()
-    with open(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w") as handle:
-        handle.write(value)
-    return value
+    if not os.path.exists(path):
+        if database and os.path.exists(database):
+            raise RuntimeError(
+                f"{os.path.basename(path)} is missing but {os.path.basename(database)} exists, so the "
+                f"saved data could not be read. Put the key file back, or delete the database and run: python seed.py"
+            )
+        # Write the whole key to a temporary file, then link it into place in one step, so another
+        # process starting at the same moment never reads half a key and only one key ever wins.
+        temp = f"{path}.{os.getpid()}.tmp"
+        with open(os.open(temp, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w") as handle:
+            handle.write(make())
+        try:
+            os.link(temp, path)
+        except FileExistsError:
+            pass  # another process made it first: use theirs
+        finally:
+            os.remove(temp)
+    with open(path) as handle:
+        return handle.read().strip()
 
 
 def create_app(test_config=None):
@@ -57,7 +70,8 @@ def create_app(test_config=None):
         SQLALCHEMY_DATABASE_URI="sqlite:///eeveelution.db",
         ENCRYPTION_KEY=(
             TEST_ENCRYPTION_KEY if testing
-            else _load_secret(app, "ENCRYPTION_KEY", lambda: Fernet.generate_key().decode())
+            else _load_secret(app, "ENCRYPTION_KEY", lambda: Fernet.generate_key().decode(),
+                              database=os.path.join(app.instance_path, "eeveelution.db"))
         ),
     )
 
