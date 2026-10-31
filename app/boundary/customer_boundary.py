@@ -7,6 +7,7 @@ from app.control.update_company_controller import UpdateCompanyController
 from app.control.view_idp_photo_controller import ViewIDPPhotoController
 
 from app.boundary import role_required, safe_next
+from app.control.send_announcement_controller import SendAnnouncementController
 from app.control.browse_designers_controller import BrowseDesignersController
 from app.control.change_password_controller import ChangePasswordController
 from app.control.remove_favourite_controller import RemoveFavouriteController
@@ -66,6 +67,7 @@ def home():
     customer_id = _customer_id()
     return render_template(
         "customer/browse.html",
+        announcements=SendAnnouncementController().latest(3) if customer_id else [],  # UA-18
         projects=results[(page - 1) * PAGE_SIZE: page * PAGE_SIZE],
         total=len(results), page=page, pages=pages,
         keyword=keyword, categories=[c for c in categories if c], status=status, sort=sort,

@@ -1,19 +1,5 @@
 {% extends "admin/layout.html" %}
-{% block title %}Reported Projects — Nestfolio
-<dialog class="modal modal-sm" id="remove-dialog" aria-labelledby="remove-title">
-  <div class="modal-header">
-    <div class="modal-titles">
-      <h2 id="remove-title">Remove this project?</h2>
-      <p>“<span data-project-title></span>” will be hidden from customers and every open report on it will be closed. The designer keeps their copy.</p>
-    </div>
-  </div>
-  <form class="modal-actions" method="post" data-delete-form>
-    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <button class="btn btn-outline" type="submit" formmethod="dialog" formaction="">Cancel</button>
-    <button class="btn btn-primary btn-danger" type="submit">Remove</button>
-  </form>
-</dialog>
-{% endblock %}
+{% block title %}Reported Projects — Nestfolio{% endblock %}
 {% block content %}
 <div>
   <h1 class="dash-title">Reported projects</h1>
@@ -40,13 +26,14 @@
           <td>{{ r.customer.name or r.customer.email }}</td>
           <td class="num">
             {% if r.status == 'open' %}
-            <form method="post" action="{{ url_for('admin.resolve_report', report_id=r.id) }}" class="status-form">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <button type="submit" class="btn btn-outline">Mark resolved</button>
-            </form>
-            <a href="#" data-open="remove-dialog" style="display:inline-block; margin-top:6px;"
-               data-action="{{ url_for('admin.remove_reported_project', report_id=r.id) }}"
-               data-title="{{ r.idp.title }}">Remove project</a>
+            <div style="display:flex; flex-direction:column; align-items:flex-end; gap:8px;">
+              <button type="button" class="link-action" data-open="resolve-dialog"
+                      data-action="{{ url_for('admin.resolve_report', report_id=r.id) }}"
+                      data-title="{{ r.idp.title }}">Mark resolved</button>
+              <button type="button" class="link-action link-danger" data-open="remove-dialog"
+                      data-action="{{ url_for('admin.remove_reported_project', report_id=r.id) }}"
+                      data-title="{{ r.idp.title }}">Remove project</button>
+            </div>
             {% else %}
             Resolved {{ r.resolved_at.strftime('%d %b %Y') }}
             {% endif %}
@@ -60,4 +47,32 @@
   <p class="empty-row">No {{ status }} reports.</p>
   {% endif %}
 </section>
+
+<dialog class="modal modal-sm" id="resolve-dialog" aria-labelledby="resolve-title">
+  <div class="modal-header">
+    <div class="modal-titles">
+      <h2 id="resolve-title">Mark this report as resolved?</h2>
+      <p>The report on “<span data-project-title></span>” will be closed and the project stays visible to customers.</p>
+    </div>
+  </div>
+  <form class="modal-actions" method="post" data-delete-form>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline" type="submit" formmethod="dialog" formaction="">Cancel</button>
+    <button class="btn btn-primary" type="submit">Mark resolved</button>
+  </form>
+</dialog>
+
+<dialog class="modal modal-sm" id="remove-dialog" aria-labelledby="remove-title">
+  <div class="modal-header">
+    <div class="modal-titles">
+      <h2 id="remove-title">Remove this project?</h2>
+      <p>“<span data-project-title></span>” will be hidden from customers and every open report on it will be closed. The designer keeps their copy.</p>
+    </div>
+  </div>
+  <form class="modal-actions" method="post" data-delete-form>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline" type="submit" formmethod="dialog" formaction="">Cancel</button>
+    <button class="btn btn-primary btn-danger" type="submit">Remove</button>
+  </form>
+</dialog>
 {% endblock %}

@@ -5,13 +5,13 @@ class SearchIDPController:
     """Control: handles the Customer 'Search IDPs' (C-04), 'Filter IDPs by
     category' (C-05) and 'Sort IDP' (C-17) use cases."""
 
-    SORTS = {"views": "Most viewed", "newest": "Newest"}
+    SORTS = {"recommended": "Recommended", "views": "Most viewed", "newest": "Newest"}
     STATUSES = {"current": "Current projects", "past": "Past projects"}
 
     def search(self, keyword):
         return IDP.search(keyword)
 
-    def browse(self, keyword="", categories=(), status=None, sort="views"):
+    def browse(self, keyword="", categories=(), status=None, sort="recommended"):
         known = set(IDP.categories())
         return IDP.browse(
             keyword=(keyword or "").strip(),
@@ -21,7 +21,7 @@ class SearchIDPController:
         )
 
     def clean_sort(self, sort):
-        return sort if sort in self.SORTS else "views"
+        return sort if sort in self.SORTS else "recommended"
 
     def category_counts(self):
         counts = IDP.count_by_category()

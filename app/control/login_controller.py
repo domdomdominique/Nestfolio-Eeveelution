@@ -8,16 +8,10 @@ from app.entity.user_account import UserAccount
 class LoginController:
     """Handles login for customers, designers, admins and platform managers."""
 
-    def login(self, email, password, role=None):
+    def login(self, email, password):
         email = (email or "").strip().lower()
 
-        account = UserAccount.login(email, password)
-
-        # The account must match the role selected on the login form.
-        if account and role and account.role != role:
-            return None
-
-        return account
+        return UserAccount.login(email, password)
 
     def application_status(self, email):
         email = (email or "").strip().lower()
@@ -29,16 +23,13 @@ class LoginController:
 
         return application.status if application else None
 
-    def failure_message(self, email, password, role=None):
+    def failure_message(self, email, password):
         email = (email or "").strip().lower()
 
         account = UserAccount.find_by_email(email)
 
         if account:
-            correct_password = account.check_password(password)
-            correct_role = not role or account.role == role
-
-            if correct_password and correct_role and account.is_blocked:
+            if account.check_password(password) and account.is_blocked:
                 return (
                     "Your account is suspended. "
                     "Please contact the administrator."
@@ -49,7 +40,7 @@ class LoginController:
         # Pending/rejected applicants do not have a login account yet.
         application = DesignerApplication.latest_for(email)
 
-        if application and role in (None, "designer"):
+        if application:
             correct_password = check_password_hash(
                 application.password_hash,
                 password or "",
@@ -68,4 +59,4 @@ class LoginController:
                         "Please contact the administrator for details."
                     )
 
-        return "Invalid email or password."
+        return "Invalid email or password."

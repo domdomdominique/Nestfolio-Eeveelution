@@ -191,7 +191,7 @@
           <form class="enquiry-form" method="post" action="{{ url_for('customer.send_enquiry', designer_id=designer.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="next" value="{{ request.full_path.rstrip('?') }}#contact">
             <input name="name" placeholder="Your name" aria-label="Your name" required value="{{ session.name or '' }}">
-            <input name="contact" placeholder="Email or phone" aria-label="Email or phone" required>
+            <input name="contact" placeholder="you@example.com or 9123 4567" aria-label="Email or phone" required>
             <textarea name="message" placeholder="Tell us about your home and budget…" aria-label="Message" rows="4" maxlength="2000" required></textarea>
             <button class="btn btn-primary" type="submit">Send enquiry</button>
           </form>

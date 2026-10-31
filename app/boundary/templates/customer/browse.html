@@ -6,7 +6,7 @@
 {# This page's URL with some filters changed (url_for leaves out None and empty lists) #}
 {% macro browse_url(page=None, cats=categories, st=status) -%}
   {{ url_for('customer.home', q=keyword or None, category=cats, status=st or None,
-             sort=None if sort == 'views' else sort, page=page) }}
+             sort=None if sort == 'recommended' else sort, page=page) }}
 {%- endmacro %}
 
 {% block content %}
@@ -28,6 +28,10 @@
         </div>
       </div>
     </section>
+
+    {% if announcements %}
+    <div class="wrap" style="padding-top:20px;">{% include "shared/_announcements.html" %}</div>
+    {% endif %}
 
     <div class="wrap browse-body">
       {# C-05 filter by category #}

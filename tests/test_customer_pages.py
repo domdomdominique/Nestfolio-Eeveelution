@@ -144,10 +144,9 @@ def test_change_password_checks_current_password(app):
 
 # --- C-01/C-02/C-03 sign up, log in, log out --------------------------------
 
-def test_login_as_role_must_match_account(app):
+def test_login_uses_the_accounts_own_role(app):
     setup_data()
-    assert LoginController().login("cus@test.com", "password123", "designer") is None
-    assert LoginController().login("cus@test.com", "password123", "customer") is not None
+    assert LoginController().login("cus@test.com", "password123").role == "customer"
 
 
 def test_register_joins_first_and_last_name(client, app):

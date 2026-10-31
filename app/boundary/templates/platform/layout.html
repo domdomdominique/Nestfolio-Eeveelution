@@ -7,4 +7,5 @@
       <a href="{{ url_for('platform.home') }}" {% if nav == 'dashboard' %}aria-current="page"{% endif %}>{{ i.icon('dashboard') }}Dashboard</a>
       <a href="{{ url_for('platform.categories') }}" {% if nav == 'categories' %}aria-current="page"{% endif %}>{{ i.icon('tag') }}IDP Categories</a>
       <a href="{{ url_for('platform.reports') }}" {% if nav == 'reports' %}aria-current="page"{% endif %}>{{ i.icon('chart') }}Reports</a>
+      <a href="{{ url_for('auth.change_password') }}" {% if nav == 'password' %}aria-current="page"{% endif %}>{{ i.icon('shield') }}Change password</a>
 {% endblock %}

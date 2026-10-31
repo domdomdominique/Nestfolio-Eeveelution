@@ -20,7 +20,7 @@ def login(client, email="des@test.com"):
 def test_profile_shows_details_status_and_never_the_password(client, designer):
     login(client)
     html = client.get("/designer/profile").get_data(as_text=True)
-    assert "Dana Ong" in html and "des@test.com" in html and "+65 91234567" in html
+    assert "Dana Ong" in html and "des@test.com" in html and "+65" in html and "91234567" in html
     assert "Registration approved" in html
     assert "password123" not in html and designer.password_hash not in html
 

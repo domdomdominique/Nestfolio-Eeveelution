@@ -79,7 +79,8 @@
             <h2>Popular interior design projects</h2>
           </div>
           <nav class="sort-tabs" aria-label="Sort projects">
-            <a class="sort-tab" href="{{ url_for('auth.index') }}#projects" {% if sort == 'views' %}aria-current="true"{% endif %}>Most viewed</a>
+            <a class="sort-tab" href="{{ url_for('auth.index') }}#projects" {% if sort == 'recommended' %}aria-current="true"{% endif %}>Recommended</a>
+            <a class="sort-tab" href="{{ url_for('auth.index', sort='views') }}#projects" {% if sort == 'views' %}aria-current="true"{% endif %}>Most viewed</a>
             <a class="sort-tab" href="{{ url_for('auth.index', sort='newest') }}#projects" {% if sort == 'newest' %}aria-current="true"{% endif %}>Newest</a>
           </nav>
         </div>

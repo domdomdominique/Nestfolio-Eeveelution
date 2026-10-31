@@ -1,4 +1,5 @@
-from datetime import datetime
+import random
+from datetime import date, datetime
 
 from app.entity.db import db
 
@@ -64,15 +65,14 @@ class IDP(db.Model):
         """Case-insensitive search on title or category."""
         if not keyword:
             return cls.query.order_by(cls.id).all()
-        pattern = f"%{keyword}%"
         return (
-            cls.query.filter(db.or_(cls.title.ilike(pattern), cls.category.ilike(pattern)))
+            cls.query.filter(db.or_(cls.title.icontains(keyword, autoescape=True), cls.category.icontains(keyword, autoescape=True)))
             .order_by(cls.id)
             .all()
         )
 
     @classmethod
-    def browse(cls, keyword="", categories=(), status=None, sort="views"):
+    def browse(cls, keyword="", categories=(), status=None, sort="recommended"):
         """Search projects using the current company information."""
         from app.entity.designer_application import DesignerApplication
         from app.entity.designer_company import DesignerCompany, CompanyRemoval
@@ -81,8 +81,6 @@ class IDP(db.Model):
         query = cls.visible()
 
         if keyword:
-            pattern = f"%{keyword}%"
-
             company_name = db.case(
                 (
                     DesignerCompany.id.isnot(None),
@@ -110,11 +108,11 @@ class IDP(db.Model):
                 )
                 .filter(
                     db.or_(
-                        cls.title.ilike(pattern),
-                        cls.description.ilike(pattern),
-                        cls.category.ilike(pattern),
-                        UserAccount.name.ilike(pattern),
-                        company_name.ilike(pattern),
+                        cls.title.icontains(keyword, autoescape=True),
+                        cls.description.icontains(keyword, autoescape=True),
+                        cls.category.icontains(keyword, autoescape=True),
+                        UserAccount.name.icontains(keyword, autoescape=True),
+                        company_name.icontains(keyword, autoescape=True),
                     )
                 )
             )
@@ -126,6 +124,9 @@ class IDP(db.Model):
             query = query.filter(
                 cls.is_current == (status == "current")
             )
+
+        if sort == "recommended":
+            return cls._by_fair_score(query)
 
         order = (
             cls.created_at.desc()
@@ -171,9 +172,26 @@ class IDP(db.Model):
         self.is_removed = True
         db.session.commit()
 
+    # Fair ranking: views per day since posting, with a head start (FAIR_DAYS) so a brand-new
+    # project is judged on how much attention it gets, not on how long it has been online.
+    FAIR_DAYS = 7
+
+    def fair_score(self, now=None):
+        age_days = max(0, ((now or datetime.now()) - (self.created_at or datetime.now())).days)
+        return (self.view_count or 0) / (age_days + self.FAIR_DAYS)
+
     @classmethod
-    def popular(cls, sort="views", limit=4):
-        """Most viewed (default) or newest projects."""
+    def _by_fair_score(cls, query):
+        """Highest fair score first; ties (e.g. no views yet) go to the newest project."""
+        now = datetime.now()
+        projects = query.order_by(cls.id.desc()).all()
+        return sorted(projects, key=lambda p: p.fair_score(now), reverse=True)
+
+    @classmethod
+    def popular(cls, sort="recommended", limit=4):
+        """Recommended (default, fair to new projects), most viewed, or newest projects."""
+        if sort == "recommended":
+            return cls._by_fair_score(cls.visible())[:limit]
         order = cls.created_at.desc() if sort == "newest" else cls.view_count.desc()
         return cls.visible().order_by(order, cls.id.desc()).limit(limit).all()
 
@@ -192,6 +210,15 @@ class IDP(db.Model):
             .limit(limit)
         )
         return [designer_id for (designer_id,) in rows]
+
+    @classmethod
+    def featured_designer_ids(cls, limit=3):
+        """Designers shown on the landing page: any active designer with a visible project,
+        rotated daily so small and new studios get their turn, not just the busiest."""
+        rows = cls.visible(db.session.query(cls.designer_id)).group_by(cls.designer_id).order_by(cls.designer_id)
+        ids = [designer_id for (designer_id,) in rows]
+        random.Random(date.today().toordinal()).shuffle(ids)
+        return ids[:limit]
 
     @classmethod
     def by_designer(cls, designer_id, status=None):

@@ -18,6 +18,11 @@ class SendAnnouncementController:
             raise ValueError(f"Title must be {MAX_TITLE_LENGTH} characters or fewer.")
         return Announcement.send(admin_id, title, message)
 
+    def remove(self, announcement_id):
+        """Take an announcement off every home page."""
+        if not Announcement.delete_by_id(announcement_id):
+            raise ValueError("Announcement not found.")
+
     def history(self):
         return Announcement.latest()
 

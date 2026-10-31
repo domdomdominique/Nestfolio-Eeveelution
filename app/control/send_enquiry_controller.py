@@ -1,3 +1,4 @@
+from app.control.signup_validation import clean_email, clean_phone
 from app.entity.enquiry import Enquiry
 from app.entity.idp import IDP
 from app.entity.user_account import UserAccount
@@ -17,6 +18,10 @@ class SendEnquiryController:
             raise ValueError("Please enter your name.")
         if not contact:
             raise ValueError("Please enter an email or phone number the designer can reply to.")
+        try:
+            contact = clean_email(contact) if "@" in contact else clean_phone(contact)
+        except ValueError:
+            raise ValueError("Please enter a valid email address or 8-digit Singapore phone number.") from None
         if not message:
             raise ValueError("Please write a message for the designer.")
         if len(message) > self.MAX_MESSAGE:
