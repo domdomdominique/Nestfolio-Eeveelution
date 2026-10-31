@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from app.entity.db import db
+from app.entity.encryption import EncryptedString
 
 
 class Enquiry(db.Model):
@@ -11,7 +12,7 @@ class Enquiry(db.Model):
     customer_id = db.Column(db.Integer, db.ForeignKey("user_account.id"), nullable=False)
     idp_id = db.Column(db.Integer, db.ForeignKey("idp.id"))  # set when sent from a project page
     name = db.Column(db.String(100), nullable=False)
-    contact = db.Column(db.String(120), nullable=False)  # email or phone to reply to
+    contact = db.Column(EncryptedString, nullable=False)  # email or phone to reply to, encrypted in the database
     message = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.now)
 

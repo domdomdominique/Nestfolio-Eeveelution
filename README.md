@@ -261,12 +261,14 @@ CSIT314-Eeveelution/
 
 - The SQLite database is created at `instance/eeveelution.db` (git-ignored).
 - Passwords are hashed with Werkzeug; phone numbers are encrypted at rest with Fernet.
-- `app/__init__.py` includes a **development-only** encryption key and secret key so the app runs out of the box. For any real deployment, set your own key:
+- No secret is written in the code. `SECRET_KEY` and `ENCRYPTION_KEY` come from the environment if set; otherwise they are generated on first run and saved in `instance/` (git-ignored). Back up `instance/encryption_key.key` with the database: without it the encrypted phone numbers and enquiry contacts cannot be read, and deleting it means re-running `python seed.py`. To use your own key:
 
   ```bash
   python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
   # then set ENCRYPTION_KEY to the printed value
   ```
+- The Flask debug console is off by default. Turn it on for local work only with `FLASK_DEBUG=1 python run.py`.
+- Phone numbers (accounts, applications, companies) and enquiry contact details are encrypted at rest.
 
 - If you see *"Could not decrypt a stored value"*, your database was made with a different key: delete `instance/eeveelution.db` and run `python seed.py` again.
 

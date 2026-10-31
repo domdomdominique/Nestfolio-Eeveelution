@@ -1,5 +1,7 @@
 import os
+import secrets
 
+from cryptography.fernet import Fernet
 from flask import Flask
 from flask_wtf.csrf import CSRFProtect
 
@@ -8,7 +10,28 @@ from app.entity.db import db
 
 csrf = CSRFProtect()
 
-DEV_ENCRYPTION_KEY = "1dCtVD-SSy_dupVpi3OPSN3pxR6kAqcWwtK4vMg-NPA="
+# Throwaway keys for the automated tests only; real runs use _load_secret below.
+TEST_ENCRYPTION_KEY = Fernet.generate_key().decode()
+TEST_SECRET_KEY = "test-only-secret"
+
+
+def _load_secret(app, name, make):
+    """The secret from the environment, else from a git-ignored file in instance/ (made on first run).
+
+    No secret is ever written in the source code, so a copy of the repository cannot forge a
+    login or read the encrypted data.
+    """
+    if os.environ.get(name):
+        return os.environ[name]
+    os.makedirs(app.instance_path, exist_ok=True)
+    path = os.path.join(app.instance_path, name.lower() + ".key")
+    if os.path.exists(path):
+        with open(path) as handle:
+            return handle.read().strip()
+    value = make()
+    with open(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w") as handle:
+        handle.write(value)
+    return value
 
 
 def create_app(test_config=None):
@@ -18,10 +41,12 @@ def create_app(test_config=None):
         template_folder="boundary/templates",
     )
 
+    testing = bool(test_config and test_config.get("TESTING"))
+
     app.config.update(
-        SECRET_KEY=os.environ.get(
-            "SECRET_KEY",
-            "dev-change-me",
+        SECRET_KEY=(
+            TEST_SECRET_KEY if testing
+            else _load_secret(app, "SECRET_KEY", lambda: secrets.token_urlsafe(48))
         ),
         SESSION_COOKIE_HTTPONLY=True,
         SESSION_COOKIE_SAMESITE="Lax",
@@ -30,9 +55,9 @@ def create_app(test_config=None):
         ),
         MAX_CONTENT_LENGTH=110 * 1024 * 1024,
         SQLALCHEMY_DATABASE_URI="sqlite:///eeveelution.db",
-        ENCRYPTION_KEY=os.environ.get(
-            "ENCRYPTION_KEY",
-            DEV_ENCRYPTION_KEY,
+        ENCRYPTION_KEY=(
+            TEST_ENCRYPTION_KEY if testing
+            else _load_secret(app, "ENCRYPTION_KEY", lambda: Fernet.generate_key().decode())
         ),
     )
 
