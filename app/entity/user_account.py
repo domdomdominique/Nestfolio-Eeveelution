@@ -172,8 +172,7 @@ class UserAccount(db.Model):
     def search(cls, keyword="", role=None, status=None):
         query = cls.query
         if keyword:
-            pattern = f"%{keyword}%"
-            query = query.filter(db.or_(cls.name.ilike(pattern), cls.email.ilike(pattern)))
+            query = query.filter(db.or_(cls.name.icontains(keyword, autoescape=True), cls.email.icontains(keyword, autoescape=True)))
         if role:
             query = query.filter(cls.role == role)
         if status in ("active", "suspended"):

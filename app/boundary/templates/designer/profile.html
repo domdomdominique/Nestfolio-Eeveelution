@@ -1,4 +1,5 @@
 {% extends "designer/layout.html" %}
+{% from "shared/_phone.html" import phone_input %}
 {% set inline_errors = true %}
 {% block title %}My profile — Nestfolio{% endblock %}
 
@@ -72,13 +73,7 @@
 
       <label class="field">
         <span>Phone number</span>
-        <input
-          name="phone"
-          value="{{ f.get('phone', '') }}"
-          autocomplete="tel"
-          inputmode="tel"
-          required
-        >
+        {{ phone_input(f.get('phone', '')) }}
       </label>
     </div>
 

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "shared/_phone.html" import phone_input %}
 {% block content %}
 
 <h1>Edit company information</h1>
@@ -40,11 +41,7 @@
 
   <label>
     Contact number
-    <input
-      name="phone"
-      type="tel"
-      value="{{ form.get('phone', '') }}"
-    >
+    {{ phone_input(form.get('phone', ''), required=false) }}
   </label>
 
   <label>

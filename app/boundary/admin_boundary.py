@@ -253,6 +253,19 @@ def announcements():
                            history=controller.history(), form=request.form, error=error)
 
 
+@admin_bp.route("/announcements/<int:announcement_id>/remove", methods=["POST"])
+@role_required("admin")
+def remove_announcement(announcement_id):
+    """Boundary: Remove button on AnnouncementsPage (UA-18): users stop seeing it."""
+    try:
+        SendAnnouncementController().remove(announcement_id)
+    except ValueError as exc:
+        flash(str(exc), "error")
+    else:
+        flash("Announcement removed.", "success")
+    return redirect(url_for("admin.announcements"))
+
+
 # --- Reported IDPs (UA-17) --------------------------------------------------------
 
 @admin_bp.route("/reports")

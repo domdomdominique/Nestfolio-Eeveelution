@@ -25,9 +25,26 @@
       <div class="enq-top"><strong>{{ a.title }}</strong><small>{{ a.sent_at.strftime('%d %b %Y, %H:%M') }}</small></div>
       <p style="white-space:pre-wrap; overflow-wrap:anywhere;">{{ a.message }}</p>
     </div>
+    <button type="button" class="link-action link-danger" data-open="remove-dialog"
+            data-action="{{ url_for('admin.remove_announcement', announcement_id=a.id) }}"
+            data-title="{{ a.title }}">Remove</button>
   </article>
   {% else %}
   <p class="empty-row">No announcements sent yet.</p>
   {% endfor %}
 </section>
+
+<dialog class="modal modal-sm" id="remove-dialog" aria-labelledby="remove-title">
+  <div class="modal-header">
+    <div class="modal-titles">
+      <h2 id="remove-title">Remove this announcement?</h2>
+      <p>“<span data-project-title></span>” will disappear from every user's home page. This cannot be undone.</p>
+    </div>
+  </div>
+  <form class="modal-actions" method="post" data-delete-form>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn btn-outline" type="submit" formmethod="dialog" formaction="">Cancel</button>
+    <button class="btn btn-primary btn-danger" type="submit">Remove</button>
+  </form>
+</dialog>
 {% endblock %}

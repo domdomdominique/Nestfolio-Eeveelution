@@ -1,4 +1,5 @@
 {% extends "customer/layout.html" %}
+{% from "shared/_phone.html" import phone_input %}
 {% import "auth/_auth_card.html" as auth with context %}
 {% set inline_errors = true %}
 {% set designer = account_type == 'designer' %}
@@ -43,7 +44,7 @@
           </label>
           <label class="field">
             <span>Phone number</span>
-            <input name="phone" type="tel" value="{{ form.get('phone', '') }}" placeholder="+65 9123 4567" autocomplete="tel" required>
+            {{ phone_input(form.get('phone', '')) }}
           </label>
           <label class="field">
             <span>Password</span>

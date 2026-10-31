@@ -61,8 +61,7 @@ class Favourite(db.Model):
         """The customer's saved IDPs, optionally filtered by title or category."""
         query = IDP.query.join(cls, cls.idp_id == IDP.id).filter(cls.customer_id == customer_id)
         if keyword:
-            pattern = f"%{keyword}%"
-            query = query.filter(db.or_(IDP.title.ilike(pattern), IDP.category.ilike(pattern)))
+            query = query.filter(db.or_(IDP.title.icontains(keyword, autoescape=True), IDP.category.icontains(keyword, autoescape=True)))
         order = {
             "views": IDP.view_count.desc(),
             "title": IDP.title.asc(),

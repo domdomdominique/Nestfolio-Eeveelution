@@ -60,11 +60,10 @@ def test_each_role_logs_in_to_its_own_home_and_can_log_out(client, app, role):
 
 
 @pytest.mark.parametrize("role", list(HOME))
-def test_login_with_the_wrong_role_selected_is_refused(client, app, role):
+def test_login_redirects_to_the_accounts_own_home(client, app, role):
     make_user(role)
-    other = "customer" if role != "customer" else "admin"
-    login(client, f"{role}@test.com", other)
-    assert client.get(PROTECTED[role]).status_code != 200
+    response = login(client, f"{role}@test.com")  # no role picked: the account decides
+    assert response.headers["Location"].endswith(HOME[role])
 
 
 @pytest.mark.parametrize("role", ["designer", "platform", "admin"])

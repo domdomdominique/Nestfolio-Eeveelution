@@ -10,4 +10,5 @@
       <a href="{{ url_for('admin.applications') }}" {% if nav == 'applications' %}aria-current="page"{% endif %}>{{ i.icon('portfolio') }}Applications</a>
       <a href="{{ url_for('admin.reports') }}" {% if nav == 'reports' %}aria-current="page"{% endif %}>{{ i.icon('flag') }}Reported Projects</a>
       <a href="{{ url_for('admin.announcements') }}" {% if nav == 'announcements' %}aria-current="page"{% endif %}>{{ i.icon('megaphone') }}Announcements</a>
+      <a href="{{ url_for('auth.change_password') }}" {% if nav == 'password' %}aria-current="page"{% endif %}>{{ i.icon('shield') }}Change password</a>
 {% endblock %}

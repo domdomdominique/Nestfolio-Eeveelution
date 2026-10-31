@@ -10,6 +10,7 @@ from flask import Blueprint, flash, redirect, render_template, request, session,
 from app.boundary import safe_next
 from app.control.apply_designer_controller import ApplyDesignerController
 from app.control.change_password_controller import ChangePasswordController
+from app.control.reset_password_controller import ResetPasswordController
 from app.control.login_controller import LoginController
 from app.control.register_controller import RegisterController
 from app.control.validate_session_controller import ValidateSessionController
@@ -23,14 +24,6 @@ HOME_BY_ROLE = {
     "designer": "designer.home",
     "customer": "customer.home",
     "platform": "platform.home",
-}
-
-# "Log in as" choices on the login page (C-02, ID-01, PM-01, UA-01)
-LOGIN_ROLES = {
-    "customer": "Customer",
-    "designer": "Interior Designer",
-    "platform": "Platform Management",
-    "admin": "User Admin",
 }
 
 APPLICATION_MESSAGES = {
@@ -51,11 +44,10 @@ def index():
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
-    """Boundary: LoginPage (C-02, and the login for every other actor)."""
+    """Boundary: LoginPage (C-02, and the login for every other actor; redirects by the account's own role)."""
     if request.method == "POST":
         controller = LoginController()
-        role = request.form.get("role") if request.form.get("role") in LOGIN_ROLES else None
-        account = controller.login(request.form["email"], request.form["password"], role)
+        account = controller.login(request.form["email"], request.form["password"])
         if account:
             session.clear()
             session.permanent = bool(request.form.get("remember"))
@@ -68,10 +60,9 @@ def login():
         message = controller.failure_message(
             request.form.get("email"),
             request.form.get("password"),
-            role,
         )
         flash(message, "error")
-    return render_template("auth/login.html", roles=LOGIN_ROLES, form=request.form)
+    return render_template("auth/login.html", form=request.form)
 
 
 # C-01 Create customer account.
@@ -187,7 +178,8 @@ def registration_status():
 
     response.headers["Cache-Control"] = "no-store"
 
-    return response
+    return response
+
 
 @auth_bp.route("/account/password", methods=["GET", "POST"])
 def change_password():
@@ -205,4 +197,8 @@ def change_password():
             session["auth"] = ValidateSessionController().token_for(UserAccount.get(session["user_id"]))
             flash("Password updated.", "success")
             return redirect(url_for(HOME_BY_ROLE.get(session.get("role"), "auth.index")))
-    return render_template("auth/change_password.html")
+    return render_template(
+        "auth/change_password.html",
+        forced=ResetPasswordController().must_change_password(session["user_id"]),
+        home_endpoint=HOME_BY_ROLE.get(session.get("role"), "auth.index"),
+    )

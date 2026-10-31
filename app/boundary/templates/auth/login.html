@@ -17,17 +17,6 @@
           {{ auth.errors() }}
 
           <label class="field">
-            <span>Log in as</span>
-            <span class="select">
-              <select name="role">
-                {% for key, label in roles.items() %}
-                  <option value="{{ key }}" {% if form.get('role', 'customer') == key %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-              </select>
-              <img src="{{ url_for('static', filename=img ~ 'chevron.svg') }}" width="18" height="18" alt="">
-            </span>
-          </label>
-          <label class="field">
             <span>Email address</span>
             <input name="email" type="email" value="{{ form.get('email', '') }}" placeholder="you@example.com" autocomplete="email" required>
           </label>

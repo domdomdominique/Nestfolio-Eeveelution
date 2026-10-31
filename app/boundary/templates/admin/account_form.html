@@ -1,4 +1,5 @@
 {% extends "admin/layout.html" %}
+{% from "shared/_phone.html" import phone_input %}
 {% block title %}{{ 'Edit' if account else 'Create' }} account — Nestfolio{% endblock %}
 {% block content %}
 <h1 class="dash-title">{{ 'Edit user account' if account else 'Create user account' }}</h1>
@@ -11,10 +12,10 @@
   <label class="field"><span>Email *</span>
     <input name="email" type="email" required maxlength="120" value="{{ form.get('email', '') }}"></label>
   <label class="field"><span>Phone *</span>
-    <input name="phone" type="tel" required value="{{ form.get('phone', '') }}"></label>
+    {{ phone_input(form.get('phone', '')) }}</label>
   <label class="field"><span>User profile *</span>
     <select name="profile" required>
-      <option value="">Choose a profile</option>
+      {% if not account %}<option value="" disabled {{ 'selected' if not form.get('profile') }}>Choose a profile</option>{% endif %}
       {% for p in profiles %}
       <option value="{{ p.key }}" {{ 'selected' if form.get('profile') == p.key }}>{{ p.name }}{{ ' (suspended)' if not p.is_active }}</option>
       {% endfor %}

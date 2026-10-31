@@ -53,7 +53,7 @@ class IDPCategory(db.Model):
     def list_all(cls, keyword=""):
         query = cls.query
         if keyword:
-            query = query.filter(cls.name.ilike(f"%{keyword}%"))
+            query = query.filter(cls.name.icontains(keyword, autoescape=True))
         return query.order_by(cls.name).all()
 
     @classmethod

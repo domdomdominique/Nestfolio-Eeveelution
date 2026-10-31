@@ -93,8 +93,6 @@ pip install -r requirements.txt
 
 ### Designer login checks
 
-Select **Interior Designer** on the login page.
-
 The suspended, pending and rejected accounts below are manually created
 test fixtures. They may not exist in a fresh database.
 
@@ -145,6 +143,13 @@ All demo accounts use the password `password123`.
 Generated accounts use the full name run together (e.g. `weimingkoh@test.com`; repeated names get a number, like `weimingkoh2@test.com`) and also use `password123`. Pending applicants cannot log in until an admin approves them; `python seed.py` prints one to try.
 
 ---
+
+## Ethics
+
+- **Passwords are hashed.** Accounts and designer applications use `werkzeug.security` (`generate_password_hash` / `check_password_hash`); plain passwords are never stored or shown, and admin resets issue a temporary password that must be changed at next login.
+- **No SQL injection.** All queries go through SQLAlchemy, which sends values as bound parameters; there is no raw SQL or string-built SQL. Search text is also escaped so `%` and `_` are matched as plain characters.
+- **View tracking is anonymous.** A project view stores only the project, its category and the time. It never records who viewed it (no customer ID, IP address or session), so the trend reports cannot be traced back to a person.
+- **Ranking is fair to new and small designers.** The default order, *Recommended*, ranks by views per day since posting with a one-week head start, so a new project is judged on the attention it gets, not on how long it has been online. Unseen projects still appear, newest first. *Most viewed* and *Newest* stay available for anyone who wants raw counts. The landing page's featured designers rotate daily across all active designers instead of favouring the ones with the most projects.
 
 ## Testing
 

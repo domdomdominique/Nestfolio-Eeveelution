@@ -22,6 +22,15 @@ class Announcement(db.Model):
         return announcement
 
     @classmethod
+    def delete_by_id(cls, announcement_id):
+        announcement = db.session.get(cls, announcement_id)
+        if announcement is None:
+            return False
+        db.session.delete(announcement)
+        db.session.commit()
+        return True
+
+    @classmethod
     def latest(cls, limit=None):
         query = cls.query.order_by(cls.sent_at.desc(), cls.id.desc())
         return (query.limit(limit) if limit else query).all()
