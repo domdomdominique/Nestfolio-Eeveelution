@@ -105,3 +105,31 @@ def test_secrets_come_from_env_or_a_generated_file_never_from_the_source(tmp_pat
     source = (Path(__file__).parent.parent / "app" / "__init__.py").read_text()
     assert "dev-change-me" not in source and "1dCtVD" not in source
     assert "debug=True" not in (Path(__file__).parent.parent / "run.py").read_text()
+
+
+def test_a_missing_key_file_never_gets_replaced_under_an_existing_database(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from app import _load_secret
+    monkeypatch.delenv("ENCRYPTION_KEY", raising=False)
+    app = SimpleNamespace(instance_path=str(tmp_path))
+    database = tmp_path / "eeveelution.db"
+    database.write_text("data")
+    with pytest.raises(RuntimeError, match="encryption_key.key is missing"):
+        _load_secret(app, "ENCRYPTION_KEY", lambda: "new", database=str(database))
+    assert not (tmp_path / "encryption_key.key").exists()
+    database.unlink()  # a fresh install may make its first key
+    assert _load_secret(app, "ENCRYPTION_KEY", lambda: "first", database=str(database)) == "first"
+
+
+def test_two_processes_starting_together_end_up_with_the_same_key(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from app import _load_secret
+    monkeypatch.delenv("SECRET_KEY", raising=False)
+    app = SimpleNamespace(instance_path=str(tmp_path))
+
+    def other_process_wins_first():
+        (tmp_path / "secret_key.key").write_text("their-key")
+        return "my-key"
+
+    assert _load_secret(app, "SECRET_KEY", other_process_wins_first) == "their-key"
+    assert list(tmp_path.glob("*.tmp")) == []  # no leftover temporary file

@@ -60,3 +60,17 @@ def test_featured_designers_are_not_just_the_busiest(app):
     project(small, "Only one", 0, 1)
     assert set(IDP.featured_designer_ids(limit=5)) == {busy.id, small.id}
     assert IDP.featured_designer_ids(limit=1) == IDP.featured_designer_ids(limit=1)  # stable within a day
+
+
+def test_landing_page_ranking_is_done_by_the_database_and_limited(app):
+    d = designer("des@test.com")
+    for i in range(10):
+        project(d, f"P{i}", views=i, age_days=1)
+    top = IDP.popular(limit=4)
+    assert [p.title for p in top] == ["P9", "P8", "P7", "P6"]
+    from sqlalchemy import event
+    from app.entity.db import db as _db
+    selects = []
+    event.listen(_db.engine, "before_cursor_execute", lambda *a: selects.append(a[2]))
+    IDP.popular(limit=4)
+    assert "LIMIT" in selects[-1].upper()  # only the rows shown are read

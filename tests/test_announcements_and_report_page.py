@@ -31,9 +31,9 @@ def test_remove_dialog_is_in_the_page_body_and_removing_works(client, app):
     head = html[:html.index("</head>")]
     assert "<dialog" not in head and 'id="remove-dialog"' in html
     assert f"/admin/reports/{report.id}/remove" in html
-    # both actions only open a confirmation dialog; neither is a direct submit button
-    assert 'id="resolve-dialog"' in html and 'data-open="resolve-dialog"' in html
-    assert f' action="/admin/reports/{report.id}/resolve"' not in html
+    # both buttons open a confirmation first, and are still real forms if JavaScript is off
+    assert 'id="resolve-dialog"' in html and 'data-open="resolve-dialog"' in html and 'data-open="remove-dialog"' in html
+    assert f'action="/admin/reports/{report.id}/resolve"' in html
     client.post(f"/admin/reports/{report.id}/remove")
     assert idp.is_removed
 
@@ -104,3 +104,14 @@ def test_admin_and_platform_can_change_their_own_password(client, app, role, nav
     from app.control.login_controller import LoginController
     assert LoginController().login(f"{role}@test.com", "password123") is None
     assert LoginController().login(f"{role}@test.com", "brandnew123") is not None
+
+
+def test_report_and_announcement_actions_work_without_javascript(client, app):
+    admin, _, customer, idp = setup_data()
+    report = ReportIDPController().report(customer.id, idp.id, "Spam or advertising")
+    note = SendAnnouncementController().send(admin.id, "Maintenance", "Sunday 2am")
+    login(client, "admin@test.com")
+    page = client.get("/admin/reports").get_data(as_text=True)
+    assert f'<form method="post" action="/admin/reports/{report.id}/remove"' in page
+    page = client.get("/admin/announcements").get_data(as_text=True)
+    assert f'<form method="post" action="/admin/announcements/{note.id}/remove"' in page

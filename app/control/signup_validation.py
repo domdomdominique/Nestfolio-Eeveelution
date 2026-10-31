@@ -20,7 +20,7 @@ def clean_name(name):
 
 def clean_email(email):
     email = (email or "").strip().lower()
-    if not EMAIL_RE.match(email):
+    if len(email) > 120 or not EMAIL_RE.match(email):
         raise ValueError("Please enter a valid email address.")
     return email
 

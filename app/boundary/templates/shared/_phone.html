@@ -2,8 +2,8 @@
 {% macro phone_input(value='', required=true) -%}
 <span class="phone-input">
   <span class="phone-prefix" aria-hidden="true">+65</span>
-  <input name="phone" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="9"
-         pattern="[3689][0-9]{3} ?[0-9]{4}" title="8-digit Singapore number, e.g. 9123 4567"
+  <input name="phone" type="tel" inputmode="numeric" autocomplete="tel-national"
+         pattern="(\+65 ?)?[3689][0-9]{3}[ \-]?[0-9]{4}" title="8-digit Singapore number, e.g. 9123 4567"
          placeholder="9123 4567" aria-label="Phone number (+65)" value="{{ (value or '')|replace('+65', '')|trim }}"
          {{ 'required' if required }}>
 </span>

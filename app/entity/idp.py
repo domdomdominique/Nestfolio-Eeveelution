@@ -125,13 +125,12 @@ class IDP(db.Model):
                 cls.is_current == (status == "current")
             )
 
-        if sort == "recommended":
-            return cls._by_fair_score(query)
-
         order = (
             cls.created_at.desc()
             if sort == "newest"
             else cls.view_count.desc()
+            if sort == "views"
+            else cls._fair_score().desc()
         )
 
         return query.order_by(order, cls.id.desc()).all()
@@ -174,25 +173,18 @@ class IDP(db.Model):
 
     # Fair ranking: views per day since posting, with a head start (FAIR_DAYS) so a brand-new
     # project is judged on how much attention it gets, not on how long it has been online.
+    # Worked out in the database (SQLite julianday) so a page only reads the rows it shows.
     FAIR_DAYS = 7
 
-    def fair_score(self, now=None):
-        age_days = max(0, ((now or datetime.now()) - (self.created_at or datetime.now())).days)
-        return (self.view_count or 0) / (age_days + self.FAIR_DAYS)
-
     @classmethod
-    def _by_fair_score(cls, query):
-        """Highest fair score first; ties (e.g. no views yet) go to the newest project."""
-        now = datetime.now()
-        projects = query.order_by(cls.id.desc()).all()
-        return sorted(projects, key=lambda p: p.fair_score(now), reverse=True)
+    def _fair_score(cls):
+        age_days = db.func.max(0.0, db.func.julianday("now", "localtime") - db.func.julianday(cls.created_at))
+        return db.func.coalesce(cls.view_count, 0) * 1.0 / (age_days + cls.FAIR_DAYS)
 
     @classmethod
     def popular(cls, sort="recommended", limit=4):
         """Recommended (default, fair to new projects), most viewed, or newest projects."""
-        if sort == "recommended":
-            return cls._by_fair_score(cls.visible())[:limit]
-        order = cls.created_at.desc() if sort == "newest" else cls.view_count.desc()
+        order = {"newest": cls.created_at.desc(), "views": cls.view_count.desc()}.get(sort, cls._fair_score().desc())
         return cls.visible().order_by(order, cls.id.desc()).limit(limit).all()
 
     @classmethod
