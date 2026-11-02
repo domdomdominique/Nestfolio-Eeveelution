@@ -66,8 +66,10 @@ def test_day_with_no_activity_shows_zeros(app):
 
 def test_viewing_a_project_is_logged_for_reports(app):
     loft, _ = setup_activity()
+    before = GenerateReportController().daily(date.today()).total_views
     loft.record_view()
-    assert GenerateReportController().daily(date.today()).total_views == 1
+    # Compare with the count just before, so the test passes on any date
+    assert GenerateReportController().daily(date.today()).total_views == before + 1
 
 
 def test_daily_figures_match_the_records(app):
