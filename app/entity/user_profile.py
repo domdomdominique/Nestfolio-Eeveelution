@@ -92,6 +92,7 @@ class UserProfile(db.Model):
         db.session.commit()
 
     def suspend(self):
+        # UA-11 The User Admin profile can never be suspended, and a suspended profile cannot be suspended again.
         if self.key == self.ADMIN_KEY:
             raise ValueError("The User Admin profile cannot be suspended.")
         if self.status == "suspended":

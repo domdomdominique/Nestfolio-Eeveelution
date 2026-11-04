@@ -286,6 +286,7 @@ def reports():
 @admin_bp.route("/reports/<int:report_id>/resolve", methods=["POST"])
 @role_required("admin")
 def resolve_report(report_id):
+    # UA-17 "Mark resolved": dismiss the report and keep the project visible.
     try:
         ReviewReportsController().resolve(report_id, session["user_id"])
     except ValueError as error:
@@ -298,6 +299,7 @@ def resolve_report(report_id):
 @admin_bp.route("/reports/<int:report_id>/remove", methods=["POST"])
 @role_required("admin")
 def remove_reported_project(report_id):
+    # UA-17 "Remove project": hide it from customers and close every open report on it.
     """Boundary: Remove project button on ReportedProjectsPage (UA-17): hides it from customers."""
     try:
         report = ReviewReportsController().remove_idp(report_id, session["user_id"])

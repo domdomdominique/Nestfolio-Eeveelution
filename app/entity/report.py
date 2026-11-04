@@ -58,6 +58,7 @@ class Report(db.Model):
         return cls.query.filter_by(status=status).order_by(cls.created_at.desc(), cls.id.desc()).all()
 
     def resolve(self, admin_id, resolution="dismissed"):
+        # UA-17 Close a report once: "dismissed" keeps the IDP visible, "removed" hides it.
         if self.status != "open":
             raise ValueError("This report has already been resolved.")
         self.status = "resolved"

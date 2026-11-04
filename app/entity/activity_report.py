@@ -27,7 +27,7 @@ class ActivityReport:
 
     @classmethod
     def weekly(cls, any_day):
-        """The Monday-to-Sunday week containing any_day."""
+        """PM-09 The Monday-to-Sunday week containing any_day."""
         monday = any_day - timedelta(days=any_day.weekday())
         return cls("weekly", monday, monday + timedelta(days=7))
 

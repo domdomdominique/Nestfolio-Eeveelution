@@ -15,7 +15,7 @@ class IDP(db.Model):
     category = db.Column(db.String(50), nullable=False)
     designer_id = db.Column(db.Integer, db.ForeignKey("user_account.id"), nullable=False)
     view_count = db.Column(db.Integer, default=0)
-    shortlist_count = db.Column(db.Integer, default=0)
+    shortlist_count = db.Column(db.Integer, default=0)  # ID-14 how many customers have it in favourites
     is_current = db.Column(db.Boolean, default=False)  # current (in progress) vs past project
     created_at = db.Column(db.DateTime, default=datetime.now)
     is_removed = db.Column(db.Boolean, default=False)  # hidden by a User Admin (UA-17)
@@ -62,7 +62,7 @@ class IDP(db.Model):
 
     @classmethod
     def search(cls, keyword):
-        """Case-insensitive search on title or category."""
+        """C-04 Search IDPs. Case-insensitive search on title or category."""
         if not keyword:
             return cls.query.order_by(cls.id).all()
         return (
@@ -73,7 +73,12 @@ class IDP(db.Model):
 
     @classmethod
     def browse(cls, keyword="", categories=(), status=None, sort="recommended"):
-        """Search projects using the current company information."""
+        """C-04 search, C-05 category filter and C-17 sort, in one query.
+
+        Only visible IDPs. A keyword matches the title, description, category,
+        designer name or the designer's current company name (the company name
+        is skipped if the designer deleted their company).
+        """
         from app.entity.designer_application import DesignerApplication
         from app.entity.designer_company import DesignerCompany, CompanyRemoval
         from app.entity.user_account import UserAccount
@@ -225,6 +230,7 @@ class IDP(db.Model):
         return cls.query.filter_by(designer_id=designer_id).count()
 
 
+    # ID-06 Save a new IDP with its ID-12 category and ID-19 photos in one commit.
     @classmethod
     def create_for_designer(
         cls,
@@ -250,6 +256,7 @@ class IDP(db.Model):
         return project
 
     def _attach_photos(self, photos):
+        # ID-19 The photos are already checked by validated_photos(); they are stored in the database.
         from app.entity.idp_photo import IDPPhoto
 
         self.photos.extend(
@@ -257,6 +264,7 @@ class IDP(db.Model):
             for photo in photos
         )
 
+    # ID-09 Edit an IDP; ID-12 can change its category and ID-19 can add more photos.
     def update_details(
         self,
         title,
