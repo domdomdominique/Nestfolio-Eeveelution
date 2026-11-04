@@ -31,6 +31,7 @@ class EditProjectController:
     def update(self, account_id, idp_id, form, files=()):
         project = self.get_project(account_id, idp_id)
 
+        # ID-12 the category must be one of the Platform Management categories.
         title, description, category, is_current = clean_idp_fields(
             form.get("title"),
             form.get("description"),

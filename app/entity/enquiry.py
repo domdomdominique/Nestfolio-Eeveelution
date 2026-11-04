@@ -18,6 +18,7 @@ class Enquiry(db.Model):
 
     idp = db.relationship("IDP")
 
+    # C-16 Save a customer's message to a designer; the contact is stored encrypted.
     @classmethod
     def send(cls, designer_id, customer_id, name, contact, message, idp_id=None):
         enquiry = cls(designer_id=designer_id, customer_id=customer_id, idp_id=idp_id,
@@ -28,7 +29,7 @@ class Enquiry(db.Model):
 
     @classmethod
     def for_designer(cls, designer_id, limit=None):
-        """Return this designer's enquiries, newest first."""
+        """ID-21 Return this designer's enquiries, newest first."""
         query = (
             cls.query.filter_by(designer_id=designer_id)
             .order_by(
