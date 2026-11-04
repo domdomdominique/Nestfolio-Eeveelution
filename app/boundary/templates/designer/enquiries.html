@@ -5,7 +5,7 @@
 <div>
   <h1 class="dash-title">Enquiries</h1>
   <p class="dash-sub">
-    Customer messages, newest first.
+    {{ total }} customer message{{ '' if total == 1 else 's' }}, newest first.
   </p>
 </div>
 
@@ -47,6 +47,7 @@
         </article>
       {% endfor %}
     </div>
+    {% include "shared/_pager.html" %}
   {% else %}
     <p class="empty-row">
       No enquiries yet. Messages will appear here

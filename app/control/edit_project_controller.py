@@ -1,7 +1,5 @@
-from app.control.portfolio_validation import (
-    project_details,
-    validated_photos,
-)
+from app.control.idp_validation import clean_idp_fields
+from app.control.portfolio_validation import validated_photos
 from app.entity.idp import IDP
 from app.entity.user_account import UserAccount
 
@@ -33,7 +31,12 @@ class EditProjectController:
     def update(self, account_id, idp_id, form, files=()):
         project = self.get_project(account_id, idp_id)
 
-        details = project_details(form)
+        title, description, category, is_current = clean_idp_fields(
+            form.get("title"),
+            form.get("description"),
+            form.get("category"),
+            form.get("status"),
+        )
 
         photos = validated_photos(
             files,
@@ -41,8 +44,11 @@ class EditProjectController:
         )
 
         project.update_details(
-            **details,
+            title,
+            description,
+            category,
+            is_current,
             photos=photos,
         )
 
-        return project
+        return project

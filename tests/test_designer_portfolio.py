@@ -4,7 +4,7 @@ import pytest
 
 from app.control.add_idp_controller import AddIDPController
 from app.control.delete_idp_controller import DeleteIDPController
-from app.control.edit_idp_controller import EditIDPController
+from app.control.edit_project_controller import EditProjectController
 from app.control.set_idp_status_controller import SetIDPStatusController
 from app.control.view_portfolio_controller import ViewPortfolioController
 from app.entity.db import db
@@ -30,6 +30,10 @@ def make_idp(designer, title="Scandinavian Loft", category="Living Room", curren
     return idp
 
 
+def form(title, description, category, status):
+    return {"title": title, "description": description, "category": category, "status": status}
+
+
 def login(client, email="des@test.com"):
     client.post("/login", data={"email": email, "password": "password123"})
 
@@ -38,7 +42,7 @@ def login(client, email="des@test.com"):
 
 def test_add_idp_saves_it_to_the_designers_portfolio(people):
     designer, _, _ = people
-    idp = AddIDPController().add(designer.id, "  Warm HDB  ", "Bright and calm", "Living Room", "current")
+    idp = AddIDPController().add(designer.id, form("  Warm HDB  ", "Bright and calm", "Living Room", "current"))
     assert (idp.title, idp.category, idp.is_current, idp.designer_id) == \
         ("Warm HDB", "Living Room", True, designer.id)
     assert [i.title for i in ViewPortfolioController().view(designer.id)["projects"]] == ["Warm HDB"]
@@ -54,14 +58,14 @@ def test_add_idp_saves_it_to_the_designers_portfolio(people):
 def test_add_idp_rejects_invalid_fields(people, title, category, status):
     designer, _, _ = people
     with pytest.raises(ValueError):
-        AddIDPController().add(designer.id, title, "", category, status)
+        AddIDPController().add(designer.id, form(title, "", category, status))
     assert IDP.count_for_designer(designer.id) == 0
 
 
 def test_description_is_limited_to_1000_characters(people):
     designer, _, _ = people
     with pytest.raises(ValueError):
-        AddIDPController().add(designer.id, "Ok", "x" * 1001, "Kitchen", "past")
+        AddIDPController().add(designer.id, form("Ok", "x" * 1001, "Kitchen", "past"))
 
 
 # --- ID-07 / ID-08 view and search ------------------------------------------
@@ -110,7 +114,7 @@ def test_portfolio_filters_by_status_and_category(people):
 def test_edit_updates_own_idp(people):
     designer, _, _ = people
     idp = make_idp(designer)
-    EditIDPController().edit(designer.id, idp.id, "New title", "New text", "Kitchen", "current")
+    EditProjectController().update(designer.id, idp.id, form("New title", "New text", "Kitchen", "current"))
     idp = IDP.get(idp.id)
     assert (idp.title, idp.description, idp.category, idp.is_current) == \
         ("New title", "New text", "Kitchen", True)
@@ -120,7 +124,7 @@ def test_edit_with_invalid_data_changes_nothing(people):
     designer, _, _ = people
     idp = make_idp(designer)
     with pytest.raises(ValueError):
-        EditIDPController().edit(designer.id, idp.id, "", "", "Kitchen", "past")
+        EditProjectController().update(designer.id, idp.id, form("", "", "Kitchen", "past"))
     assert IDP.get(idp.id).title == "Scandinavian Loft"
 
 
@@ -128,9 +132,9 @@ def test_designer_cannot_edit_or_load_someone_elses_idp(people):
     designer, other, _ = people
     idp = make_idp(other)
     with pytest.raises(LookupError):
-        EditIDPController().edit(designer.id, idp.id, "Hacked", "", "Kitchen", "past")
+        EditProjectController().update(designer.id, idp.id, form("Hacked", "", "Kitchen", "past"))
     with pytest.raises(LookupError):
-        EditIDPController().get(designer.id, idp.id)
+        EditProjectController().get_project(designer.id, idp.id)
     assert IDP.get(idp.id).title == "Scandinavian Loft"
 
 

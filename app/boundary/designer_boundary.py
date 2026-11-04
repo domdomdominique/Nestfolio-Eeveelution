@@ -22,6 +22,7 @@ from app.control.view_enquiries_controller import ViewEnquiriesController
 from app.control.add_company_controller import AddCompanyController
 from app.control.view_company_controller import ViewCompanyController
 from app.control.add_idp_controller import AddIDPController
+from app.control.paginate import paginate
 from app.control.edit_project_controller import EditProjectController
 from app.control.delete_project_controller import DeleteProjectController
 from app.control.view_portfolio_controller import ViewPortfolioController
@@ -104,10 +105,17 @@ def enquiries():
     except LookupError:
         abort(404)
 
+    shown, page, pages = paginate(
+        messages, request.args.get("page", 1, type=int)
+    )
+
     return render_template(
         "designer/enquiries.html",
         nav="enquiries",
-        enquiries=messages,
+        enquiries=shown,
+        total=len(messages),
+        page=page,
+        pages=pages,
     )
 
 @designer_bp.after_request
