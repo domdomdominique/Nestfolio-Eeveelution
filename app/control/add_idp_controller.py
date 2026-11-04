@@ -1,5 +1,3 @@
-from collections.abc import Mapping
-
 from app.control.idp_validation import clean_idp_fields
 from app.control.portfolio_validation import validated_photos
 from app.entity.idp import IDP
@@ -16,16 +14,7 @@ class AddIDPController:
     def categories(self):
         return IDP.categories()
 
-    def add(
-        self,
-        account_id,
-        title,
-        description=None,
-        category=None,
-        status=None,
-        *,
-        files=(),
-    ):
+    def add(self, account_id, form, files=()):
         account = UserAccount.get(account_id)
 
         if (
@@ -35,36 +24,19 @@ class AddIDPController:
         ):
             raise LookupError("Designer account not found.")
 
-        if isinstance(title, Mapping):
-            # Your route supplies a form and optional uploaded files.
-            form = title
-
-            if description is not None:
-                files = description
-
-            values = clean_idp_fields(
-                form.get("title"),
-                form.get("description"),
-                form.get("category"),
-                form.get("status"),
-            )
-        else:
-            # Existing team code supplies individual field values.
-            values = clean_idp_fields(
-                title,
-                description,
-                category,
-                status,
-            )
-
-        clean_title, clean_description, clean_category, is_current = values
+        title, description, category, is_current = clean_idp_fields(
+            form.get("title"),
+            form.get("description"),
+            form.get("category"),
+            form.get("status"),
+        )
         photos = validated_photos(files)
 
         return IDP.create_for_designer(
             account.id,
-            clean_title,
-            clean_description,
-            clean_category,
+            title,
+            description,
+            category,
             is_current,
             photos=photos,
-        )
+        )

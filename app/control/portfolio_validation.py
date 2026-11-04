@@ -5,41 +5,9 @@ import warnings
 from PIL import Image, UnidentifiedImageError
 from werkzeug.utils import secure_filename
 
-from app.entity.idp import IDP
-
 
 MAX_PHOTO_BYTES = 5 * 1024 * 1024
 MAX_PHOTOS = 10
-
-
-def project_details(form):
-    title = (form.get("title") or "").strip()
-    description = (form.get("description") or "").strip()
-    category = form.get("category")
-    status = form.get("status")
-
-    if not title or len(title) > 150:
-        raise ValueError(
-            "Title is required and must be 150 characters or fewer."
-        )
-
-    if len(description) > 1000:
-        raise ValueError(
-            "Description must be 1000 characters or fewer."
-        )
-
-    if category not in IDP.categories():
-        raise ValueError("Please select an existing category.")
-
-    if status not in ("current", "past"):
-        raise ValueError("Please select Current or Past.")
-
-    return {
-        "title": title,
-        "description": description,
-        "category": category,
-        "is_current": status == "current",
-    }
 
 
 # ID-19 Photo rules: JPG or PNG, 5 MB each, at most 10, checked as real images.
@@ -117,4 +85,4 @@ def validated_photos(files, existing=0):
             "data": data,
         })
 
-    return photos
+    return photos
