@@ -132,6 +132,8 @@ python run.py
 
 Open <http://127.0.0.1:5000>. To turn on the Flask debugger for local work only, run `FLASK_DEBUG=1 python run.py`.
 
+Days, "today" and report periods use Singapore time whatever the server's own clock says (a cloud host usually runs UTC). Set `APP_TIMEZONE` (for example `APP_TIMEZONE=UTC`) to change it. On Windows the PC's own time zone setting applies.
+
 ### Demo logins
 
 All demo and generated accounts use the password `password123`.

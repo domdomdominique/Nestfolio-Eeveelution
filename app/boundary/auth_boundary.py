@@ -1,7 +1,4 @@
-import secrets
-from hmac import compare_digest
-
-from flask import abort, make_response
+from flask import make_response
 
 from app.control.view_registration_status_controller import ViewRegistrationStatusController
 

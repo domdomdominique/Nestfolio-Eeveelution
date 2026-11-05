@@ -1,8 +1,13 @@
 import os
 import secrets
+import sqlite3
+import time
 
 from cryptography.fernet import Fernet
 from flask import Flask
+from sqlalchemy import event
+from sqlalchemy.engine import Engine
+from sqlalchemy.exc import IntegrityError, OperationalError
 from flask_wtf.csrf import CSRFProtect
 
 from app.entity.db import db
@@ -47,8 +52,25 @@ def _load_secret(app, name, make, database=None):
         return handle.read().strip()
 
 
+@event.listens_for(Engine, "connect")
+def _sqlite_for_several_workers(dbapi_connection, _record):
+    """Several Gunicorn workers share one SQLite file: wait for a busy file instead of failing with
+    "database is locked", and let readers work while another worker writes (WAL)."""
+    if isinstance(dbapi_connection, sqlite3.Connection):
+        cursor = dbapi_connection.cursor()
+        cursor.execute("PRAGMA busy_timeout=15000")
+        cursor.execute("PRAGMA journal_mode=WAL")  # stays "memory" for an in-memory test database
+        cursor.close()
+
+
 def create_app(test_config=None):
     """Application factory: builds and configures the Flask app."""
+    # Days, "today" and report periods follow Singapore time whatever the server's clock says
+    # (cloud hosts run UTC). Set APP_TIMEZONE to change it. Windows has no tzset: the PC's own setting applies.
+    os.environ["TZ"] = os.environ.get("APP_TIMEZONE", "Asia/Singapore")
+    if hasattr(time, "tzset"):
+        time.tzset()
+
     app = Flask(
         __name__,
         template_folder="boundary/templates",
@@ -135,6 +157,22 @@ def create_app(test_config=None):
     for name in ("ago", "clock", "day_label", "initials"):
         app.jinja_env.filters[name] = getattr(timefmt, name)
 
+    @app.errorhandler(IntegrityError)
+    def unique_race(error):
+        """Two requests saved the same unique value (email, phone, ...) at once: say so instead of a 500 page.
+        Any other integrity error is a real bug, so it still surfaces as one."""
+        from urllib.parse import urlparse
+
+        from flask import flash, redirect, request, url_for
+
+        db.session.rollback()
+        if "UNIQUE" not in str(error.orig).upper():
+            raise error
+        app.logger.warning("Two requests saved the same unique value: %s", error.orig)
+        flash("That was just saved by someone else. Please check and try again.", "error")
+        back = request.referrer
+        return redirect(back if back and urlparse(back).netloc == request.host else url_for("auth.index"))
+
     # ID-21 notification badge: number of enquiry conversations with new messages
     @app.context_processor
     def enquiry_notifications():
@@ -147,9 +185,21 @@ def create_app(test_config=None):
         return {"unread_enquiries": 0}
 
     with app.app_context():
-        db.create_all()
-        enquiry_attachment.EnquiryAttachment.ensure_schema()
-        IDPCategory.ensure_defaults()
-        UserProfile.ensure_defaults()
+        # Every worker runs this set-up when it starts. If another one got there first ("table already
+        # exists", "duplicate column", a default row added twice), look again and carry on.
+        for attempt in (1, 2, 3):
+            try:
+                db.create_all()
+                enquiry_attachment.EnquiryAttachment.ensure_schema()
+                from app.entity.report import Report
+                Report.ensure_schema()
+                IDPCategory.ensure_defaults()
+                UserProfile.ensure_defaults()
+                break
+            except (OperationalError, IntegrityError):
+                db.session.rollback()
+                if attempt == 3:
+                    raise
+                time.sleep(0.3 * attempt)
 
     return app

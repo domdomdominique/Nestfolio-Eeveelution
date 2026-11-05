@@ -13,7 +13,7 @@ class SendAnnouncementController:
     """
 
     def send(self, admin_id, title, message, roles=None):
-        """roles=None (or empty) sends to everyone; otherwise a list of profile keys."""
+        """roles=None sends to everyone; otherwise a list of profile keys (an empty list is refused)."""
         title, message = (title or "").strip(), (message or "").strip()
         if not title or not message:
             raise ValueError("Please enter both a title and a message.")

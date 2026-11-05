@@ -290,6 +290,7 @@ def reports():
         reports=controller.list_reports(status),
         status=status if status in ("open", "resolved") else "open",
         open_count=controller.open_count(),
+        reason_max=controller.REASON_MAX,
     )
 
 
@@ -312,7 +313,8 @@ def remove_reported_project(report_id):
     # UA-17 "Remove project": hide it from customers and close every open report on it.
     """Boundary: Remove project button on ReportedProjectsPage (UA-17): hides it from customers."""
     try:
-        report = ReviewReportsController().remove_idp(report_id, session["user_id"])
+        report = ReviewReportsController().remove_idp(
+            report_id, session["user_id"], request.form.get("reason", ""))
     except ValueError as error:
         flash(str(error), "error")
     else:

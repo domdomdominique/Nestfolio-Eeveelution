@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import validates
 from werkzeug.security import generate_password_hash
 
@@ -111,7 +112,11 @@ class DesignerApplication(db.Model):
         db.session.flush()  # gives account an id before we commit
         self.account_id = account.id
         self._mark_reviewed("approved", admin_id)
-        db.session.commit()  # account + application saved together
+        try:
+            db.session.commit()  # account + application saved together
+        except IntegrityError:  # the email or phone was taken a moment ago; nothing is saved
+            db.session.rollback()
+            raise ValueError("An account with this email or phone number already exists.") from None
         return account
 
     def reject(self, admin_id, reason=""):

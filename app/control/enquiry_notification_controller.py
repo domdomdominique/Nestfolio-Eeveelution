@@ -16,8 +16,7 @@ class EnquiryNotificationController:
 
     def unread_count(self, user_id):
         """Number of conversations with something new: the number on the badge."""
-        unread = self.unread_by_enquiry(user_id, Enquiry.for_person(user_id))
-        return sum(1 for n in unread.values() if n)
+        return Enquiry.unread_count_for(user_id)
 
     def mark_seen(self, user_id, enquiries):
         EnquirySeen.mark([e.id for e in enquiries], user_id)

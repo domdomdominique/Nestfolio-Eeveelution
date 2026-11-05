@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import validates
 from werkzeug.security import check_password_hash, generate_password_hash
 
@@ -78,7 +79,16 @@ class UserAccount(db.Model):
                       must_change_password=must_change_password)
         account.set_password(password)
         db.session.add(account)
-        db.session.commit()
+        try:
+            db.session.commit()
+        except IntegrityError:
+            # Two sign-ups passed the "is it taken?" check together and the unique index caught the second.
+            db.session.rollback()
+            if cls.email_exists(email):
+                raise ValueError("Email already registered.") from None
+            if cls.phone_exists(phone):
+                raise ValueError("Phone number already registered.") from None
+            raise  # something else is wrong with the data: do not hide it
         return account
 
     @classmethod
