@@ -99,6 +99,13 @@ class ActivityReport:
 
     # --- For downloads (PM-11) -------------------------------------------------
 
+    def timeline(self):
+        """Views and shortlists per hour (daily report) or per day (weekly and
+        monthly reports), for the chart on the Reports page."""
+        from app.entity.activity_timeline import ActivityTimeline
+
+        return ActivityTimeline(self.start, self.end, "hour" if self.kind == "daily" else "day")
+
     def summary_rows(self):
         return [
             ("New user accounts", self.new_accounts),

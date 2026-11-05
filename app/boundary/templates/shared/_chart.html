@@ -1,0 +1,31 @@
+{# Line chart drawn as inline SVG. Use: {% from "shared/_chart.html" import chart %}
+   {{ chart("Views per day", timeline.labels, timeline.views) }} #}
+{% macro chart(title, labels, values, unit="views") %}
+{% set c = line_chart(labels, values) %}
+<figure class="nf-chart" style="margin:0;">
+  <figcaption style="display:flex; justify-content:space-between; gap:12px; align-items:baseline; margin-bottom:6px;">
+    <strong>{{ title }}</strong>
+    <small style="color:#6b5a4e;">{{ '{:,}'.format(c.total) }} {{ unit }} in total · peak {{ '{:,}'.format(c.peak) }}</small>
+  </figcaption>
+  <svg viewBox="0 0 {{ c.width }} {{ c.height }}" width="100%" role="img"
+       aria-label="{{ title }}: {{ '{:,}'.format(c.total) }} {{ unit }} in total, highest {{ c.peak }}"
+       style="display:block; max-width:100%; height:auto; font: 12px system-ui, sans-serif;">
+    {% for t in c.ticks %}
+    <line x1="{{ c.left }}" x2="{{ c.right }}" y1="{{ t.y }}" y2="{{ t.y }}" stroke="#e7dfd8" stroke-width="1"/>
+    <text x="{{ c.left - 6 }}" y="{{ t.y + 4 }}" text-anchor="end" fill="#6b5a4e">{{ '{:,}'.format(t.value) }}</text>
+    {% endfor %}
+    {% if c.points %}
+    <polygon points="{{ c.area }}" fill="#5B3A29" fill-opacity="0.12"/>
+    <polyline points="{{ c.line }}" fill="none" stroke="#5B3A29" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    {% for p in c.points %}
+    <circle cx="{{ p.x }}" cy="{{ p.y }}" r="{{ 3 if c.show_dots else 6 }}"
+            fill="{{ '#5B3A29' if c.show_dots else 'transparent' }}"><title>{{ p.label }}: {{ p.value }} {{ unit }}</title></circle>
+    {% endfor %}
+    {% endif %}
+    <line x1="{{ c.left }}" x2="{{ c.right }}" y1="{{ c.base }}" y2="{{ c.base }}" stroke="#b9aba0"/>
+    {% for l in c.x_labels %}
+    <text x="{{ l.x }}" y="{{ c.base + 18 }}" text-anchor="middle" fill="#6b5a4e">{{ l.text }}</text>
+    {% endfor %}
+  </svg>
+</figure>
+{% endmacro %}

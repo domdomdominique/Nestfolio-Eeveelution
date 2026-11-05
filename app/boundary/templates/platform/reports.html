@@ -1,4 +1,5 @@
 {% extends "platform/layout.html" %}
+{% from "shared/_chart.html" import chart %}
 {% block title %}Reports — Nestfolio{% endblock %}
 {% block content %}
 <div>
@@ -41,6 +42,13 @@
     {% endfor %}
   </div>
 </section>
+
+{% set t = report.timeline() %}
+{% set per = 'hour' if kind == 'daily' else 'day' %}
+<div class="dash-grid dash-grid-even">
+  <section class="card">{{ chart("Views per " ~ per, t.labels, t.views, "views") }}</section>
+  <section class="card">{{ chart("New shortlists per " ~ per, t.labels, t.shortlists, "shortlists") }}</section>
+</div>
 
 <div class="dash-grid dash-grid-even">
   {% for heading, columns, rows in report.sections() %}

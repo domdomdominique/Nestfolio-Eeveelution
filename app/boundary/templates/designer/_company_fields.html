@@ -1,0 +1,26 @@
+{# Company form fields shared by the Add and Edit company pages (ID-03, ID-05). #}
+{% from "shared/_phone.html" import phone_input %}
+{% macro company_fields(form) %}
+  <label class="field">
+    <span>Company name *</span>
+    <input name="company_name" maxlength="150" required value="{{ form.get('company_name', '') }}">
+  </label>
+  <label class="field">
+    <span>Description</span>
+    <textarea name="description" maxlength="5000" rows="5">{{ form.get('description', '') }}</textarea>
+  </label>
+  <label class="field">
+    <span>Address</span>
+    <input name="address" maxlength="255" value="{{ form.get('address', '') }}" autocomplete="street-address">
+  </label>
+  <div class="field-row">
+    <label class="field">
+      <span>Contact number</span>
+      {{ phone_input(form.get('phone', ''), required=false) }}
+    </label>
+    <label class="field">
+      <span>Company email</span>
+      <input name="email" type="email" maxlength="120" value="{{ form.get('email', '') }}">
+    </label>
+  </div>
+{% endmacro %}

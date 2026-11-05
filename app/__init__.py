@@ -124,6 +124,10 @@ def create_app(test_config=None):
     ):
         app.register_blueprint(bp)
 
+    # Over-time charts (inline SVG) on the Reports, Statistics and Trends pages
+    from app.boundary.charts import line_chart
+    app.jinja_env.globals["line_chart"] = line_chart
+
     with app.app_context():
         db.create_all()
         IDPCategory.ensure_defaults()
