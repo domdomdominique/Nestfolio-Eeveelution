@@ -33,7 +33,7 @@ def test_dismiss_keeps_the_idp_visible(app):
 
 def test_remove_hides_the_idp_and_closes_all_its_reports(app):
     admin, idp, r1, r2 = setup_data()
-    ReviewReportsController().remove_idp(r1.id, admin.id, "Spam")
+    ReviewReportsController().remove_idp(r1.id, admin.id)
     assert idp.is_removed and not idp.is_visible
     assert idp not in SearchIDPController().browse()
     with pytest.raises(LookupError):
@@ -53,20 +53,5 @@ def test_cannot_remove_from_an_already_resolved_report(app):
     admin, idp, r1, _ = setup_data()
     ReviewReportsController().dismiss(r1.id, admin.id)
     with pytest.raises(ValueError, match="already been resolved"):
-        ReviewReportsController().remove_idp(r1.id, admin.id, "Spam")
+        ReviewReportsController().remove_idp(r1.id, admin.id)
     assert not idp.is_removed
-
-
-def test_remove_needs_a_reason_and_keeps_it(app):
-    admin, idp, r1, r2 = setup_data()
-    with pytest.raises(ValueError, match="reason"):
-        ReviewReportsController().remove_idp(r1.id, admin.id, "  ")
-    assert not idp.is_removed
-    ReviewReportsController().remove_idp(r1.id, admin.id, "Copied content")
-    assert r1.removal_reason == r2.removal_reason == "Copied content"
-
-
-def test_reason_with_crlf_line_breaks_counts_as_one_character(app):
-    admin, _, r1, _ = setup_data()
-    ReviewReportsController().remove_idp(r1.id, admin.id, "a\r\n" * 200 + "b" * 100)  # 500 in a browser, 700 raw
-    assert r1.status == "resolved"

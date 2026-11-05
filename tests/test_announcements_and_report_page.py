@@ -34,7 +34,7 @@ def test_remove_dialog_is_in_the_page_body_and_removing_works(client, app):
     # both buttons open a confirmation first, and are still real forms if JavaScript is off
     assert 'id="resolve-dialog"' in html and 'data-open="resolve-dialog"' in html and 'data-open="remove-dialog"' in html
     assert f'action="/admin/reports/{report.id}/resolve"' in html
-    client.post(f"/admin/reports/{report.id}/remove", data={"reason": "Spam"})
+    client.post(f"/admin/reports/{report.id}/remove")
     assert idp.is_removed
 
 

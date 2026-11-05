@@ -43,7 +43,6 @@
             </div>
             {% else %}
             Resolved {{ r.resolved_at.strftime('%d %b %Y') }}
-            {% if r.removal_reason %}<br><small>Removed: {{ r.removal_reason }}</small>{% endif %}
             {% endif %}
           </td>
         </tr>
@@ -77,12 +76,9 @@
       <p>“<span data-project-title></span>” will be hidden from customers and every open report on it will be closed. The designer keeps their copy.</p>
     </div>
   </div>
-  <form class="modal-actions" method="post" data-delete-form style="flex-wrap:wrap;">
+  <form class="modal-actions" method="post" data-delete-form>
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-    <label for="remove-reason" style="flex-basis:100%;">Reason for removal
-      <textarea id="remove-reason" name="reason" rows="3" maxlength="{{ reason_max }}" required style="width:100%;"></textarea>
-    </label>
-    <button class="btn btn-outline" type="submit" formmethod="dialog" formaction="" formnovalidate>Cancel</button>
+    <button class="btn btn-outline" type="submit" formmethod="dialog" formaction="">Cancel</button>
     <button class="btn btn-primary btn-danger" type="submit">Remove</button>
   </form>
 </dialog>

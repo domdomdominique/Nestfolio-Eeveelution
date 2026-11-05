@@ -82,7 +82,7 @@
       // Fill the delete dialog with the project that was clicked
       if (opener.dataset.action) {
         var form = dialog.querySelector('form[data-delete-form]');
-        if (form) { form.reset(); form.action = opener.dataset.action; }
+        if (form) form.action = opener.dataset.action;
         var name = dialog.querySelector('[data-project-title]');
         if (name) name.textContent = opener.dataset.title || '';
       }

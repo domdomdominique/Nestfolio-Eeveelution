@@ -91,30 +91,9 @@ def test_admin_can_remove_a_reported_project_from_the_page(client, app):
 
     assert b"Remove project" in client.get("/admin/reports").data
     assert client.get(f"/customer/projects/{idp.id}").status_code == 200
-    client.post(f"/admin/reports/{first.id}/remove", data={"reason": "Spam"})
+    client.post(f"/admin/reports/{first.id}/remove")
     assert client.get(f"/customer/projects/{idp.id}").status_code == 404   # hidden from customers
     assert IDP.get(idp.id) is not None                                     # designer keeps it
     assert Report.get(second.id).status == "resolved"                      # every open report closed
     assert b"already been resolved" in client.post(
-        f"/admin/reports/{first.id}/remove", data={"reason": "Spam"}, follow_redirects=True).data
-
-
-def test_blank_reason_does_not_remove_from_the_page(client, app):
-    UserAccount.create("admin@test.com", "password123", "admin")
-    designer = UserAccount.create("des@test.com", "password123", "designer")
-    c1 = UserAccount.create("c1@test.com", "password123", "customer")
-    idp = IDP(title="Loft", category="Kitchen", designer_id=designer.id)
-    db.session.add(idp)
-    db.session.commit()
-    report = ReportIDPController().report(c1.id, idp.id, "Other")
-    client.post("/login", data={"email": "admin@test.com", "password": "password123"})
-    page = client.post(f"/admin/reports/{report.id}/remove", data={"reason": " "}, follow_redirects=True).data
-    assert b"give a reason" in page and not idp.is_removed and report.status == "open"
-
-
-def test_ensure_schema_adds_the_missing_column(app):
-    db.session.remove()
-    with db.engine.begin() as c:
-        c.exec_driver_sql("ALTER TABLE report DROP COLUMN removal_reason")
-    Report.ensure_schema()
-    assert "removal_reason" in {c["name"] for c in db.inspect(db.engine).get_columns("report")}
+        f"/admin/reports/{first.id}/remove", follow_redirects=True).data
