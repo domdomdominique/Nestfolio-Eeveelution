@@ -1144,61 +1144,66 @@ dialog.lightbox::backdrop { background: rgba(20, 14, 9, 0.88); }
 }
 
 /* Designer registration status */
+.status-card { display: flex; flex-direction: column; gap: 20px; }
+.status-card h2 { font-family: var(--font-display); font-size: 26px; line-height: 1.25; font-weight: 400; color: var(--espresso-deep); }
+.status-card .btn, .status-badge { align-self: flex-start; }
 .status-badge {
-  display: inline-block;
-  padding: 0.2rem 0.75rem;
+  padding: 4px 12px;
   border-radius: 999px;
-  font-size: 0.8rem;
+  font-size: 13px;
   font-weight: 600;
-  background: #fff1e0;
-  color: #b45309;
+  background: var(--cream);
+  color: var(--espresso);
 }
-.status-badge-approved { background: #e6f4ea; color: #2e7d32; }
-.status-badge-rejected { background: #fdecea; color: #c62828; }
-.status-steps {
-  display: flex;
-  list-style: none;
-  padding: 0;
-  margin: 1.5rem 0;
-}
+.status-badge-approved { background: var(--success-bg); color: var(--success); }
+.status-badge-rejected { background: var(--error-bg); color: var(--error); }
+.status-steps { display: flex; list-style: none; padding: 0; margin: 0; }
 .status-steps li {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 2px;
   position: relative;
+  text-align: center;
+  font-size: 12px;
   color: var(--text-muted);
 }
+/* The line between two circles: green once the step on its right is reached. */
 .status-steps li + li::before {
   content: "";
   position: absolute;
-  top: 18px;
+  top: 17px;
   right: 50%;
+  width: calc(100% - 48px);
   border-top: 3px solid var(--line);
   transform: translateX(-24px);
-  width: calc(100% - 48px);
 }
+.status-steps .step-done::before,
+.status-steps .step-current::before,
+.status-steps .step-approved::before { border-top-color: var(--success); }
+.status-steps .step-rejected::before { border-top-color: var(--error); }
 .status-steps .step-icon {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
+  margin-bottom: 4px;
   border-radius: 50%;
   border: 2px solid var(--line);
-  background: #fff;
+  background: var(--surface-white);
+  font-size: 14px;
   font-weight: 700;
 }
 .status-steps .step-done .step-icon,
-.status-steps .step-approved .step-icon { background: #2e7d32; border-color: #2e7d32; color: #fff; }
-.status-steps .step-current .step-icon { background: var(--espresso-deep); border-color: var(--espresso-deep); color: #fff; }
-.status-steps .step-rejected .step-icon { background: #c62828; border-color: #c62828; color: #fff; }
-.status-steps .step-done::before,
-.status-steps .step-approved::before { border-top-color: #2e7d32; }
-.status-steps .step-rejected::before { border-top-color: #c62828; }
-.status-steps li strong { color: var(--text-body); margin-top: 0.4rem; }
-.status-summary { background: #f7f4f0; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1rem; }
-.status-summary h3 { font-size: 1rem; margin-bottom: 0.5rem; }
-.status-summary dl { display: grid; grid-template-columns: auto 1fr; gap: 0.25rem 1rem; margin: 0; }
-.status-summary dd { margin: 0; text-align: right; }
-.status-reason { color: #c62828; }
+.status-steps .step-approved .step-icon { background: var(--success); border-color: var(--success); color: var(--text-on-dark); }
+.status-steps .step-current .step-icon { background: var(--espresso); border-color: var(--espresso); color: var(--text-on-dark); }
+.status-steps .step-rejected .step-icon { background: var(--error); border-color: var(--error); color: var(--text-on-dark); }
+.status-steps li strong { font-size: 14px; color: var(--text-body); }
+.status-summary { background: var(--sand); border-radius: 10px; padding: 16px 20px; }
+.status-summary h3 { margin-bottom: 8px; font-size: 15px; font-weight: 600; color: var(--espresso-deep); }
+.status-summary dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0; font-size: 14px; }
+.status-summary dt { color: var(--text-muted); }
+.status-summary dd { margin: 0; text-align: right; overflow-wrap: anywhere; }
+.status-reason { padding: 12px 16px; border-radius: 8px; background: var(--error-bg); color: var(--error); font-size: 14px; }
