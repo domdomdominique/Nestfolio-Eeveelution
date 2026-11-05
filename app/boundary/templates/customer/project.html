@@ -5,6 +5,7 @@
 {% block content %}
 {% set img = 'img/ui/' %}
 {% set here = request.full_path.rstrip('?') %}
+{% set enquire = url_for('customer.new_enquiry', designer_id=designer.id, idp_id=idp.id) %}
 {% set photo_colours = ['#eed6be', '#d9cec2', '#e6ddcf', '#f0dccb', '#e2d9cf'] %}
   <div class="wrap project-page">
     <nav class="breadcrumb" aria-label="Breadcrumb">
@@ -40,6 +41,12 @@
           Delete project
         </a>
 
+        {% endif %}
+        {# C-16 Send enquiry: opens My enquiries with a new message to this designer #}
+        {% if session.role == 'customer' %}
+          <a class="btn btn-primary btn-enquire" href="{{ enquire }}"><img src="{{ url_for('static', filename=img ~ 'chat-white.svg') }}" width="18" height="18" alt=""> Send enquiry</a>
+        {% elif not session.user_id %}
+          <a class="btn btn-primary btn-enquire" href="{{ url_for('auth.login', next=enquire) }}"><img src="{{ url_for('static', filename=img ~ 'chat-white.svg') }}" width="18" height="18" alt=""> Send enquiry</a>
         {% endif %}
         <button class="btn btn-share" type="button" id="share-btn">
           <img src="{{ url_for('static', filename=img ~ 'share.svg') }}" width="18" height="18" alt="">
@@ -146,16 +153,9 @@
           </h2>
           <p class="designer-about">Send {{ designer.display_name }} a message to start a renovation discussion.</p>
           {% if session.role == 'customer' %}
-            <form class="enquiry-form" method="post" action="{{ url_for('customer.send_enquiry', designer_id=designer.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-              <input type="hidden" name="idp_id" value="{{ idp.id }}">
-              <input type="hidden" name="next" value="{{ here }}">
-              <input name="name" placeholder="Your name" aria-label="Your name" required value="{{ session.name or '' }}">
-              <input name="contact" placeholder="you@example.com or 9123 4567" aria-label="Email or phone" required>
-              <textarea name="message" placeholder="Tell us about your home and budget…" aria-label="Message" rows="4" maxlength="2000" required></textarea>
-              <button class="btn btn-primary" type="submit">Send enquiry</button>
-            </form>
+            <a class="btn btn-primary" href="{{ enquire }}">Send enquiry</a>
           {% elif not session.user_id %}
-            <a class="btn btn-primary" href="{{ url_for('auth.login', next=here) }}">Log in to send an enquiry</a>
+            <a class="btn btn-primary" href="{{ url_for('auth.login', next=enquire) }}">Log in to send an enquiry</a>
           {% endif %}
         </section>
 

@@ -7,7 +7,7 @@
 {% block sidebar_nav %}
       <a href="{{ url_for('designer.home') }}" {% if nav == 'dashboard' %}aria-current="page"{% endif %}>{{ i.icon('dashboard') }}Dashboard</a>
       <a href="{{ url_for('designer.portfolio') }}" {% if nav == 'portfolio' %}aria-current="page"{% endif %}>{{ i.icon('portfolio') }}My Portfolio</a>
-      <a href="{{ url_for('designer.enquiries') }}" {% if nav == 'enquiries' %}aria-current="page"{% endif %}>{{ i.icon('enquiries') }}Enquiries</a>
+      <a href="{{ url_for('designer.enquiries') }}" {% if nav == 'enquiries' %}aria-current="page"{% endif %}>{{ i.icon('enquiries') }}Enquiries{% if unread_enquiries %} <span class="pill pill-pending" aria-label="{{ unread_enquiries }} new">{{ unread_enquiries }}</span>{% endif %}</a>
       <a href="{{ url_for('designer.profile') }}" {% if nav == 'profile' %}aria-current="page"{% endif %}>{{ i.icon('profile') }}My Profile</a>
 {% endblock %}
 {% block topbar_left %}

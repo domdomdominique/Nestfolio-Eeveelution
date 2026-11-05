@@ -76,6 +76,17 @@
             <span>My Favourites</span>
           </a>
 
+          {% if session.get('role') == 'customer' %}
+          {# ID-21: new replies from designers #}
+          <a class="nav-fav" href="{{ url_for('customer.my_enquiries') }}">
+            <img src="{{ url_for('static', filename=img ~ 'chat.svg') }}" width="20" height="20" alt="">
+            <span>My Enquiries</span>
+            {% if unread_enquiries %}
+            <span aria-label="{{ unread_enquiries }} new" style="background:#b25e09; color:#fff; border-radius:999px; padding:1px 7px; font-size:12px; font-weight:600;">{{ unread_enquiries }}</span>
+            {% endif %}
+          </a>
+          {% endif %}
+
           <a class="btn btn-primary"
             href="{{ url_for('customer.designers') }}">
             Find a Designer

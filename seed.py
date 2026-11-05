@@ -19,6 +19,7 @@ from app.entity.db import db
 from app.entity.designer_application import DesignerApplication
 from app.entity.designer_company import DesignerCompany
 from app.entity.enquiry import Enquiry
+from app.entity.reply import EnquirySeen, Reply
 from app.entity.favourite import Favourite
 from app.entity.idp import IDP
 from app.entity.idp_category import IDPCategory
@@ -358,6 +359,41 @@ with app.app_context():
             name=customer.name, contact=contact, message=message,
             created_at=ago(0, 60, after=idp.created_at if idp else None)))
 
+    # The demo customer has sent 3 enquiries of their own
+    for idp in random.sample(idps, 3):
+        db.session.add(Enquiry(designer_id=idp.designer_id, customer_id=customers[0].id, idp_id=idp.id,
+                               name=customers[0].name, contact=customers[0].email,
+                               message="Hi, I love this project. Could you give me a rough quote for my 4-room HDB?",
+                               created_at=ago(2, 10, after=idp.created_at)))
+    db.session.commit()
+
+    # --- Replies (ID-21): designers answer most enquiries; some customers write back ----------
+    DESIGNER_REPLIES = [
+        "Thanks for reaching out! A similar design usually starts from about S${k}k. Shall we arrange a site visit?",
+        "Hi {name}, yes we are available. Could you share your floor plan so we can prepare a quote?",
+        "Thank you! We can start in about {weeks} weeks. Would a call this Saturday work for you?",
+        "Hi {name}, happy to help. Our 3D drawings are included once you confirm the design.",
+    ]
+    CUSTOMER_REPLIES = ["Great, Saturday morning works for me.", "Sure, I'll email the floor plan tonight.",
+                        "Thanks! Could you also include the bathrooms in the quote?"]
+    for enquiry in Enquiry.query.all():
+        demo = enquiry.customer_id == customers[0].id
+        if random.random() < 0.55 or demo:
+            replied = min(enquiry.created_at + timedelta(hours=random.uniform(2, 48)), NOW)
+            db.session.add(Reply(enquiry_id=enquiry.id, sender_id=enquiry.designer_id, created_at=replied,
+                                 message=random.choice(DESIGNER_REPLIES).format(
+                                     k=random.randint(3, 9) * 10, weeks=random.randint(2, 8),
+                                     name=enquiry.name.split()[0])))
+            # The designer saw the enquiry when replying; older replies were read by the customer
+            db.session.add(EnquirySeen(enquiry_id=enquiry.id, user_id=enquiry.designer_id, seen_at=replied))
+            if (NOW - replied).days >= 2 and not demo:
+                db.session.add(EnquirySeen(enquiry_id=enquiry.id, user_id=enquiry.customer_id, seen_at=NOW))
+                if random.random() < 0.3:
+                    db.session.add(Reply(enquiry_id=enquiry.id, sender_id=enquiry.customer_id,
+                                         message=random.choice(CUSTOMER_REPLIES),
+                                         created_at=min(replied + timedelta(hours=random.uniform(1, 24)), NOW)))
+    db.session.commit()
+
     # --- 100 reports (C-15 / UA-17): 70 open, 30 resolved; each customer reports a project once -
     pairs = random.sample([(c, i) for c in customers[1:] for i in idps], 100)
     for n, (customer, idp) in enumerate(pairs):
@@ -386,7 +422,7 @@ with app.app_context():
     print(f"Accounts: {UserAccount.query.count()} ({len(customers)} customers, {len(designers)} designers), "
           f"companies: {DesignerCompany.query.count()}, projects: {IDP.query.count()}, "
           f"views logged: {IDPView.query.count()}, favourites: {Favourite.query.count()}, "
-          f"enquiries: {Enquiry.query.count()}, reports: {Report.query.count()} ({Report.count_open()} open), "
+          f"enquiries: {Enquiry.query.count()} ({Reply.query.count()} replies), reports: {Report.query.count()} ({Report.count_open()} open), "
           f"applications: {DesignerApplication.query.count()} ({DesignerApplication.count_pending()} pending), "
           f"categories: {IDPCategory.query.count()}, profiles: {UserProfile.query.count()}, "
           f"announcements: {Announcement.query.count()}")

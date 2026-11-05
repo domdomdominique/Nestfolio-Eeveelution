@@ -2,7 +2,7 @@ from app.entity.enquiry import Enquiry
 from app.entity.user_account import UserAccount
 
 
-# ID-21 Designer's enquiry list, newest first (replies are not built yet).
+# ID-21 Designer's enquiry list, newest first, each with its replies.
 class ViewEnquiriesController:
     def _check_designer(self, designer_id):
         account = UserAccount.get(designer_id)
@@ -20,4 +20,4 @@ class ViewEnquiriesController:
 
     def count(self, designer_id):
         self._check_designer(designer_id)
-        return Enquiry.count_for_designer(designer_id)
+        return Enquiry.count_for_designer(designer_id)

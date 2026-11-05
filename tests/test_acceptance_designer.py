@@ -316,8 +316,6 @@ def test_id21_enquiry_list_newest_first_with_details(dc, app):
     assert "Zed" not in page                                                                       # AC4
 
 
-@pytest.mark.xfail(reason="ID-21 AC3 and AC5: replies are not built yet (needs the Reply table, "
-                          "see docs/backend-requirements-id.md section 5)", strict=True)
 def test_id21_designer_can_reply_and_customer_sees_it(dc, app):
     designer = UserAccount.query.filter_by(email="des@test.com").one()
     cus = make("customer", "cus@test.com", "Sarah", phone="81112222")
@@ -325,3 +323,7 @@ def test_id21_designer_can_reply_and_customer_sees_it(dc, app):
     db.session.add(enquiry)
     db.session.commit()
     assert b"Reply" in dc.get("/designer/enquiries").data
+    dc.post(f"/designer/enquiries/{enquiry.id}/reply", data={"message": "Happy to help, Ann!"})          # AC3
+    cc = dc.application.test_client()
+    cc.post("/login", data={"email": "cus@test.com", "password": "password123", "role": "customer"})
+    assert "Happy to help, Ann!" in cc.get("/customer/enquiries").get_data(as_text=True)               # AC5

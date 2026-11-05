@@ -1,0 +1,24 @@
+{% extends "customer/layout.html" %}
+{% import "customer/_account.html" as account with context %}
+{% from "shared/_inbox.html" import inbox %}
+{% set inline_errors = true %}
+{% block title %}My enquiries — Nestfolio{% endblock %}
+{% block content %}
+  <div class="account-page">
+    <div class="wrap account-layout">
+      {{ account.sidebar('enquiries') }}
+
+      <div class="account-main">
+        <div>
+          <h1 class="page-title">My enquiries</h1>
+          <p class="page-sub">Your messages to interior designers, and their replies.</p>
+        </div>
+        {{ inbox('customer', enquiries, selected, unread, counts, show, search, session.user_id,
+                 'customer.my_enquiries', 'customer.reply_to_designer', compose) }}
+        {% if not total and not compose %}
+        <p><a class="btn btn-primary" href="{{ url_for('customer.home') }}">Browse projects</a></p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,0 +1,192 @@
+{# ID-21 Enquiries inbox: conversations on the left, the open conversation on the right.
+   Used by the designer's Enquiries page and the customer's My enquiries page.
+   side is 'designer' or 'customer'; page and reply are the endpoints for links and the reply form. #}
+
+{% macro icon(name) -%}
+<svg class="inbox-ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+  {%- if name == 'search' %}<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
+  {%- elif name == 'mail' %}<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>
+  {%- elif name == 'phone' %}<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>
+  {%- elif name == 'back' %}<path d="m15 18-6-6 6-6"/>
+  {%- elif name == 'image' %}<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>
+  {%- endif %}
+</svg>
+{%- endmacro %}
+
+{# C-16 Right pane for a new enquiry, opened by 'Send enquiry' on a project or designer page #}
+{% macro new_enquiry(c, page) %}
+  {% set d = c.designer %}
+  <header class="inbox-head">
+    <a class="inbox-back" href="{{ url_for(page) }}">{{ icon('back') }}All conversations</a>
+    <span class="inbox-avatar inbox-avatar-lg">{{ d.display_name|initials }}</span>
+    <div class="inbox-who">
+      <h2><a href="{{ url_for('customer.designer_profile', designer_id=d.id) }}">{{ d.display_name }}</a></h2>
+      <p>Interior designer</p>
+    </div>
+    <span class="inbox-status">New enquiry</span>
+  </header>
+  <div class="inbox-about">
+    {% if c.idp %}
+      {% if c.idp.photos %}
+      <img src="{{ url_for('customer.project_photo', photo_id=c.idp.photos[0].id) }}" alt="" width="56" height="40">
+      {% else %}<span class="inbox-thumb">{{ icon('image') }}</span>{% endif %}
+      <div>
+        <strong>About: <a href="{{ url_for('customer.project', idp_id=c.idp.id) }}">{{ c.idp.title }}</a></strong>
+        <small>{{ c.idp.category }} · {{ 'Current project' if c.idp.is_current else 'Past project' }}</small>
+      </div>
+    {% else %}
+      <span class="inbox-thumb">{{ icon('mail') }}</span>
+      <div><strong>General enquiry</strong><small>Ask {{ d.display_name }} about their services or a new project.</small></div>
+    {% endif %}
+  </div>
+  <div class="inbox-messages inbox-start">
+    <p>Start the conversation. Tell {{ d.display_name }} about your home, budget and timeline.<br>
+       Their reply will appear here, and you'll see a badge on My Enquiries when it arrives.</p>
+  </div>
+  <form class="inbox-reply" method="post" action="{{ url_for('customer.send_enquiry', designer_id=d.id) }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if c.idp %}<input type="hidden" name="idp_id" value="{{ c.idp.id }}">{% endif %}
+    {% for message in get_flashed_messages(category_filter=['error']) %}
+      <p class="form-error" role="alert">{{ message }}</p>
+    {% endfor %}
+    <div class="inbox-fields">
+      <label>Your name<input name="name" required maxlength="100" value="{{ c.name }}"></label>
+      <label>Reply to (email or phone)<input name="contact" required maxlength="120" value="{{ c.contact }}" placeholder="you@example.com or 9123 4567"></label>
+    </div>
+    <label>
+      <span class="visually-hidden">Message</span>
+      <textarea name="message" rows="3" maxlength="2000" required autofocus
+                placeholder="Hi! I like this design. My home is a… and my budget is about…">{{ c.message }}</textarea>
+    </label>
+    <button class="btn btn-primary" type="submit">Send enquiry</button>
+  </form>
+{% endmacro %}
+
+{% macro inbox(side, enquiries, selected, unread, counts, show, search, viewer_id, page, reply, compose=None) %}
+{% set keep = {'show': show if show != 'all' else None, 'q': search or None} %}
+{% set new_label = 'New' if side == 'designer' else 'New reply' %}
+
+<div class="inbox{{ ' inbox-open' if request.args.get('id') or compose }}">
+  {# ---------- Left: the list of conversations ---------- #}
+  <section class="inbox-list" aria-label="Conversations">
+    <form class="inbox-search" role="search" method="get" action="{{ url_for(page) }}">
+      {{ icon('search') }}
+      <input type="search" name="q" value="{{ search }}" maxlength="100" placeholder="Search enquiries…" aria-label="Search enquiries">
+      {% if show != 'all' %}<input type="hidden" name="show" value="{{ show }}">{% endif %}
+    </form>
+    <nav class="inbox-tabs" aria-label="Filter enquiries">
+      {% for key, label in [('all', 'All'), ('unread', 'Unread'), ('replied', 'Replied')] %}
+      <a href="{{ url_for(page, show=key if key != 'all' else None, q=search or None) }}"
+         {% if show == key %}aria-current="page"{% endif %}>{{ label }} ({{ counts[key] }})</a>
+      {% endfor %}
+    </nav>
+
+    <div class="inbox-items">
+      {% for e in enquiries %}
+      {% set other = e.name if side == 'designer' else e.designer.display_name %}
+      {% set last = e.conversation[-1] %}
+      <a class="inbox-item" id="enquiry-{{ e.id }}" href="{{ url_for(page, id=e.id, **keep) }}"
+         {% if selected and e.id == selected.id %}aria-current="true"{% endif %}>
+        <span class="inbox-avatar">{{ other|initials }}</span>
+        <span class="inbox-item-body">
+          <span class="inbox-item-top">
+            <strong>{{ other }}</strong>
+            {% if unread.get(e.id) %}<span class="inbox-dot" title="{{ new_label }} message"><span class="visually-hidden">{{ new_label }}</span></span>{% endif %}
+            <small>{{ e.last_activity|ago }}</small>
+          </span>
+          <span class="inbox-item-project">{{ e.idp.title if e.idp else 'General enquiry' }}</span>
+          <span class="inbox-item-preview{{ ' is-unread' if unread.get(e.id) }}">{{ 'You: ' if last.sender_id == viewer_id }}{{ last.message|truncate(90, true, '…') }}</span>
+        </span>
+      </a>
+      {% else %}
+      <p class="inbox-empty">
+        {% if search %}No results found for “{{ search }}”.
+        {% elif show == 'unread' %}No unread messages.
+        {% elif show == 'replied' %}No replied conversations yet.
+        {% elif side == 'designer' %}No enquiries yet. Messages will appear here when customers contact you.
+        {% else %}You haven't contacted any designers yet. Use “Send enquiry” on a project or designer page, and their replies will appear here.
+        {% endif %}
+      </p>
+      {% endfor %}
+    </div>
+  </section>
+
+  {# ---------- Right: the open conversation ---------- #}
+  <section class="inbox-thread" aria-label="Conversation">
+    {% if selected %}
+    {% set e = selected %}
+    {% set other = e.name if side == 'designer' else e.designer.display_name %}
+    {% set answered = e.last_message_from_designer %}
+    <header class="inbox-head">
+      <a class="inbox-back" href="{{ url_for(page, **keep) }}">{{ icon('back') }}All conversations</a>
+      <span class="inbox-avatar inbox-avatar-lg">{{ other|initials }}</span>
+      <div class="inbox-who">
+        {% if side == 'designer' %}
+        <h2>{{ other }}</h2>
+        <p>{{ icon('mail' if '@' in e.contact else 'phone') }}{{ e.contact }}</p>
+        {% else %}
+        <h2><a href="{{ url_for('customer.designer_profile', designer_id=e.designer_id) }}">{{ other }}</a></h2>
+        <p>Interior designer · replies go to {{ e.contact }}</p>
+        {% endif %}
+      </div>
+      <span class="inbox-status{{ ' is-replied' if answered }}">
+        {% if answered %}Replied{% elif side == 'designer' %}Awaiting reply{% else %}Waiting for a reply{% endif %}
+      </span>
+    </header>
+
+    <div class="inbox-about">
+      {% if e.idp %}
+        {% if e.idp.photos %}
+        <img src="{{ url_for('customer.project_photo', photo_id=e.idp.photos[0].id) }}" alt="" width="56" height="40">
+        {% else %}<span class="inbox-thumb">{{ icon('image') }}</span>{% endif %}
+        <div>
+          <strong>About: <a href="{{ url_for('customer.project', idp_id=e.idp_id) }}">{{ e.idp.title }}</a></strong>
+          <small>{{ e.idp.category }} · {{ 'Current project' if e.idp.is_current else 'Past project' }}</small>
+        </div>
+      {% else %}
+        <span class="inbox-thumb">{{ icon('mail') }}</span>
+        <div><strong>General company enquiry</strong><small>Not about a specific project, or the project is no longer available.</small></div>
+      {% endif %}
+    </div>
+
+    <div class="inbox-messages" id="conversation">
+      {% set day = namespace(label='') %}
+      {% for m in e.conversation %}
+        {% if m.created_at|day_label != day.label %}
+          {% set day.label = m.created_at|day_label %}
+          <p class="inbox-day">{{ day.label }}</p>
+        {% endif %}
+        {% set mine = m.sender_id == viewer_id %}
+        {% set sender = e.designer.display_name if m.sender_id == e.designer_id else e.name %}
+        <div class="bubble-row{{ ' is-mine' if mine }}">
+          <p class="bubble">{{ m.message }}</p>
+          <small>{{ m.created_at|clock }}{% if mine %} · {{ sender }}{% endif %}</small>
+        </div>
+      {% endfor %}
+    </div>
+
+    <form class="inbox-reply" method="post" action="{{ url_for(reply, enquiry_id=e.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      {% if show != 'all' %}<input type="hidden" name="show" value="{{ show }}">{% endif %}
+      {% if search %}<input type="hidden" name="q" value="{{ search }}">{% endif %}
+      {% for message in get_flashed_messages(category_filter=['error']) %}
+        <p class="form-error" role="alert">{{ message }}</p>
+      {% endfor %}
+      <label>
+        <span class="visually-hidden">Reply to {{ other }}</span>
+        <textarea name="message" rows="3" maxlength="2000" required placeholder="Write a reply to {{ other.split()[0] }}…"></textarea>
+      </label>
+      <button class="btn btn-primary" type="submit">Send reply</button>
+    </form>
+    {% elif compose %}
+    {{ new_enquiry(compose, page) }}
+    {% else %}
+    <p class="inbox-empty inbox-pick">Select a conversation to read it here.</p>
+    {% endif %}
+  </section>
+</div>
+<script>
+  // Open the conversation at its newest message
+  document.querySelectorAll('.inbox-messages').forEach(function (m) { m.scrollTop = m.scrollHeight; });
+</script>
+{% endmacro %}
