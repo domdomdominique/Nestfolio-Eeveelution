@@ -24,7 +24,7 @@
            '✕' if status == 'rejected' else ('✓' if status == 'approved' else '3'),
            application.reviewed_at.strftime(when) if application.reviewed_at else 'Pending'),
         ] %}
-        <section class="card status-card">
+        <section class="status-card">
           <span class="status-badge status-badge-{{ status }}">
             {{ {'pending': 'Pending review', 'approved': 'Approved', 'rejected': 'Rejected'}[status] }}
           </span>
