@@ -7,7 +7,8 @@ import re
 
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 SG_PHONE_RE = re.compile(r"^[3689]\d{7}$")
-UEN_RE = re.compile(r"^[0-9A-Z]{9,10}$")
+# Singapore UEN: 8 digits + letter (business), 9 digits + letter (local company), or T/S/R + yy + 2 letters + 4 digits + letter.
+UEN_RE = re.compile(r"^(\d{8}[A-Z]|\d{9}[A-Z]|[TSR]\d{2}[A-Z]{2}\d{4}[A-Z])$")
 MIN_PASSWORD_LENGTH = 8
 
 
@@ -45,5 +46,5 @@ def check_password(password, confirm_password):
 def clean_uen(uen):
     uen = (uen or "").strip().upper()
     if not UEN_RE.match(uen):
-        raise ValueError("Please enter a valid UEN (9 or 10 letters/digits).")
+        raise ValueError("Please enter a valid UEN, for example 201912345K or 53312345A.")
     return uen

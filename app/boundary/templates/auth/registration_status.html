@@ -1,6 +1,5 @@
 {% extends "customer/layout.html" %}
 {% import "auth/_auth_card.html" as auth with context %}
-{% set inline_errors = true %}
 {% block title %}Registration status — Nestfolio{% endblock %}
 {% block content %}
   <div class="auth-page">
@@ -10,40 +9,64 @@
                             'A User Admin checks every interior design company before it can publish projects on Nestfolio.',
                             ['Company and UEN are verified', 'Most applications reviewed within a few days', 'You can apply again if rejected']) }}
 
-        <form class="auth-form" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="auth-form">
           <h1>Designer registration status</h1>
-          {{ auth.errors() }}
 
-          {% if application %}
-          <section class="card" style="display:flex; flex-direction:column; gap:8px;">
-            <h2 style="font-size:18px;">{{ application.company_name }}</h2>
-            <p class="hint">Registration email: {{ application.email }}</p>
-            <p>Status: <strong>{{ application.status|title }}</strong></p>
-            {% if application.status == 'pending' %}
-              <p>Your application is being reviewed. You can use designer features after approval.</p>
-            {% elif application.status == 'approved' %}
-              <p>Your application has been approved. You can now log in as an Interior Designer.</p>
-              <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Go to login</a>
-            {% elif application.status == 'rejected' %}
-              <p>Your application was not approved.</p>
-              <p>Reason: {{ application.rejection_reason or 'Please contact the administrator for details.' }}</p>
-            {% endif %}
+      {% if application %}
+        {% set status = application.status %}
+        {% set when = '%d %b %Y' %}
+        {% set steps = [
+          ('Submitted', 'done', '✓', application.submitted_at.strftime(when)),
+          ('Under review', 'done' if status != 'pending' else 'current',
+           '✓' if status != 'pending' else '…', 'Completed' if status != 'pending' else 'In progress'),
+          ('Not approved' if status == 'rejected' else 'Approved',
+           status if status != 'pending' else 'todo',
+           '✕' if status == 'rejected' else ('✓' if status == 'approved' else '3'),
+           application.reviewed_at.strftime(when) if application.reviewed_at else 'Pending'),
+        ] %}
+        <section class="card status-card">
+          <span class="status-badge status-badge-{{ status }}">
+            {{ {'pending': 'Pending review', 'approved': 'Approved', 'rejected': 'Rejected'}[status] }}
+          </span>
+
+          <h2>
+            {% if status == 'pending' %}Thanks, {{ application.name.split()[0] }}! Your application is being reviewed
+            {% elif status == 'approved' %}Your application has been approved
+            {% else %}Your application was not approved{% endif %}
+          </h2>
+
+          <ol class="status-steps">
+            {% for label, state, icon, sub in steps %}
+              <li class="step-{{ state }}">
+                <span class="step-icon">{{ icon }}</span>
+                <strong>{{ label }}</strong>
+                <small>{{ sub }}</small>
+              </li>
+            {% endfor %}
+          </ol>
+
+          <section class="status-summary">
+            <h3>Application summary</h3>
+            <dl>
+              <dt>Company</dt><dd>{{ application.company_name }}</dd>
+              <dt>UEN</dt><dd>{{ application.uen }}</dd>
+              <dt>Contact</dt><dd>{{ application.name }} · {{ application.email }}</dd>
+            </dl>
           </section>
+
+          {% if status == 'pending' %}
+            <p>You can use designer features after approval.</p>
+          {% elif status == 'rejected' %}
+            <p class="status-reason">
+              <strong>Reason:</strong>
+              {{ application.rejection_reason or 'Please contact the administrator for details.' }}
+            </p>
           {% endif %}
 
-          <p class="auth-lead">Enter the email and password you used when submitting your designer application.</p>
-          <label class="field">
-            <span>Registration email</span>
-            <input name="email" type="email" autocomplete="email" required value="{{ request.form.get('email', '') }}">
-          </label>
-          <label class="field">
-            <span>Password</span>
-            <input name="password" type="password" autocomplete="current-password" required>
-          </label>
-          {{ auth.show_password() }}
-          <button class="btn btn-primary btn-block" type="submit">Check registration status</button>
-          <p class="auth-switch"><a href="{{ url_for('auth.login') }}">Back to login</a></p>
-        </form>
+          <a class="btn btn-primary" href="{{ url_for('auth.login') }}">Back to login</a>
+        </section>
+      {% endif %}
+        </div>
       </div>
     </div>
   </div>

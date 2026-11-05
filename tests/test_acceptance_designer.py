@@ -53,7 +53,7 @@ def test_id01_login_rules(client, app):
 
 def test_id01_pending_and_rejected_designers_cannot_log_in(client, app):
     """AC5: a designer whose registration is Pending or Rejected cannot use designer features."""
-    for status, word in (("pending", b"still being reviewed"), ("rejected", b"not approved")):
+    for status, word in (("pending", b"being reviewed"), ("rejected", b"not approved")):
         application = DesignerApplication(
             name="Ann", email=f"{status}@test.com", phone="8123456" + str(len(status)),
             password_hash="x", company_name="Co", uen="12345678A", experience_years=1,
@@ -63,7 +63,8 @@ def test_id01_pending_and_rejected_designers_cannot_log_in(client, app):
         from werkzeug.security import generate_password_hash
         application.password_hash = generate_password_hash("password123")
         db.session.commit()
-        page = login(client, f"{status}@test.com")
+        page = client.post("/login", data={"email": f"{status}@test.com", "password": "password123"},
+                           follow_redirects=True)
         assert word in page.data
         assert client.get("/designer/portfolio").status_code == 302
 
@@ -235,24 +236,21 @@ def test_id15_registration_form(client, app):
 
 
 def test_id16_designer_sees_registration_status(client, app):
-    client.post("/register/designer", data=APPLY)
-    page = client.post("/registration-status", data={"email": "ann@test.com", "password": "password123"},
-                       follow_redirects=True)
-    assert b"Pending" in page.data                                                              # AC1/AC2
+    attempt = {"email": "ann@test.com", "password": "password123"}
+    page = client.post("/register/designer", data=APPLY, follow_redirects=True)
+    assert b"Pending" in page.data and b"201912345K" in page.data                               # AC1/AC2 (card after applying)
+    assert b"Invalid email or password" in client.post(
+        "/login", data={**attempt, "password": "wrong-password"}, follow_redirects=True).data   # no card without the password
     application = DesignerApplication.query.one()
     admin = make("admin", "admin@test.com", "Ann")
     from app.control.review_designer_application_controller import ReviewDesignerApplicationController
     ReviewDesignerApplicationController().reject(application.id, admin.id, "Incomplete UEN")
-    page = client.post("/registration-status", data={"email": "ann@test.com", "password": "password123"},
-                       follow_redirects=True)
+    page = client.post("/login", data=attempt, follow_redirects=True)
     assert b"Rejected" in page.data and b"Incomplete UEN" in page.data
     assert client.get("/designer/").status_code == 302                                          # AC4
     application.status = "pending"
     db.session.commit()
     ReviewDesignerApplicationController().approve(application.id, admin.id)
-    assert b"Approved" in client.post("/registration-status",
-                                      data={"email": "ann@test.com", "password": "password123"},
-                                      follow_redirects=True).data
     assert login(client, "ann@test.com").status_code == 302                                     # AC3
     assert b"Welcome back" in client.get("/designer/").data
 

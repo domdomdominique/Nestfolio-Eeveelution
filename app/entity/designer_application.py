@@ -76,6 +76,14 @@ class DesignerApplication(db.Model):
         return cls.query.filter_by(email=email, status="pending").first() is not None
 
     @classmethod
+    def uen_in_use(cls, uen):
+        """Is this UEN on a pending application or on a registered company?"""
+        from app.entity.designer_company import DesignerCompany
+
+        return (cls.query.filter_by(uen=uen, status="pending").first() is not None
+                or DesignerCompany.query.filter_by(uen=uen).first() is not None)
+
+    @classmethod
     def latest_for(cls, email):
         return cls.query.filter_by(email=email).order_by(cls.id.desc()).first()
 

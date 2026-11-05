@@ -36,6 +36,8 @@ class ApplyDesignerController:
         if DesignerApplication.has_pending(email):
             raise ValueError("You already have an application waiting for review.")
         ensure_phone_free(phone)
+        if DesignerApplication.uen_in_use(uen):
+            raise ValueError("This UEN is already registered or waiting for review.")
 
         return DesignerApplication.submit(
             name, email, phone, password, company_name, uen,

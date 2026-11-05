@@ -41,9 +41,17 @@ def test_cannot_apply_with_email_that_already_has_account(app):
         apply()
 
 
+def test_same_uen_cannot_be_used_twice(app):
+    apply()
+    with pytest.raises(ValueError, match="UEN is already"):
+        apply(email="other@studio.com", phone="+65 8123 4567")
+
+
 @pytest.mark.parametrize("changes, message", [
     ({"company_name": ""}, "company name"),
     ({"uen": "123"}, "UEN"),
+    ({"uen": "ABCDEFGHIJ"}, "UEN"),
+    ({"uen": "1234567890"}, "UEN"),
     ({"experience_years": "abc"}, "number"),
     ({"portfolio_url": "javascript:alert(1)"}, "http"),
 ])
@@ -105,7 +113,7 @@ def test_pending_list_and_count(app):
     admin = make_admin()
     controller = ReviewDesignerApplicationController()
     first = apply()
-    apply(email="cara@studio.com", phone="+65 9123 4567")  # phone numbers must be unique
+    apply(email="cara@studio.com", phone="+65 9123 4567", uen="201912346K")  # phone and UEN must be unique
     controller.approve(first.id, admin.id)
 
     assert controller.pending_count() == 1
@@ -125,7 +133,7 @@ def test_apply_page_submits_and_login_explains_pending(client):
 
     response = client.post("/login", data={"email": "ben@studio.com", "password": "designer123"},
                            follow_redirects=True)
-    assert b"still being reviewed" in response.data
+    assert b"being reviewed" in response.data
 
 
 def test_admin_can_approve_from_the_page(client):
