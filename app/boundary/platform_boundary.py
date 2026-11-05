@@ -8,6 +8,7 @@ from app.control.create_category_controller import CreateCategoryController
 from app.control.delete_category_controller import DeleteCategoryController
 from app.control.download_report_controller import DownloadReportController
 from app.control.generate_report_controller import GenerateReportController
+from app.control.paginate import paginate
 from app.control.search_category_controller import SearchCategoryController
 from app.control.send_announcement_controller import SendAnnouncementController
 from app.control.update_category_controller import UpdateCategoryController
@@ -30,7 +31,7 @@ def home():
         "platform/home.html", nav="dashboard",
         today=GenerateReportController().daily(date.today()),
         categories=ViewCategoryController().list_categories(),
-        announcements=SendAnnouncementController().latest(3))
+        announcements=SendAnnouncementController().latest(3, role="platform"))
 
 
 # --- IDP categories (PM-03 to PM-07) ------------------------------------------------
@@ -50,11 +51,16 @@ def categories():
 @role_required("platform")
 def view_category(category_id):
     """Boundary: CategoryDetailPage (PM-04 AC3: open a category to see its details)."""
+    controller = ViewCategoryController()
     try:
-        category = ViewCategoryController().view(category_id)
+        category = controller.view(category_id)
     except LookupError:
         abort(404)
-    return render_template("platform/category_detail.html", nav="categories", category=category)
+    keyword = request.args.get("q", "").strip()
+    found = controller.projects(category, keyword)
+    shown, page, pages = paginate(found, request.args.get("page", 1, type=int), per_page=20)
+    return render_template("platform/category_detail.html", nav="categories", category=category,
+                           projects=shown, found=len(found), keyword=keyword, page=page, pages=pages)
 
 
 @platform_bp.route("/categories/new", methods=["GET", "POST"])

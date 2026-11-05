@@ -26,11 +26,15 @@ class Reply(db.Model):
     sender = db.relationship("UserAccount")
 
     @classmethod
-    def add(cls, enquiry, sender_id, message):
-        """Save a reply. The controller has already checked the text; this checks access."""
+    def add(cls, enquiry, sender_id, message, attachments=()):
+        """Save a reply and any photos/PDFs sent with it, in one step.
+        The controller has already checked the text and files; this checks access."""
+        from app.entity.enquiry_attachment import EnquiryAttachment
+
         if sender_id not in (enquiry.designer_id, enquiry.customer_id):
             raise PermissionError("Only the designer and the customer can reply to this enquiry.")
         reply = cls(enquiry_id=enquiry.id, sender_id=sender_id, message=message)
+        reply.attachments = [EnquiryAttachment(enquiry_id=enquiry.id, **a) for a in attachments]
         db.session.add(reply)
         db.session.commit()
         return reply

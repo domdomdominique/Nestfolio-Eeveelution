@@ -74,6 +74,14 @@ class IDPCategory(db.Model):
         return {name: category_id for name, category_id in rows}
 
     @property
+    def projects(self):
+        """PM-04 Every IDP in this category, newest first (including hidden ones, so the list matches idp_count)."""
+        from app.entity.idp import IDP
+
+        return (IDP.query.filter_by(category=self.name)
+                .order_by(IDP.created_at.desc(), IDP.id.desc()).all())
+
+    @property
     def idp_count(self):
         from app.entity.idp import IDP
 

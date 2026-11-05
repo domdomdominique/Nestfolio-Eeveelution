@@ -18,11 +18,15 @@ class Enquiry(db.Model):
 
     idp = db.relationship("IDP")
 
-    # C-16 Save a customer's message to a designer; the contact is stored encrypted.
+    # C-16 Save a customer's message to a designer, with any photos or PDFs attached,
+    # in one step; the contact is stored encrypted.
     @classmethod
-    def send(cls, designer_id, customer_id, name, contact, message, idp_id=None):
+    def send(cls, designer_id, customer_id, name, contact, message, idp_id=None, attachments=()):
+        from app.entity.enquiry_attachment import EnquiryAttachment
+
         enquiry = cls(designer_id=designer_id, customer_id=customer_id, idp_id=idp_id,
                       name=name, contact=contact, message=message)
+        enquiry.all_attachments = [EnquiryAttachment(**a) for a in attachments]
         db.session.add(enquiry)
         db.session.commit()
         return enquiry
@@ -96,8 +100,13 @@ class Enquiry(db.Model):
     @property
     def conversation(self):
         """The whole conversation in order: the customer's first message, then every reply."""
-        first = Message(self.customer_id, self.message, self.created_at)
-        return [first] + [Message(r.sender_id, r.message, r.created_at) for r in self.replies]
+        first = Message(self.customer_id, self.message, self.created_at, self.attachments)
+        return [first] + [Message(r.sender_id, r.message, r.created_at, r.attachments) for r in self.replies]
+
+    @property
+    def attachments(self):
+        """The files sent with the customer's first message (replies carry their own)."""
+        return [a for a in self.all_attachments if a.reply_id is None]
 
     @property
     def last_activity(self):
@@ -114,7 +123,8 @@ class Enquiry(db.Model):
 class Message:
     """One speech bubble in an enquiry conversation (not stored: built from Enquiry and Reply)."""
 
-    def __init__(self, sender_id, message, created_at):
+    def __init__(self, sender_id, message, created_at, attachments=()):
         self.sender_id = sender_id
         self.message = message
         self.created_at = created_at
+        self.attachments = list(attachments)  # photos/PDFs sent with this message

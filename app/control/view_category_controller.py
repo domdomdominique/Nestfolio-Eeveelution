@@ -13,3 +13,13 @@ class ViewCategoryController:
         if category is None:
             raise LookupError("Category not found.")
         return category
+
+    def projects(self, category, keyword=""):
+        """PM-04 The IDPs in this category, newest first, optionally filtered by title or designer."""
+        projects = category.projects
+        keyword = (keyword or "").strip().lower()
+        if keyword:
+            projects = [p for p in projects
+                        if keyword in p.title.lower()
+                        or (p.designer and keyword in p.designer.display_name.lower())]
+        return projects

@@ -19,4 +19,49 @@
     <div><dt>Created</dt><dd>{{ category.created_at.strftime('%d %b %Y') if category.created_at else '—' }}</dd></div>
   </dl>
 </section>
+
+{# PM-04 The IDPs filed under this category #}
+<section class="card" aria-labelledby="projects-title">
+  <div class="card-head">
+    <h2 id="projects-title">Projects in this category</h2>
+  </div>
+  {% if category.idp_count %}
+  <form class="dash-search" role="search" method="get" style="width:100%; max-width:380px; margin-bottom:16px;">
+    {{ i.icon('search') }}
+    <input type="search" name="q" value="{{ keyword }}" placeholder="Search by project or designer…" aria-label="Search projects in this category" maxlength="100">
+  </form>
+  {% endif %}
+
+  {% if projects %}
+  <div class="table-wrap">
+    <table class="ptable">
+      <thead><tr><th>Project</th><th>Designer</th><th>Status</th><th>Views</th><th>Shortlists</th><th>Added</th></tr></thead>
+      <tbody>
+        {% for p in projects %}
+        <tr>
+          <td>
+            {% if p.is_visible %}
+            <a href="{{ url_for('customer.project', idp_id=p.id) }}" target="_blank" rel="noopener"><strong>{{ p.title }}</strong></a>
+            {% else %}
+            <strong>{{ p.title }}</strong>
+            <small class="muted-note">{{ 'Removed by an admin' if p.is_removed else 'Hidden: designer suspended' }}</small>
+            {% endif %}
+          </td>
+          <td>{{ p.designer.display_name if p.designer else '—' }}</td>
+          <td><span class="pill {{ 'pill-current' if p.is_current else 'pill-past' }}">{{ 'Current' if p.is_current else 'Past' }}</span></td>
+          <td class="num">{{ '{:,}'.format(p.view_count or 0) }}</td>
+          <td class="num">{{ '{:,}'.format(p.shortlist_count or 0) }}</td>
+          <td class="num">{{ p.created_at.strftime('%d %b %Y') if p.created_at else '—' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "shared/_pager.html" %}
+  {% elif keyword %}
+  <p class="empty-row">No projects in this category match “{{ keyword }}”.</p>
+  {% else %}
+  <p class="empty-row">No projects use this category yet.</p>
+  {% endif %}
+</section>
 {% endblock %}

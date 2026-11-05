@@ -38,7 +38,7 @@ def home():
                            open_reports=ReviewReportsController().open_count(),
                            accounts=UserAccount.query.count(),
                            suspended=UserAccount.query.filter_by(is_suspended=True).count(),
-                           announcements=SendAnnouncementController().latest(3),
+                           announcements=SendAnnouncementController().latest(3, role="admin"),
                            activity=ViewAdminActivityController().activity(
                                request.args.get("days", type=int)),
                            periods=ViewAdminActivityController.PERIODS)
@@ -246,15 +246,21 @@ def announcements():
     """Boundary: AnnouncementsPage (UA-18): write one and see the past ones."""
     controller, error = SendAnnouncementController(), None
     if request.method == "POST":
+        # "Everyone" (the default) or only the ticked roles
+        roles = request.form.getlist("roles") if request.form.get("audience") == "roles" else None
         try:
-            controller.send(session["user_id"], request.form.get("title"), request.form.get("message"))
+            sent = controller.send(session["user_id"], request.form.get("title"),
+                                   request.form.get("message"), roles)
         except ValueError as exc:
             error = str(exc)
         else:
-            flash("Announcement sent to all users.", "success")
+            names = controller.role_names()
+            to = ", ".join(names.get(r, r) for r in sent.role_keys) or "all users"
+            flash(f"Announcement sent to {to}.", "success")
             return redirect(url_for("admin.announcements"))
     return render_template("admin/announcements.html", nav="announcements",
-                           history=controller.history(), form=request.form, error=error)
+                           history=controller.history(), form=request.form, error=error,
+                           role_choices=controller.role_choices(), role_names=controller.role_names())
 
 
 @admin_bp.route("/announcements/<int:announcement_id>/remove", methods=["POST"])

@@ -1,3 +1,4 @@
+from app.control.enquiry_attachment_validation import validated_attachments
 from app.entity.enquiry import Enquiry
 from app.entity.reply import Reply
 from app.entity.user_account import UserAccount
@@ -13,7 +14,8 @@ class ReplyToEnquiryController:
 
     MAX_MESSAGE = Reply.MAX_MESSAGE
 
-    def reply(self, sender_id, enquiry_id, message):
+    def reply(self, sender_id, enquiry_id, message, files=()):
+        """files are photos (JPG/PNG) or PDFs to send with the reply; a reply may be files only."""
         enquiry = Enquiry.get(enquiry_id)
         sender = UserAccount.get(sender_id)
         if enquiry is None or sender is None or sender_id not in (enquiry.designer_id, enquiry.customer_id):
@@ -21,8 +23,9 @@ class ReplyToEnquiryController:
         if sender.is_blocked:
             raise LookupError("Enquiry not found.")
         message = (message or "").strip()
-        if not message:
-            raise ValueError("Please write a reply before sending.")
         if len(message) > self.MAX_MESSAGE:
             raise ValueError(f"Please keep your reply under {self.MAX_MESSAGE} characters.")
-        return Reply.add(enquiry, sender_id, message)
+        attachments = validated_attachments(files)
+        if not message and not attachments:
+            raise ValueError("Please write a reply or attach a file before sending.")
+        return Reply.add(enquiry, sender_id, message, attachments)

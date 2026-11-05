@@ -33,9 +33,9 @@ Story IDs (C-, ID-, PM-, UA-) refer to the team's user story sheet.
 - Browse IDPs with keyword search, category filters, a current/past status filter, and sorting by **Recommended**, **Most viewed** or **Newest**.
 - View an IDP's details and photo gallery. Each view is logged anonymously.
 - Save IDPs to favourites, then search, sort and remove them.
-- Browse designers, view a designer's company profile and portfolio, and send them an enquiry.
+- Browse designers, view a designer's company profile and portfolio, and send them an enquiry, optionally with up to 5 photos (JPG/PNG) or PDFs attached (5 MB each). Only the customer and that designer can open the attachments.
 - Report an inappropriate IDP (once per project).
-- See system announcements on the home page.
+- See system announcements meant for them on the home page.
 
 ### Interior Designer (ID-01 to ID-21)
 - Apply to join with company details (company name, UEN, portfolio URL, years of experience).
@@ -48,7 +48,7 @@ Story IDs (C-, ID-, PM-, UA-) refer to the team's user story sheet.
 - View and edit their own account details.
 
 ### Platform Management (PM-01 to PM-11)
-- Create, view, search, update and delete **IDP categories**. These drive the designer forms and customer filters.
+- Create, view, search, update and delete **IDP categories**. These drive the designer forms and customer filters. A category's page lists the IDPs filed under it (designer, status, views, shortlists), with search.
 - Generate **daily, weekly (Monday to Sunday) and monthly activity reports**: new accounts, new IDPs, total views and shortlists, plus the top IDPs and categories by views and by shortlists.
 - **Download** any report as PDF or Excel. The Excel workbook has a Summary, Activity and Top lists sheet, each with native Excel charts made from its figures; text cells are stored as text, so they are protected against formula injection.
 
@@ -58,7 +58,7 @@ Story IDs (C-, ID-, PM-, UA-) refer to the team's user story sheet.
 - Create, view, search, update and suspend **user profiles** (roles).
 - Review **designer applications** and approve or reject them, with a reason.
 - Review **reported IDPs**: resolve the report, or remove the project.
-- Send and remove **system-wide announcements**.
+- Send and remove **announcements**, either to everyone or only to selected roles (user profiles).
 
 ---
 
@@ -263,8 +263,9 @@ Nestfolio-Eeveelution/
 │   │   ├── idp_view.py               IDPView (anonymous view log, trends)
 │   │   ├── favourite.py              Favourite
 │   │   ├── enquiry.py                Enquiry
+│   │   ├── enquiry_attachment.py     EnquiryAttachment
 │   │   ├── report.py                 Report (reported IDPs)
-│   │   ├── announcement.py           Announcement
+│   │   ├── announcement.py           Announcement, AnnouncementRole
 │   │   ├── activity_report.py        ActivityReport (computed, not stored)
 │   │   ├── encryption.py             EncryptedString column type, phone fingerprint
 │   │   └── db.py                     SQLAlchemy instance

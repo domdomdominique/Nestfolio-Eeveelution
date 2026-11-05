@@ -1,8 +1,9 @@
-{# Page numbers under a list; needs page and pages, and keeps the current search in the links #}
+{# Page numbers under a list; needs page and pages, and keeps the current search in the links.
+   The page's own URL values (e.g. a category id) are kept too, so it works on detail pages. #}
 {% if pages > 1 %}
 <nav class="pagination" aria-label="Pages" style="margin-top:16px;">
   {% for n in range(1, pages + 1) %}
-  <a class="page-btn" href="{{ url_for(request.endpoint, **dict(request.args.to_dict(), page=n)) }}" {% if n == page %}aria-current="page"{% endif %}>{{ n }}</a>
+  <a class="page-btn" href="{{ url_for(request.endpoint, **dict(dict(request.view_args or {}, **request.args.to_dict()), page=n)) }}" {% if n == page %}aria-current="page"{% endif %}>{{ n }}</a>
   {% endfor %}
 </nav>
 {% endif %}

@@ -7,7 +7,7 @@ from app.control.update_company_controller import UpdateCompanyController
 from app.control.view_idp_photo_controller import ViewIDPPhotoController
 from app.control.view_category_photo_controller import ViewCategoryPhotoController
 
-from app.boundary import role_required, safe_next
+from app.boundary import role_required, safe_next, send_attachment
 from app.control.send_announcement_controller import SendAnnouncementController
 from app.control.browse_designers_controller import BrowseDesignersController
 from app.control.change_password_controller import ChangePasswordController
@@ -71,7 +71,7 @@ def home():
     customer_id = _customer_id()
     return render_template(
         "customer/browse.html",
-        announcements=SendAnnouncementController().latest(3) if customer_id else [],  # UA-18
+        announcements=SendAnnouncementController().latest(3, role="customer") if customer_id else [],  # UA-18
         projects=results[(page - 1) * PAGE_SIZE: page * PAGE_SIZE],
         total=len(results), page=page, pages=pages,
         keyword=keyword, categories=[c for c in categories if c], status=status, sort=sort,
@@ -234,7 +234,7 @@ def send_enquiry(designer_id):
     controller = SendEnquiryController()
     try:
         designer = controller.send(session["user_id"], designer_id, f.get("name"), f.get("contact"),
-                                   f.get("message"), idp_id)
+                                   f.get("message"), idp_id, request.files.getlist("attachments"))
     except LookupError:
         abort(404)
     except ValueError as error:
@@ -297,7 +297,8 @@ def new_enquiry():
 def reply_to_designer(enquiry_id):
     """Boundary: the customer answers a designer's reply."""
     try:
-        reply = ReplyToEnquiryController().reply(session["user_id"], enquiry_id, request.form.get("message"))
+        reply = ReplyToEnquiryController().reply(session["user_id"], enquiry_id, request.form.get("message"),
+                                                 request.files.getlist("attachments"))
     except LookupError:
         abort(404)
     except ValueError as error:
@@ -306,6 +307,13 @@ def reply_to_designer(enquiry_id):
         flash(f"Message sent to {reply.enquiry.designer.display_name}.", "success")
     args = {k: v for k, v in (("show", request.form.get("show")), ("q", request.form.get("q"))) if v and v != "all"}
     return redirect(url_for("customer.my_enquiries", id=enquiry_id, **args))
+
+
+@customer_bp.route("/enquiries/attachments/<int:attachment_id>")
+@role_required("customer")
+def enquiry_attachment(attachment_id):
+    """Boundary: open a photo or PDF attached to one of the customer's own enquiries (C-16)."""
+    return send_attachment(session["user_id"], attachment_id)
 
 
 @customer_bp.route("/photos/<int:photo_id>")
