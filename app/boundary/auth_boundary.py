@@ -26,13 +26,6 @@ HOME_BY_ROLE = {
     "platform": "platform.home",
 }
 
-APPLICATION_MESSAGES = {
-    "pending": "Your designer application is still being reviewed. "
-               "You can log in once an admin approves it.",
-    "rejected": "Your designer application was not approved. "
-                "Please contact us or apply again.",
-}
-
 
 @auth_bp.route("/")
 def index():
@@ -57,6 +50,12 @@ def login():
             session["auth"] = ValidateSessionController().token_for(account)
             next_url = safe_next(request.args.get("next"))
             return redirect(next_url or url_for(HOME_BY_ROLE.get(account.role, "auth.index")))
+        application = controller.unapproved_application(request.form.get("email"), request.form.get("password"))
+        if application:
+            # Not approved yet: show their status card instead of a bare error.
+            session.clear()
+            session["application_id"] = application.id
+            return redirect(url_for("auth.registration_status"))
         message = controller.failure_message(
             request.form.get("email"),
             request.form.get("password"),
@@ -98,7 +97,7 @@ def apply_designer():
     if request.method == "POST":
         f = request.form
         try:
-            ApplyDesignerController().apply(
+            application = ApplyDesignerController().apply(
                 _full_name(f), f.get("email"), f.get("phone"),
                 f.get("password"), f.get("confirm_password"),
                 f.get("company_name"), f.get("uen"), f.get("portfolio_url"),
@@ -107,14 +106,10 @@ def apply_designer():
         except ValueError as error:
             flash(str(error), "error")
         else:
-            flash(
-                "Your designer application was submitted successfully. "
-                "Your registration status is Pending. "
-                "You can log in after an administrator approves it.",
-                "success",
-            )
-
-            return redirect(url_for("auth.login"))
+            # They just proved who they are, so show their status without asking again.
+            session["application_id"] = application.id
+            flash("Your designer application was submitted successfully.", "success")
+            return redirect(url_for("auth.registration_status"))
     return render_template("auth/register.html", account_type="designer", form=request.form)
 
 
@@ -133,41 +128,14 @@ def logout():
 
 
 # ID-16 View registration status (pending, approved or rejected designers).
-@auth_bp.route(
-    "/registration-status",
-    methods=["GET", "POST"],
-)
+@auth_bp.route("/registration-status")
 def registration_status():
-    controller = ViewRegistrationStatusController()
-
-    if request.method == "POST":
-        try:
-            application = controller.authenticate(
-                request.form.get("email"),
-                request.form.get("password"),
-            )
-
-        except ValueError as error:
-            session.pop("application_id", None)
-            flash(str(error), "error")
-
-        else:
-            session["application_id"] = application.id
-
-            return redirect(
-                url_for("auth.registration_status")
-            )
-
-    application = None
-
-    if session.get("application_id"):
-        try:
-            application = controller.view(
-                session["application_id"]
-            )
-
-        except LookupError:
-            session.pop("application_id", None)
+    # Only reached after applying or after a login attempt by an unapproved applicant.
+    try:
+        application = ViewRegistrationStatusController().view(session.get("application_id"))
+    except LookupError:
+        session.pop("application_id", None)
+        return redirect(url_for("auth.login"))
 
     response = make_response(
         render_template(

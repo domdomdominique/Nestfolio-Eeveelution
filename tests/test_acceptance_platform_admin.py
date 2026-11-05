@@ -383,10 +383,10 @@ def test_ua14_ua15_review_registrations(ua, app):
     assert "r@test.com" not in text(ua.get("/admin/applications"))                                   # UA-15 AC3
     rejected = db.session.get(DesignerApplication, reject_me.id)
     assert rejected.status == "rejected" and rejected.rejection_reason == "Incomplete portfolio"
-    status = app.test_client().post("/registration-status", data={"email": "r@test.com", "password": "password123"},
+    status = app.test_client().post("/login", data={"email": "r@test.com", "password": "password123"},
                                     follow_redirects=True)
     assert b"Rejected" in status.data and b"Incomplete portfolio" in status.data                    # UA-15 AC4
-    assert login(app.test_client(), "r@test.com", "designer").status_code == 200                     # cannot use features
+    assert login(app.test_client(), "r@test.com", "designer").headers["Location"].endswith("/registration-status")  # cannot use features; sees status card
 
 
 # UA-16 / UA-17 / UA-18 ---------------------------------------------------------------------------

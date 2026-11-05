@@ -18,7 +18,7 @@ beside each assertion names the AC it covers (for example `# C-03 AC3`).
 | Story | Criterion | State |
 |---|---|---|
 | ID-21 | AC3 (designer replies) and AC5 (customer sees the reply) | Not built. Needs the Reply table in `backend-requirements-id.md` section 5. `test_id21_designer_can_reply_and_customer_sees_it` is marked `xfail` and will start failing (`strict`) once replies exist, so remove the mark then. The sheet also says this needs a customer story to view replies. |
-| ID-01 AC5, ID-16 AC4 | Pending or rejected designers cannot use designer features | Met by not creating the account until approval: they cannot log in and are told why. A designer cannot log in to see a "Pending" page. They use the Registration status page (email and password). `backend-requirements-id.md` section 1 describes the alternative. |
+| ID-01 AC5, ID-16 AC4 | Pending or rejected designers cannot use designer features | Met by not creating the account until approval: they cannot log in. A login attempt with the right password shows them the Registration status card (Pending or Rejected, with the reason); they also see it right after applying. `backend-requirements-id.md` section 1 describes the alternative. |
 | ID-20 AC2 | "Most viewed categories and IDPs across the platform" | Met by `IDPView.trends`. It counts the whole platform, as asked. |
 
 ## Behaviour changed to meet the sheet

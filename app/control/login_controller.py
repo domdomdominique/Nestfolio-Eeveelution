@@ -13,7 +13,8 @@ class LoginController:
 
         return UserAccount.login(email, password)
 
-    def application_status(self, email):
+    def unapproved_application(self, email, password):
+        """A designer applicant with no account yet (pending or rejected) who gave the right password."""
         email = (email or "").strip().lower()
 
         if UserAccount.email_exists(email):
@@ -21,7 +22,10 @@ class LoginController:
 
         application = DesignerApplication.latest_for(email)
 
-        return application.status if application else None
+        if application and check_password_hash(application.password_hash, password or ""):
+            return application
+
+        return None
 
     def failure_message(self, email, password):
         email = (email or "").strip().lower()
@@ -36,27 +40,5 @@ class LoginController:
                 )
 
             return "Invalid email or password."
-
-        # Pending/rejected applicants do not have a login account yet.
-        application = DesignerApplication.latest_for(email)
-
-        if application:
-            correct_password = check_password_hash(
-                application.password_hash,
-                password or "",
-            )
-
-            if correct_password:
-                if application.status == "pending":
-                    return (
-                        "Your designer application is still being reviewed. "
-                        "You can log in once it is approved."
-                    )
-
-                if application.status == "rejected":
-                    return (
-                        "Your designer application was not approved. "
-                        "Please contact the administrator for details."
-                    )
 
         return "Invalid email or password."
