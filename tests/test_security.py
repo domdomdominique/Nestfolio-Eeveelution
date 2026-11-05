@@ -1,4 +1,5 @@
 """Security checklist: visitors and wrong roles are kept out, CSRF is enforced, personal data is protected."""
+import os
 import re
 import sqlite3
 
@@ -99,7 +100,8 @@ def test_secrets_come_from_env_or_a_generated_file_never_from_the_source(tmp_pat
     monkeypatch.delenv("SECRET_KEY", raising=False)
     first = _load_secret(app, "SECRET_KEY", lambda: "generated-once")
     assert first == "generated-once" and _load_secret(app, "SECRET_KEY", lambda: "other") == first  # kept
-    assert (tmp_path / "secret_key.key").stat().st_mode & 0o077 == 0  # owner-only
+    if os.name != "nt":  # Windows has no owner-only permission bits
+        assert (tmp_path / "secret_key.key").stat().st_mode & 0o077 == 0  # owner-only
     monkeypatch.setenv("SECRET_KEY", "from-env")
     assert _load_secret(app, "SECRET_KEY", lambda: "x") == "from-env"
     source = (Path(__file__).parent.parent / "app" / "__init__.py").read_text()
