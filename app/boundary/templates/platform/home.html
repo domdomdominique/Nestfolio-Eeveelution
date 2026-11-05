@@ -9,7 +9,7 @@
   <a class="btn btn-primary" href="{{ url_for('platform.reports') }}">View reports</a>
 </div>
 
-<section class="stats" aria-label="Today">
+<section class="stats stats-auto" aria-label="Today">
   {% for label, value in today.summary_rows() %}
   <div class="stat">
     <span class="stat-label">{{ label }}</span>

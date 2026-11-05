@@ -1,4 +1,5 @@
 from datetime import date, datetime, timedelta
+from functools import cached_property
 
 from app.entity.db import db
 
@@ -6,7 +7,8 @@ from app.entity.db import db
 class ActivityTimeline:
     """Entity: IDP views and shortlists counted per hour or per day, for the
     over-time charts on the Reports (PM-08 to PM-10), Statistics (ID-13, ID-14)
-    and Trends (ID-20) pages.
+    and Trends (ID-20) pages. count() does the same for any other dated record,
+    e.g. new accounts or reported projects on the User Admin dashboard.
 
     Not stored in the database: like ActivityReport, it is counted from the
     IDPView and Favourite records every time, so the chart always matches them.
@@ -19,8 +21,6 @@ class ActivityTimeline:
         self.designer_id, self.visible_only = designer_id, visible_only
         self.keys = self._keys()
         self.labels = [self._label(k) for k in self.keys]
-        self.views = self._count_views()
-        self.shortlists = self._count_shortlists()
 
     @classmethod
     def last_days(cls, days, **filters):
@@ -70,6 +70,21 @@ class ActivityTimeline:
         return [None if k > now else counts.get(k, 0) for k in self.keys]
 
     # --- Counting -----------------------------------------------------------------
+
+    @cached_property
+    def views(self):
+        return self._count_views()
+
+    @cached_property
+    def shortlists(self):
+        return self._count_shortlists()
+
+    def count(self, column, *conditions):
+        """Records per hour or day by a DateTime column, e.g. count(UserAccount.created_at)."""
+        bucket = self._bucket(column)
+        query = (db.session.query(bucket, db.func.count())
+                 .filter(self._between(column), *conditions).group_by(bucket))
+        return self._fill(query.all())
 
     def _restrict(self, query, idp_column):
         from app.entity.idp import IDP

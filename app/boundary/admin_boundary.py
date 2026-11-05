@@ -15,6 +15,7 @@ from app.control.suspend_user_account_controller import SuspendUserAccountContro
 from app.control.suspend_user_profile_controller import SuspendUserProfileController
 from app.control.update_user_account_controller import UpdateUserAccountController
 from app.control.update_user_profile_controller import UpdateUserProfileController
+from app.control.view_admin_activity_controller import ViewAdminActivityController
 from app.control.view_user_account_controller import ViewUserAccountController
 from app.control.view_user_profile_controller import ViewUserProfileController
 from app.entity.user_account import UserAccount
@@ -37,7 +38,10 @@ def home():
                            open_reports=ReviewReportsController().open_count(),
                            accounts=UserAccount.query.count(),
                            suspended=UserAccount.query.filter_by(is_suspended=True).count(),
-                           announcements=SendAnnouncementController().latest(3))
+                           announcements=SendAnnouncementController().latest(3),
+                           activity=ViewAdminActivityController().activity(
+                               request.args.get("days", type=int)),
+                           periods=ViewAdminActivityController.PERIODS)
 
 
 # --- User accounts (UA-03 to UA-07, UA-13, UA-16) ---------------------------------

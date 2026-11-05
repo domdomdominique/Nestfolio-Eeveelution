@@ -33,12 +33,21 @@
     </div>
     <div class="dash-header-actions">
       <a class="btn btn-outline" href="{{ url_for('platform.download_report', kind=kind, value=value, format='pdf') }}">{{ i.icon('download') }}PDF</a>
-      <a class="btn btn-outline" href="{{ url_for('platform.download_report', kind=kind, value=value, format='csv') }}">{{ i.icon('download') }}CSV</a>
+      <a class="btn btn-outline" href="{{ url_for('platform.download_report', kind=kind, value=value, format='xlsx') }}">{{ i.icon('download') }}Excel</a>
     </div>
   </div>
-  <div class="stats">
-    {% for label, count in report.summary_rows() %}
-    <div class="stat"><span class="stat-label">{{ label }}</span><span class="stat-value">{{ '{:,}'.format(count) }}</span></div>
+  <div class="stats stats-auto">
+    {% for row in report.comparison() %}
+    {% set ch = row.change %}
+    <div class="stat">
+      <span class="stat-label">{{ row.label }}</span><span class="stat-value">{{ '{:,}'.format(row.value) }}</span>
+      <span class="stat-note {{ 'is-flat' if ch is none or ch == 0 else ('is-down' if ch != 'new' and ch < 0 else '') }}">
+        {%- if ch is none -%}None in either {{ report.period_name }}
+        {%- elif ch == 'new' -%}▲ New · 0 the previous {{ report.period_name }}
+        {%- else -%}{{ '▲' if ch > 0 else ('▼' if ch < 0 else '•') }} {{ report.change_text(ch) }} vs previous {{ report.period_name }} ({{ '{:,}'.format(row.previous) }})
+        {%- endif -%}
+      </span>
+    </div>
     {% endfor %}
   </div>
 </section>

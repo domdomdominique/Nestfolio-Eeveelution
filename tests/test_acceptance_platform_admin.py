@@ -1,6 +1,5 @@
 """Acceptance criteria from the User Stories sheet, Platform Management (PM-01 to PM-11)
 and User Admin (UA-01 to UA-18)."""
-import csv
 import html
 import io
 from datetime import date, datetime, timedelta
@@ -18,6 +17,7 @@ from app.entity.idp_view import IDPView
 from app.entity.report import Report
 from app.entity.user_account import UserAccount
 from app.entity.user_profile import UserProfile
+from openpyxl import load_workbook
 
 
 def make(role, email, name=None, **kw):
@@ -176,7 +176,8 @@ def figures(page):
 def test_pm08_to_pm10_reports(pm, app):
     activity()
     daily = text(pm.get("/platform/reports?kind=daily&value=2026-10-13"))
-    assert figures(daily) == {"New user accounts": 2, "New IDPs": 1, "Total IDP views": 3, "Total shortlists": 1}  # PM-08 AC2/AC4
+    assert figures(daily) == {"New user accounts": 2, "New IDPs": 1, "Total IDP views": 3, "Total shortlists": 1,
+                             "New enquiries": 0}  # PM-08 AC2/AC4
     assert "Most viewed IDPs" in daily and "Most shortlisted categories" in daily               # PM-08 AC3
     assert "Scandi Loft" in daily
     empty = figures(text(pm.get("/platform/reports?kind=daily&value=2026-01-01")))
@@ -193,16 +194,16 @@ def test_pm11_download_matches_the_screen_and_names_the_file(pm, app):
     activity()
     screen = figures(text(pm.get("/platform/reports?kind=daily&value=2026-10-13")))
     page = text(pm.get("/platform/reports?kind=daily&value=2026-10-13"))
-    assert "format=pdf" in page and "format=csv" in page                                         # AC1/AC2
-    csv_file = pm.get("/platform/reports/download?kind=daily&value=2026-10-13&format=csv")
-    assert "daily_report_2026-10-13.csv" in csv_file.headers["Content-Disposition"]              # AC4
-    rows = list(csv.reader(io.StringIO(csv_file.data.decode("utf-8-sig"))))
-    in_file = {r[0]: int(r[1]) for r in rows if len(r) == 2 and r[1].isdigit()}
+    assert "format=pdf" in page and "format=xlsx" in page                                        # AC1/AC2
+    xlsx = pm.get("/platform/reports/download?kind=daily&value=2026-10-13&format=xlsx")
+    assert "daily_report_2026-10-13.xlsx" in xlsx.headers["Content-Disposition"]                 # AC4
+    summary = load_workbook(io.BytesIO(xlsx.data))["Summary"].iter_rows(min_row=5, values_only=True)
+    in_file = {row[0]: row[1] for row in summary if row[0]}
     assert {k: in_file[k] for k in screen} == screen                                             # AC3
     pdf = pm.get("/platform/reports/download?kind=weekly&value=2026-10-13&format=pdf")
     assert pdf.data.startswith(b"%PDF") and "weekly_report_2026-10-12.pdf" in pdf.headers["Content-Disposition"]
-    assert "monthly_report_2026-10.csv" in pm.get(
-        "/platform/reports/download?kind=monthly&value=2026-10&format=csv").headers["Content-Disposition"]
+    assert "monthly_report_2026-10.xlsx" in pm.get(
+        "/platform/reports/download?kind=monthly&value=2026-10&format=xlsx").headers["Content-Disposition"]
 
 
 # UA-03 to UA-07 ----------------------------------------------------------------------------------

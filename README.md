@@ -50,7 +50,7 @@ Story IDs (C-, ID-, PM-, UA-) refer to the team's user story sheet.
 ### Platform Management (PM-01 to PM-11)
 - Create, view, search, update and delete **IDP categories**. These drive the designer forms and customer filters.
 - Generate **daily, weekly (Monday to Sunday) and monthly activity reports**: new accounts, new IDPs, total views and shortlists, plus the top IDPs and categories by views and by shortlists.
-- **Download** any report as PDF or CSV. CSV cells are protected against formula injection.
+- **Download** any report as PDF or Excel. The Excel workbook has a Summary, Activity and Top lists sheet, each with native Excel charts made from its figures; text cells are stored as text, so they are protected against formula injection.
 
 ### User Admin (UA-01 to UA-18)
 - Create, view, search and update **user accounts**, and suspend or reactivate them.
@@ -299,7 +299,7 @@ Nestfolio-Eeveelution/
 - **CSRF protection** on every form (Flask-WTF).
 - **Sessions:** HttpOnly, SameSite=Lax cookies (set `SESSION_COOKIE_SECURE=1` when serving over HTTPS). Each request checks that the account is still active and its password unchanged, so suspending a user or changing a password logs out existing sessions.
 - **Headers:** `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, and a strict referrer policy.
-- **Input safety:** all queries go through SQLAlchemy bound parameters (no raw SQL), search wildcards are escaped, redirects are restricted to this site, uploaded images are verified with Pillow, and CSV exports are protected against formula injection.
+- **Input safety:** all queries go through SQLAlchemy bound parameters (no raw SQL), search wildcards are escaped, redirects are restricted to this site, uploaded images are verified with Pillow, and Excel exports are protected against formula injection.
 
 ### Keys and the database
 

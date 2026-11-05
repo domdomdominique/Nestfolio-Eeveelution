@@ -36,6 +36,17 @@ class ActivityReport:
         first = date(year, month, 1)
         return cls("monthly", first, first + timedelta(days=calendar.monthrange(year, month)[1]))
 
+    def previous(self):
+        """The report for the period just before this one (the day, week or month before)."""
+        if self.kind == "monthly":
+            last_month = self.start - timedelta(days=1)
+            return self.monthly(last_month.year, last_month.month)
+        return type(self)(self.kind, self.start - (self.end - self.start), self.start)
+
+    @property
+    def period_name(self):
+        return {"daily": "day", "weekly": "week", "monthly": "month"}[self.kind]
+
     @property
     def title(self):
         if self.kind == "daily":
@@ -58,11 +69,13 @@ class ActivityReport:
         return db.and_(column >= start, column < end)
 
     def _count_figures(self):
+        from app.entity.enquiry import Enquiry
         from app.entity.favourite import Favourite
         from app.entity.idp import IDP
         from app.entity.idp_view import IDPView
         from app.entity.user_account import UserAccount
 
+        self.new_enquiries = Enquiry.query.filter(self._between(Enquiry.created_at)).count()
         self.new_accounts = UserAccount.query.filter(self._between(UserAccount.created_at)).count()
         self.new_idps = IDP.query.filter(self._between(IDP.created_at)).count()
         self.total_views = IDPView.query.filter(self._between(IDPView.viewed_at)).count()
@@ -112,7 +125,33 @@ class ActivityReport:
             ("New IDPs", self.new_idps),
             ("Total IDP views", self.total_views),
             ("Total shortlists", self.total_shortlists),
+            ("New enquiries", self.new_enquiries),
         ]
+
+    def comparison(self):
+        """Each summary figure next to the same figure for the previous period, with the change.
+
+        change is a whole percentage, "new" when the previous period had none, or None when both are 0.
+        """
+        before = dict(self.previous().summary_rows())
+        rows = []
+        for label, value in self.summary_rows():
+            old = before[label]
+            if old:
+                change = round((value - old) * 100 / old)
+            else:
+                change = "new" if value else None
+            rows.append({"label": label, "value": value, "previous": old, "change": change})
+        return rows
+
+    @staticmethod
+    def change_text(change):
+        """e.g. +25%, -10%, 0%, new, or a dash when there was nothing in either period."""
+        if change is None:
+            return "-"
+        if change == "new":
+            return "new"
+        return f"{change:+d}%" if change else "0%"
 
     def sections(self):
         """(heading, column headings, rows) for each ranked list."""

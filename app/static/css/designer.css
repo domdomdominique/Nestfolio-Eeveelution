@@ -75,11 +75,16 @@
 .card h2 { font-size: 20px; font-weight: 600; color: var(--espresso-deep); }
 .card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .card-head a { font-size: 14px; font-weight: 500; color: var(--taupe-text); text-decoration: underline; text-underline-offset: 3px; }
+.card-head .tabs { flex-shrink: 0; max-width: 100%; }
+.card-head .tabs a { font-weight: 400; color: var(--text-muted); text-decoration: none; }
 .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
 .stat { display: flex; flex-direction: column; gap: 6px; padding: 20px; background: var(--surface-white); border: 1px solid var(--greige); border-radius: 14px; }
 .stat-label { font-size: 14px; color: var(--text-muted); }
 .stat-value { font-size: 34px; font-weight: 600; line-height: 1.1; color: var(--espresso-deep); }
 .stat-note { font-size: 13px; color: var(--status-current); }
+.stat-note.is-down { color: var(--error); }
+.stat-note.is-flat { color: var(--text-muted); }
+.stats-auto { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
 .banner { display: flex; align-items: center; gap: 10px; padding: 14px 18px; border-radius: 10px; background: var(--success-bg); color: var(--success); font-size: 15px; }
 .banner strong { font-weight: 600; }
 .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start; }
@@ -133,7 +138,7 @@
 .toolbar .search input { flex: 1; min-width: 0; padding: 12px 0; border: 0; outline: 0; background: none; color: var(--text-body); }
 .tabs { display: flex; padding: 4px; border-radius: 10px; background: var(--sand); }
 .tabs a { padding: 8px 14px; border-radius: 8px; font-size: 14px; color: var(--text-muted); }
-.tabs a[aria-current="true"] { background: var(--surface-white); color: var(--espresso-deep); font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
+.tabs a[aria-current="true"], .card-head .tabs a[aria-current="true"] { background: var(--surface-white); color: var(--espresso-deep); font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
 .toolbar select { padding: 11px 14px; border: 1.5px solid var(--greige); border-radius: 10px; background: var(--surface-white); color: var(--espresso-deep); font-weight: 500; }
 .table-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; font-size: 14px; color: var(--text-muted); }
 .empty-row { padding: 40px 0; text-align: center; color: var(--text-muted); }

@@ -143,7 +143,7 @@ def reports():
 @platform_bp.route("/reports/download")
 @role_required("platform")
 def download_report():
-    """Boundary: Download as PDF or CSV button on ReportsPage (PM-11)."""
+    """Boundary: Download as PDF or Excel buttons on ReportsPage (PM-11)."""
     try:
         report = GenerateReportController().generate(
             request.args.get("kind"), request.args.get("value"))

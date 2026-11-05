@@ -1,12 +1,13 @@
 """PM-08 to PM-11: Platform Management generates and downloads activity reports."""
-import csv
 import io
 from datetime import date, datetime
 
 import pytest
+from openpyxl import load_workbook
 
 from app.control.download_report_controller import DownloadReportController
 from app.control.generate_report_controller import GenerateReportController
+from app.entity.activity_report import ActivityReport
 from app.entity.db import db
 from app.entity.favourite import Favourite
 from app.entity.idp import IDP
@@ -117,18 +118,27 @@ def test_invalid_report_choices_are_rejected(app, kind, value):
 ])
 def test_file_name_has_report_type_and_date(app, kind, value, expected):
     report = GenerateReportController().generate(kind, value)
-    assert DownloadReportController().download(report, "csv")[0] == f"{expected}.csv"
+    assert DownloadReportController().download(report, "xlsx")[0] == f"{expected}.xlsx"
     assert DownloadReportController().download(report, "pdf")[0] == f"{expected}.pdf"
 
 
-def test_csv_has_the_same_figures_as_the_report(app):
+def workbook(report):
+    _, content_type, data = DownloadReportController().download(report, "xlsx")
+    assert content_type == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    return load_workbook(io.BytesIO(data))
+
+
+def rows(sheet):
+    return [[cell for cell in row] for row in sheet.iter_rows(values_only=True)]
+
+
+def test_excel_has_the_same_figures_as_the_report(app):
     setup_activity()
-    report = GenerateReportController().daily(DAY)
-    name, content_type, data = DownloadReportController().download(report, "csv")
-    rows = list(csv.reader(io.StringIO(data.decode("utf-8-sig"))))
-    assert content_type == "text/csv"
-    assert ["Total IDP views", "4"] in rows and ["New user accounts", "2"] in rows
-    assert ["Scandi Loft", "Living Room", "3"] in rows
+    book = workbook(GenerateReportController().daily(DAY))
+    assert book.sheetnames == ["Summary", "Activity", "Top lists"]
+    summary = rows(book["Summary"])
+    assert ["Total IDP views", 4, 0, "new"] in summary and ["New user accounts", 2, 0, "new"] in summary
+    assert [1, "Scandi Loft", "Living Room", 3] in rows(book["Top lists"])
 
 
 def test_pdf_is_a_valid_pdf_with_the_figures(app):
@@ -137,22 +147,88 @@ def test_pdf_is_a_valid_pdf_with_the_figures(app):
     _, content_type, data = DownloadReportController().download(report, "pdf")
     assert content_type == "application/pdf"
     assert data.startswith(b"%PDF-") and data.rstrip().endswith(b"%%EOF")
-    assert b"Total IDP views: 4" in data and b"Scandi Loft" in data
+    assert b"(Total IDP views) Tj" in data and b"(4) Tj" in data and b"Scandi Loft" in data
 
 
 def test_unknown_download_format_is_rejected(app):
-    with pytest.raises(ValueError, match="PDF or CSV"):
-        DownloadReportController().download(GenerateReportController().daily(DAY), "xlsx")
+    with pytest.raises(ValueError, match="PDF or Excel"):
+        DownloadReportController().download(GenerateReportController().daily(DAY), "csv")
 
 
-def test_csv_does_not_let_a_project_title_run_as_a_formula(app):
+def test_excel_does_not_let_a_project_title_run_as_a_formula(app):
     designer = UserAccount.create("des@test.com", "password123", "designer", name="Des")
     evil = IDP(title='=HYPERLINK("http://evil","x")', category="Kitchen", designer_id=designer.id)
     db.session.add(evil)
     db.session.commit()
     db.session.add(IDPView(idp_id=evil.id, category="Kitchen", viewed_at=datetime.now()))
     db.session.commit()
-    report = GenerateReportController().daily(date.today())
-    _, _, data = DownloadReportController().download(report, "csv")
-    assert "\n=HYPERLINK" not in data.decode("utf-8-sig")
-    assert "'=HYPERLINK" in data.decode("utf-8-sig")
+    sheet = workbook(GenerateReportController().daily(date.today()))["Top lists"]
+    cells = [cell for row in sheet.iter_rows() for cell in row if cell.value == evil.title]
+    assert cells and all(cell.data_type == "s" for cell in cells)  # stored as text, not a formula
+
+
+# --- Report enhancements: previous period, enquiries, activity in the downloads ---------
+
+def test_previous_period_is_the_day_week_or_month_before(app):
+    controller = GenerateReportController()
+    assert controller.daily(DAY).previous().start == date(2026, 10, 12)
+    assert controller.weekly(DAY).previous().start == date(2026, 10, 5)
+    march = controller.monthly(2026, 3).previous()
+    assert (march.start, march.end) == (date(2026, 2, 1), date(2026, 3, 1))
+    assert controller.monthly(2026, 1).previous().start == date(2025, 12, 1)
+
+
+def test_comparison_shows_change_against_previous_period(app):
+    setup_activity()  # 15 Oct has 1 view; 13 Oct has 4 views
+    loft = IDP.query.filter_by(title="Scandi Loft").one()
+    db.session.add(IDPView(idp_id=loft.id, category=loft.category, viewed_at=at(date(2026, 10, 14))))
+    db.session.add(IDPView(idp_id=loft.id, category=loft.category, viewed_at=at(date(2026, 10, 14), 13)))
+    db.session.commit()
+    rows = {r["label"]: r for r in GenerateReportController().daily(date(2026, 10, 14)).comparison()}
+    assert (rows["Total IDP views"]["value"], rows["Total IDP views"]["previous"]) == (2, 4)
+    assert rows["Total IDP views"]["change"] == -50
+    assert rows["New IDPs"]["change"] is None or rows["New IDPs"]["previous"] == 2
+    first_day = {r["label"]: r for r in GenerateReportController().daily(DAY).comparison()}
+    assert first_day["Total IDP views"]["change"] == "new"
+    assert ActivityReport.change_text(-50) == "-50%" and ActivityReport.change_text(None) == "-"
+
+
+def test_report_counts_new_enquiries(app):
+    from app.entity.enquiry import Enquiry
+
+    loft, _ = setup_activity()
+    customer = UserAccount.query.filter_by(email="cus@test.com").one()
+    db.session.add(Enquiry(designer_id=loft.designer_id, customer_id=customer.id, idp_id=loft.id,
+                           name="Cus", contact="cus@test.com", message="Hi", created_at=at(DAY)))
+    db.session.commit()
+    report = GenerateReportController().daily(DAY)
+    assert report.new_enquiries == 1 and ("New enquiries", 1) in report.summary_rows()
+
+
+def test_excel_has_activity_per_hour_with_a_total(app):
+    setup_activity()  # 13 Oct: views at 0:00, 9:00, 12:00 and 23:00, 1 shortlist at 12:00
+    activity = rows(workbook(GenerateReportController().daily(DAY))["Activity"])
+    assert ["Hour", "IDP views", "Shortlists"] in activity
+    by_hour = {row[0]: row[1:3] for row in activity if isinstance(row[0], datetime)}  # real Excel dates
+    assert by_hour[datetime(2026, 10, 13, 9)] == [1, 0] and by_hour[datetime(2026, 10, 13, 12)] == [1, 1]
+    assert len(by_hour) == 24
+    assert ["Total", "=SUM(B5:B28)", "=SUM(C5:C28)"] == activity[28][:3]
+
+
+def test_excel_has_charts_made_from_the_figures(app):
+    setup_activity()
+    book = workbook(GenerateReportController().weekly(DAY))
+    assert [type(c).__name__ for c in book["Summary"]._charts] == ["BarChart"]
+    assert [type(c).__name__ for c in book["Activity"]._charts] == ["LineChart"]
+    assert len(book["Top lists"]._charts) == 4  # one bar chart per ranked list
+    line = book["Activity"]._charts[0]
+    assert len(line.series) == 2  # views and shortlists
+
+
+def test_pdf_has_chart_and_page_numbers(app):
+    setup_activity()
+    _, _, data = DownloadReportController().download(GenerateReportController().weekly(DAY), "pdf")
+    assert b"(Views and shortlists per day) Tj" in data
+    assert b"(Page 1 of " in data
+    assert b"(-75%) Tj" not in data  # previous week had no activity, so changes read "new"
+    assert b"(new) Tj" in data

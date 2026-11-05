@@ -1,4 +1,5 @@
 {% extends "admin/layout.html" %}
+{% from "shared/_chart.html" import chart %}
 {% block title %}Dashboard — Nestfolio{% endblock %}
 {% block content %}
 <div>
@@ -13,6 +14,34 @@
     <span class="stat-note">{{ 'waiting for review' if pending else 'none waiting' }}</span></div>
   <div class="stat"><span class="stat-label">Reported projects</span><span class="stat-value">{{ open_reports }}</span>
     <span class="stat-note">{{ 'waiting for review' if open_reports else 'none waiting' }}</span></div>
+</section>
+
+<section class="card" aria-labelledby="activity-title">
+  <div class="card-head">
+    <div>
+      <h2 id="activity-title">Activity</h2>
+      <small class="hint">Per day over the last {{ activity.days }} days, including today.</small>
+    </div>
+    <nav class="tabs" aria-label="Activity period">
+      {% for d in periods %}
+      <a href="{{ url_for('admin.home', days=d) }}#activity-title" {% if activity.days == d %}aria-current="true"{% endif %}>{{ d }} days</a>
+      {% endfor %}
+    </nav>
+  </div>
+  <div class="dash-grid dash-grid-even">
+    {% for s in activity.series %}
+    {% set ch = s.change %}
+    <div>
+      {{ chart(s.title, activity.labels, s.counts, s.unit) }}
+      <p class="stat-note {{ 'is-flat' if ch is none or ch == 0 else ('is-down' if ch != 'new' and ch < 0 else '') }}" style="margin:0;">
+        {%- if ch is none -%}None in this or the previous {{ activity.days }} days
+        {%- elif ch == 'new' -%}▲ New · none in the previous {{ activity.days }} days
+        {%- else -%}{{ '▲' if ch > 0 else ('▼' if ch < 0 else '•') }} {{ s.change_text }} vs previous {{ activity.days }} days ({{ '{:,}'.format(s.previous) }})
+        {%- endif -%}
+      </p>
+    </div>
+    {% endfor %}
+  </div>
 </section>
 
 <div class="dash-grid dash-grid-even">

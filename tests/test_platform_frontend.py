@@ -56,8 +56,9 @@ def test_report_page_and_downloads(client, app):
     today = date.today().isoformat()
     page = client.get(f"/platform/reports?kind=daily&value={today}")
     assert b"Daily report" in page.data
-    csv = client.get(f"/platform/reports/download?kind=daily&value={today}&format=csv")
-    assert csv.mimetype == "text/csv" and f"daily_report_{today}.csv" in csv.headers["Content-Disposition"]
+    xlsx = client.get(f"/platform/reports/download?kind=daily&value={today}&format=xlsx")
+    assert xlsx.mimetype == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    assert f"daily_report_{today}.xlsx" in xlsx.headers["Content-Disposition"]
     pdf = client.get(f"/platform/reports/download?kind=daily&value={today}&format=pdf")
     assert pdf.data.startswith(b"%PDF")
 
