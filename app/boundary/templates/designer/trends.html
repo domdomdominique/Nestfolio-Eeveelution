@@ -1,84 +1,64 @@
-{% extends "base.html" %}
+{% extends "designer/layout.html" %}
+{% from "shared/_chart.html" import chart %}
+{% set nav = 'dashboard' %}
+{% block title %}Customer trends — Nestfolio{% endblock %}
 {% block content %}
+<div class="dash-header">
+  <div>
+    <p class="breadcrumb"><a href="{{ url_for('designer.home') }}">Dashboard</a> <span>/</span> <span aria-current="page">Customer trends</span></p>
+    <h1 class="dash-title">Customer trends</h1>
+    <p class="dash-sub">See which categories and projects customers view most across the platform.</p>
+  </div>
+  <a class="btn btn-outline" href="{{ url_for('designer.statistics') }}">My project statistics</a>
+</div>
 
-<h1>Customer trends</h1>
-
-<p>
-  See which categories and projects customers view
-  most across the platform.
-</p>
-
-<form method="get">
-  <label for="days">Time period</label>
-
-  <select id="days" name="days">
-    <option value="7" {% if days == 7 %}selected{% endif %}>
-      Last 7 days
-    </option>
-    <option value="30" {% if days == 30 %}selected{% endif %}>
-      Last 30 days
-    </option>
-  </select>
-
-  <button type="submit">Show trends</button>
-</form>
+<section class="card">
+  <nav class="tabs" aria-label="Time period" style="width:max-content; max-width:100%;">
+    {% for d in (7, 30) %}
+    <a href="{{ url_for('designer.trends', days=d) }}" {% if days == d %}aria-current="true"{% endif %}>Last {{ d }} days</a>
+    {% endfor %}
+  </nav>
+</section>
 
 {% if categories %}
+<section class="card">
+  <div style="max-width:760px;">{{ chart("Project views per day across the platform, last " ~ days ~ " days", timeline.labels, timeline.views, "views") }}</div>
+</section>
 
-<h2>Most viewed categories</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th>Category</th>
-      <th>Views</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for category, count in categories %}
-    <tr>
-      <td>{{ category }}</td>
-      <td>{{ count }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
-<h2>Most viewed projects</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th>Project</th>
-      <th>Company</th>
-      <th>Views</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for project, count in projects %}
-    <tr>
-      <td>
-        <a href="{{ url_for('customer.project', idp_id=project.id) }}">
-          {{ project.title }}
-        </a>
-      </td>
-      <td>{{ project.designer.display_name }}</td>
-      <td>{{ count }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
-
+<div class="dash-grid dash-grid-even">
+  <section class="card">
+    <div class="card-head"><h2>Most viewed categories</h2></div>
+    <div class="table-wrap">
+      <table class="ptable">
+        <thead><tr><th scope="col">#</th><th scope="col">Category</th><th scope="col">Views</th></tr></thead>
+        <tbody>
+          {% for category, count in categories %}
+          <tr><td class="num">{{ loop.index }}</td><td>{{ category }}</td><td>{{ count }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Most viewed projects</h2></div>
+    <div class="table-wrap">
+      <table class="ptable">
+        <thead><tr><th scope="col">#</th><th scope="col">Project</th><th scope="col">Company</th><th scope="col">Views</th></tr></thead>
+        <tbody>
+          {% for project, count in projects %}
+          <tr>
+            <td class="num">{{ loop.index }}</td>
+            <td><a class="proj-title" href="{{ url_for('customer.project', idp_id=project.id) }}">{{ project.title }}</a></td>
+            <td>{{ project.designer.display_name }}</td>
+            <td>{{ count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+</div>
 {% else %}
-
-<p>No trend data for the last {{ days }} days yet.</p>
-
+<section class="card"><p class="empty-row">No trend data for the last {{ days }} days yet.</p></section>
 {% endif %}
-
-<p>
-  <a href="{{ url_for('designer.home') }}">
-    Back to dashboard
-  </a>
-</p>
-
 {% endblock %}

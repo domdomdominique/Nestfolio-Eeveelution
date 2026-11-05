@@ -1,3 +1,4 @@
+from app.entity.activity_timeline import ActivityTimeline
 from app.entity.idp_view import IDPView
 from app.entity.user_account import UserAccount
 
@@ -23,4 +24,6 @@ class ViewTrendsController:
             "days": days,
             "categories": categories,
             "projects": projects,
+            # Views per day across the platform (visible IDPs only), for the chart
+            "timeline": ActivityTimeline.last_days(days, visible_only=True),
         }

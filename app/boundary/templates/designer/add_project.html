@@ -1,130 +1,108 @@
-{% extends "base.html" %}
+{% extends "designer/layout.html" %}
+{% set editing = editing|default(false) %}
+{% set nav = 'portfolio' %}
+{% set inline_errors = true %}
+{% block title %}{{ 'Edit project' if editing else 'Add project' }} — Nestfolio{% endblock %}
 {% block content %}
+<form method="post" enctype="multipart/form-data" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="dash-header">
+    <div>
+      <p class="breadcrumb"><a href="{{ url_for('designer.portfolio') }}">My portfolio</a> <span>/</span> <span aria-current="page">{{ 'Edit project' if editing else 'Add project' }}</span></p>
+      <h1 class="dash-title">{{ 'Edit project' if editing else 'Add project to portfolio' }}</h1>
+      {% if editing %}
+      <p class="dash-sub">Added {{ project.created_at|ago }} · {{ '{:,}'.format(project.view_count or 0) }} views · {{ '{:,}'.format(project.shortlist_count or 0) }} shortlists</p>
+      {% endif %}
+    </div>
+    <div class="dash-header-actions">
+      <a class="btn btn-outline" href="{{ url_for('designer.portfolio') if editing else url_for('designer.home') }}">Cancel</a>
+      <button class="btn btn-primary" type="submit">{{ 'Save changes' if editing else 'Add project' }}</button>
+    </div>
+  </div>
 
-<h1>
-  {{ 'Edit project' if editing|default(false) else 'Add project to portfolio' }}
-</h1>
+  {% for message in get_flashed_messages(category_filter=['error']) %}
+    <p class="form-error" role="alert" style="margin-top:16px">{{ message }}</p>
+  {% endfor %}
 
-<form method="post" enctype="multipart/form-data">
-  <input
-    type="hidden"
-    name="csrf_token"
-    value="{{ csrf_token() }}"
-  >
+  <div class="form-layout" style="margin-top:24px">
+    <div class="form-stack">
+      <section class="form-card-dash">
+        <div><h2>Project details</h2><p class="hint">What customers will see on the project page.</p></div>
+        <label class="field">
+          <span>Project title *</span>
+          <input name="title" required maxlength="150" value="{{ form.get('title', '') }}">
+        </label>
+        <label class="field">
+          <span>Description</span>
+          <textarea name="description" maxlength="1000" rows="5">{{ form.get('description', '') }}</textarea>
+          <span class="hint">Up to 1,000 characters.</span>
+        </label>
+        <label class="field">
+          <span>Category *</span>
+          <select name="category" required>
+            <option value="">Select a category</option>
+            {% for category in categories %}
+            <option value="{{ category }}" {% if form.get('category') == category %}selected{% endif %}>{{ category }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <fieldset class="field" style="border:0;padding:0;margin:0">
+          <span style="font-size:14px;font-weight:500;color:var(--espresso-deep)">Project status *</span>
+          <div class="radio-cards">
+            <label class="radio-card"><input type="radio" name="status" value="current" {{ 'checked' if form.get('status', 'current') == 'current' }}><span><strong>Current</strong><span>Work is still in progress</span></span></label>
+            <label class="radio-card"><input type="radio" name="status" value="past" {{ 'checked' if form.get('status') == 'past' }}><span><strong>Past</strong><span>Work is completed and handed over</span></span></label>
+          </div>
+        </fieldset>
+      </section>
 
-  <label>
-    Project title *
-    <input
-      name="title"
-      required
-      maxlength="150"
-      value="{{ form.get('title', '') }}"
-    >
-  </label>
+      <section class="form-card-dash">
+        <div><h2>Project photos</h2><p class="hint">JPG or PNG only. Maximum 5 MB per photo, 20 megapixels, and 10 photos per project. Photos are optional.</p></div>
+        <label class="field">
+          <span>{{ 'Add more photos' if editing else 'Choose photos' }}</span>
+          <input type="file" name="photos" accept="image/jpeg,image/png" multiple>
+        </label>
+        <p class="hint">If validation fails, select your photos again before submitting.</p>
+      </section>
+    </div>
 
-  <label>
-    Description
-    <textarea
-      name="description"
-      maxlength="1000"
-      rows="5"
-    >{{ form.get('description', '') }}</textarea>
-  </label>
-
-  <label>
-    Category *
-    <select name="category" required>
-      <option value="">Select a category</option>
-
-      {% for category in categories %}
-        <option
-          value="{{ category }}"
-          {% if form.get('category') == category %}selected{% endif %}
-        >
-          {{ category }}
-        </option>
-      {% endfor %}
-    </select>
-  </label>
-
-  <label>
-    Project status *
-    <select name="status" required>
-      <option
-        value="current"
-        {% if form.get('status', 'current') == 'current' %}selected{% endif %}
-      >
-        Current
-      </option>
-
-      <option
-        value="past"
-        {% if form.get('status') == 'past' %}selected{% endif %}
-      >
-        Past
-      </option>
-    </select>
-  </label>
-
-<label>
-  Project photos
-  <input
-    type="file"
-    name="photos"
-    accept="image/jpeg,image/png"
-    multiple
-  >
-</label>
-
-<p>
-  JPG or PNG only. Maximum 5 MB per photo,
-  20 megapixels, and 10 photos per project.
-  Photos are optional.
-</p>
-
-<p>
-  If validation fails, select your photos again before submitting.
-</p>
-
-  <button type="submit">
-  {{ 'Save changes' if editing|default(false) else 'Add project' }}
-</button>
-
-  <a href="{{ url_for('designer.home') }}">
-    Cancel
-  </a>
+    <aside class="form-stack">
+      {% if editing %}
+      <section class="form-card-dash">
+        <div><h2>Existing photos</h2><p class="hint">{{ project.photos|length }} of 10 photos.</p></div>
+        {% if project.photos %}
+        <div style="display:grid; grid-template-columns:repeat(2, 1fr); gap:12px;">
+          {% for photo in project.photos %}
+          <figure style="margin:0; display:flex; flex-direction:column; gap:6px;">
+            <img src="{{ url_for('customer.project_photo', photo_id=photo.id) }}" alt="Project photo {{ loop.index }}"
+                 style="width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:8px;">
+            {# A separate form (via form=) so this button doesn't submit the edit form #}
+            <button class="link-action link-danger" type="submit" form="remove-photo-{{ photo.id }}">Remove photo</button>
+          </figure>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="hint">No photos uploaded yet.</p>
+        {% endif %}
+      </section>
+      {% endif %}
+      <section class="tips">
+        <h3>Tips for a great project</h3>
+        <ul>
+          <li>Use a bright, wide shot as the first photo.</li>
+          <li>Pick the category customers would search for.</li>
+          <li>Mark the project as Past once it is handed over.</li>
+        </ul>
+      </section>
+    </aside>
+  </div>
 </form>
 
-{% if editing|default(false) %}
-  <h2>Existing photos</h2>
-
-  {% for photo in project.photos %}
-    <article>
-      <img
-        src="{{ url_for('customer.project_photo', photo_id=photo.id) }}"
-        alt="Project photo {{ loop.index }}"
-        style="max-height: 220px; max-width: 100%;"
-      >
-
-      <form
-        method="post"
-        action="{{ url_for('designer.remove_project_photo', idp_id=project.id, photo_id=photo.id) }}"
-      >
-        <input
-          type="hidden"
-          name="csrf_token"
-          value="{{ csrf_token() }}"
-        >
-
-        <button type="submit" class="secondary">
-          Remove photo
-        </button>
-      </form>
-    </article>
-
-  {% else %}
-    <p>No photos uploaded yet.</p>
-  {% endfor %}
+{% if editing %}
+{% for photo in project.photos %}
+<form id="remove-photo-{{ photo.id }}" method="post"
+      action="{{ url_for('designer.remove_project_photo', idp_id=project.id, photo_id=photo.id) }}" hidden>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+</form>
+{% endfor %}
 {% endif %}
-
 {% endblock %}

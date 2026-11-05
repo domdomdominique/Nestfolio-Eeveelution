@@ -1,37 +1,21 @@
-{% extends "base.html" %}
+{% extends "designer/layout.html" %}
+{% set nav = 'profile' %}
+{% block title %}Delete company — Nestfolio{% endblock %}
 {% block content %}
+<div class="dash-header">
+  <div>
+    <p class="breadcrumb"><a href="{{ url_for('designer.company') }}">My company</a> <span>/</span> <span aria-current="page">Delete company</span></p>
+    <h1 class="dash-title">Delete company information?</h1>
+  </div>
+</div>
 
-<h1>Delete company information?</h1>
-
-<p>
-  Remove the public company information for
-  <strong>{{ company.company_name }}</strong>?
-</p>
-
-<p>
-  Your designer account and projects will remain.
-  Your original registration application is kept
-  as an approval record.
-</p>
-
-<form method="post">
-  <input
-    type="hidden"
-    name="csrf_token"
-    value="{{ csrf_token() }}"
-  >
-
-  <button type="submit" name="confirm" value="delete">
-    Confirm deletion
-  </button>
-
-  <a
-    href="{{ url_for('designer.company') }}"
-    role="button"
-    class="secondary"
-  >
-    Cancel
-  </a>
-</form>
-
+<section class="danger-card" style="max-width:640px;">
+  <h3>Remove the public company information for <strong>{{ company.company_name }}</strong>?</h3>
+  <p>Your designer account and projects will remain. Your original registration application is kept as an approval record.</p>
+  <form class="form-actions" method="post" style="justify-content:flex-start; margin-top:8px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <a class="btn btn-outline" href="{{ url_for('designer.company') }}">Cancel</a>
+    <button class="btn btn-primary btn-danger" type="submit" name="confirm" value="delete">Confirm deletion</button>
+  </form>
+</section>
 {% endblock %}

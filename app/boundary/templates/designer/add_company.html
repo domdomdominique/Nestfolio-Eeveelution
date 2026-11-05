@@ -1,60 +1,26 @@
-{% extends "base.html" %}
-{% from "shared/_phone.html" import phone_input %}
-
+{% extends "designer/layout.html" %}
+{% from "designer/_company_fields.html" import company_fields %}
+{% set nav = 'profile' %}
+{% set inline_errors = true %}
+{% block title %}Add company — Nestfolio{% endblock %}
 {% block content %}
-<h1>Add company information</h1>
+<div class="dash-header">
+  <div>
+    <p class="breadcrumb"><a href="{{ url_for('designer.home') }}">Dashboard</a> <span>/</span> <span aria-current="page">Add company</span></p>
+    <h1 class="dash-title">Add company information</h1>
+    <p class="dash-sub">Shown to customers on your public designer profile.</p>
+  </div>
+</div>
 
-<form method="post">
-  <input
-  type="hidden"
-  name="csrf_token"
-  value="{{ csrf_token() }}"
-  >
-  <label>
-    Company name *
-    <input
-      name="company_name"
-      maxlength="150"
-      required
-      value="{{ form.get('company_name', '') }}"
-    >
-  </label>
-
-  <label>
-    Description
-    <textarea
-      name="description"
-      maxlength="5000"
-      rows="5"
-    >{{ form.get('description', '') }}</textarea>
-  </label>
-
-  <label>
-    Address
-    <input
-      name="address"
-      maxlength="255"
-      value="{{ form.get('address', '') }}"
-    >
-  </label>
-
-  <label>
-    Contact number
-    {{ phone_input(form.get('phone', ''), required=false) }}
-  </label>
-
-  <label>
-    Company email
-    <input
-      name="email"
-      type="email"
-      maxlength="120"
-      value="{{ form.get('email', '') }}"
-    >
-  </label>
-
-  <button type="submit">Save company information</button>
-
-  <a href="{{ url_for('designer.home') }}">Cancel</a>
+<form class="card form-card-dash" method="post" novalidate style="max-width:760px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% for message in get_flashed_messages(category_filter=['error']) %}
+    <p class="form-error" role="alert">{{ message }}</p>
+  {% endfor %}
+  {{ company_fields(form) }}
+  <div class="form-actions">
+    <a class="btn btn-outline" href="{{ url_for('designer.home') }}">Cancel</a>
+    <button class="btn btn-primary" type="submit">Save company information</button>
+  </div>
 </form>
 {% endblock %}

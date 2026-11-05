@@ -1,40 +1,21 @@
-{% extends "base.html" %}
+{% extends "designer/layout.html" %}
+{% set nav = 'portfolio' %}
+{% block title %}Delete project — Nestfolio{% endblock %}
 {% block content %}
+<div class="dash-header">
+  <div>
+    <p class="breadcrumb"><a href="{{ url_for('designer.portfolio') }}">My portfolio</a> <span>/</span> <span aria-current="page">Delete project</span></p>
+    <h1 class="dash-title">Delete project?</h1>
+  </div>
+</div>
 
-<h1>Delete project?</h1>
-
-<p>
-  Are you sure you want to delete
-  <strong>{{ project.title }}</strong>?
-</p>
-
-<p>
-  The project will be removed from your portfolio.
-  Its saved favourites and reports will also be removed.
-  Existing enquiry messages will be kept.
-</p>
-
-<form
-  method="post"
-  action="{{ url_for('designer.delete_project', idp_id=project.id) }}"
->
-  <input
-    type="hidden"
-    name="csrf_token"
-    value="{{ csrf_token() }}"
-  >
-
-  <button type="submit" name="confirm" value="delete">
-    Confirm deletion
-  </button>
-
-  <a
-    href="{{ url_for('customer.project', idp_id=project.id) }}"
-    role="button"
-    class="secondary"
-  >
-    Cancel
-  </a>
-</form>
-
+<section class="danger-card" style="max-width:640px;">
+  <h3>Are you sure you want to delete <strong>{{ project.title }}</strong>?</h3>
+  <p>The project will be removed from your portfolio. Its saved favourites and reports will also be removed. Existing enquiry messages will be kept.</p>
+  <form class="form-actions" method="post" action="{{ url_for('designer.delete_project', idp_id=project.id) }}" style="justify-content:flex-start; margin-top:8px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <a class="btn btn-outline" href="{{ url_for('customer.project', idp_id=project.id) }}">Cancel</a>
+    <button class="btn btn-primary btn-danger" type="submit" name="confirm" value="delete">Confirm deletion</button>
+  </form>
+</section>
 {% endblock %}

@@ -446,9 +446,9 @@ def delete_project(idp_id):
 @role_required("designer")
 def statistics():
     try:
-        projects = ViewIDPStatisticsController().view(
-            session["user_id"]
-        )
+        controller = ViewIDPStatisticsController()
+        projects = controller.view(session["user_id"])
+        timeline = controller.activity(session["user_id"])
 
     except LookupError:
         abort(404)
@@ -456,6 +456,7 @@ def statistics():
     return render_template(
         "designer/statistics.html",
         projects=projects,
+        timeline=timeline,
     )
 
 

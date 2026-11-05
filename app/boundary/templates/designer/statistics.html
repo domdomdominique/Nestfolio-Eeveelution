@@ -1,66 +1,45 @@
-{% extends "base.html" %}
+{% extends "designer/layout.html" %}
+{% from "shared/_chart.html" import chart %}
+{% set nav = 'dashboard' %}
+{% block title %}Project statistics — Nestfolio{% endblock %}
 {% block content %}
-
-<h1>My project statistics</h1>
-
-<p>
-  Views show customer and visitor visits to your project pages.
-  Shortlists show how many customers currently have
-  each project saved in their favourites.
-</p>
+<div class="dash-header">
+  <div>
+    <p class="breadcrumb"><a href="{{ url_for('designer.home') }}">Dashboard</a> <span>/</span> <span aria-current="page">Project statistics</span></p>
+    <h1 class="dash-title">My project statistics</h1>
+    <p class="dash-sub">Views show customer and visitor visits to your project pages. Shortlists show how many customers currently have each project saved in their favourites.</p>
+  </div>
+  <a class="btn btn-outline" href="{{ url_for('designer.trends') }}">Customer trends</a>
+</div>
 
 {% if projects %}
+<div class="dash-grid dash-grid-even">
+  <section class="card">{{ chart("Views per day, last 30 days", timeline.labels, timeline.views, "views") }}</section>
+  <section class="card">{{ chart("New shortlists per day, last 30 days", timeline.labels, timeline.shortlists, "shortlists") }}</section>
+</div>
 
-  <div style="overflow-x: auto;">
-    <table>
-      <thead>
-        <tr>
-          <th>Project</th>
-          <th>Category</th>
-          <th>Views</th>
-          <th>Shortlists</th>
-        </tr>
-      </thead>
-
+<section class="card">
+  <div class="card-head"><h2>All time, by project</h2></div>
+  <div class="table-wrap">
+    <table class="ptable">
+      <thead><tr><th scope="col">Project</th><th scope="col">Category</th><th scope="col">Views</th><th scope="col">Shortlists</th></tr></thead>
       <tbody>
         {% for project in projects %}
-          <tr>
-            <td>
-              <a href="{{ url_for('customer.project', idp_id=project.id) }}">
-                {{ project.title }}
-              </a>
-            </td>
-
-            <td>{{ project.category }}</td>
-
-            <td>{{ project.view_count or 0 }}</td>
-
-            <td>{{ project.shortlist_count or 0 }}</td>
-          </tr>
+        <tr>
+          <td><a class="proj-title" href="{{ url_for('customer.project', idp_id=project.id) }}">{{ project.title }}</a></td>
+          <td>{{ project.category }}</td>
+          <td class="num">{{ i.icon('eye') }} {{ '{:,}'.format(project.view_count or 0) }}</td>
+          <td class="num">{{ i.icon('heart') }} {{ '{:,}'.format(project.shortlist_count or 0) }}</td>
+        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-
+</section>
 {% else %}
-
-  <p>
-    No project statistics yet.
-    Add a project to your portfolio first.
-  </p>
-
+<section class="card">
+  <p class="empty-row">No project statistics yet. Add a project to your portfolio first.
+    <a class="link-action" href="{{ url_for('designer.add_project') }}">Add a project</a></p>
+</section>
 {% endif %}
-
-<p>
-  <a href="{{ url_for('designer.portfolio') }}">
-    My portfolio
-  </a>
-</p>
-
-<p>
-  <a href="{{ url_for('designer.home') }}">
-    Back to dashboard
-  </a>
-</p>
-
 {% endblock %}

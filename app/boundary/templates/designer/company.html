@@ -1,66 +1,50 @@
-{% extends "base.html" %}
-
+{% extends "designer/layout.html" %}
+{% set nav = 'profile' %}
+{% block title %}My company — Nestfolio{% endblock %}
 {% block content %}
-
-<h1>My company information</h1>
+<div class="dash-header">
+  <div>
+    <p class="breadcrumb"><a href="{{ url_for('designer.home') }}">Dashboard</a> <span>/</span> <span aria-current="page">My company</span></p>
+    <h1 class="dash-title">My company information</h1>
+    <p class="dash-sub">What customers see on your public designer profile.</p>
+  </div>
+  {% if company %}
+  <div class="dash-header-actions">
+    <a class="btn btn-outline" href="{{ url_for('designer.delete_company') }}">Delete company</a>
+    <a class="btn btn-primary" href="{{ url_for('designer.edit_company') }}">Edit company</a>
+  </div>
+  {% endif %}
+</div>
 
 {% if company %}
-  <article>
+<div class="profile-grid">
+  <section class="card profile-card">
+    {% if company.profile_photo %}
+    <img src="{{ url_for('customer.company_photo', designer_id=company.account_id) }}" alt="{{ company.company_name }} profile picture"
+         width="96" height="96" style="width:96px; height:96px; border-radius:50%; object-fit:cover;">
+    {% else %}
+    <span class="initials initials-lg">{{ (company.company_name.split()|map('first')|join)[:2]|upper }}</span>
+    {% endif %}
     <h2>{{ company.company_name }}</h2>
-    <p>
-        <a href="{{ url_for('designer.edit_company') }}" role="button">
-            Edit company
-        </a>
-
-        <a
-            href="{{ url_for('designer.delete_company') }}"
-            role="button"
-            class="secondary"
-        >
-            Delete company
-        </a>
-    </p>
-
-    <dl>
-      <dt>Description</dt>
-      <dd style="white-space: pre-line">{{ company.description or 'Not provided' }}</dd>
-
-      <dt>Address</dt>
-      <dd>{{ company.address|default('') or 'Not provided' }}</dd>
-
-      <dt>Contact number</dt>
-      <dd>{{ company.phone or 'Not provided' }}</dd>
-
-      <dt>Company email</dt>
-      <dd>{{ company.email or 'Not provided' }}</dd>
-
-      {% if company.uen %}
-        <dt>UEN</dt>
-        <dd>{{ company.uen }}</dd>
-      {% endif %}
-
-      {% if company.portfolio_url %}
-        <dt>Website</dt>
-        <dd>{{ company.portfolio_url }}</dd>
-      {% endif %}
-
-      <dt>Years of experience</dt>
-      <dd>{{ company.experience_years }}</dd>
+    <p class="hint">{{ company.experience_years }} years of experience</p>
+  </section>
+  <section class="card">
+    <div class="card-head"><h2>Company details</h2></div>
+    <p style="white-space: pre-line; margin-top:12px;">{{ company.description or 'Not provided' }}</p>
+    <dl class="kv">
+      <div><dt>Address</dt><dd>{{ company.address|default('') or 'Not provided' }}</dd></div>
+      <div><dt>Contact number</dt><dd>{{ company.phone or 'Not provided' }}</dd></div>
+      <div><dt>Company email</dt><dd>{{ company.email or 'Not provided' }}</dd></div>
+      {% if company.uen %}<div><dt>UEN</dt><dd>{{ company.uen }}</dd></div>{% endif %}
+      {% if company.portfolio_url %}<div><dt>Website</dt><dd>{{ company.portfolio_url }}</dd></div>{% endif %}
+      <div><dt>Years of experience</dt><dd>{{ company.experience_years }}</dd></div>
     </dl>
-  </article>
-
+  </section>
+</div>
 {% else %}
-  <p>No company information has been added yet.</p>
-
-  <a href="{{ url_for('designer.add_company') }}" role="button">
-    Add company information
-  </a>
+<section class="card">
+  <p class="empty-row">No company information has been added yet.
+    <a class="link-action" href="{{ url_for('designer.add_company') }}">Add company information</a></p>
+</section>
 {% endif %}
-
-<p>
-  <a href="{{ url_for('designer.home') }}">
-    Back to dashboard
-  </a>
-</p>
-
 {% endblock %}
