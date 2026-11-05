@@ -10,6 +10,14 @@ MAX_PHOTO_BYTES = 5 * 1024 * 1024
 MAX_PHOTOS = 10
 
 
+def safe_upload_name(filename):
+    """(safe file name, lower-case extension). The extension is read from the name the user chose:
+    secure_filename drops non-ASCII letters, so "报告.pdf" would otherwise lose its ".pdf"."""
+    path = PurePath((filename or "").strip())
+    extension = path.suffix.lower()
+    return ((secure_filename(path.stem)[:240] or "file") + extension)[:255], extension
+
+
 # ID-19 Photo rules: JPG or PNG, 5 MB each, at most 10, checked as real images.
 def validated_photos(files, existing=0):
     files = [
@@ -25,8 +33,7 @@ def validated_photos(files, existing=0):
     photos = []
 
     for upload in files:
-        filename = secure_filename(upload.filename)[:255]
-        extension = PurePath(filename).suffix.lower()
+        filename, extension = safe_upload_name(upload.filename)
 
         if extension not in (".jpg", ".jpeg", ".png"):
             raise ValueError("Only JPG and PNG photos are accepted.")

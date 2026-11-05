@@ -1,8 +1,4 @@
-from pathlib import PurePath
-
-from werkzeug.utils import secure_filename
-
-from app.control.portfolio_validation import validated_photos
+from app.control.portfolio_validation import safe_upload_name, validated_photos
 
 MAX_ATTACHMENTS = 5
 MAX_ATTACHMENT_BYTES = 5 * 1024 * 1024
@@ -18,7 +14,7 @@ def validated_attachments(files):
 
     attachments = []
     for upload in files:
-        extension = PurePath(secure_filename(upload.filename)).suffix.lower()
+        extension = safe_upload_name(upload.filename)[1]
         if extension == ".pdf":
             attachments.append(_pdf(upload))
         elif extension in (".jpg", ".jpeg", ".png"):
@@ -34,7 +30,7 @@ def validated_attachments(files):
 
 
 def _pdf(upload):
-    filename = secure_filename(upload.filename)[:255] or "document.pdf"
+    filename = safe_upload_name(upload.filename)[0]
     data = upload.stream.read(MAX_ATTACHMENT_BYTES + 1)
     if len(data) > MAX_ATTACHMENT_BYTES:
         raise ValueError("Each file must be 5 MB or smaller.")

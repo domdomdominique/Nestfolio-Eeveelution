@@ -1,5 +1,8 @@
 from datetime import datetime
 
+from sqlalchemy import and_, exists, func, or_
+from sqlalchemy.orm import selectinload
+
 from app.entity.db import db
 from app.entity.encryption import EncryptedString
 
@@ -32,10 +35,21 @@ class Enquiry(db.Model):
         return enquiry
 
     @classmethod
+    def _with_conversation(cls):
+        """A query that also reads each enquiry's replies, files and project in bulk. The inbox and the
+        unread badge (which runs on every page) show all of them, so this avoids one query per enquiry.
+        The file bytes stay deferred; only their names and sizes are read."""
+        from app.entity.enquiry_attachment import EnquiryAttachment  # noqa: F401  (defines all_attachments)
+        from app.entity.reply import Reply
+
+        return cls.query.options(selectinload(cls.replies).selectinload(Reply.attachments),
+                                 selectinload(cls.all_attachments), selectinload(cls.idp))
+
+    @classmethod
     def for_designer(cls, designer_id, limit=None):
         """ID-21 Return this designer's enquiries, newest first."""
         query = (
-            cls.query.filter_by(designer_id=designer_id)
+            cls._with_conversation().filter_by(designer_id=designer_id)
             .order_by(
                 cls.created_at.desc(),
                 cls.id.desc(),
@@ -61,7 +75,7 @@ class Enquiry(db.Model):
     @classmethod
     def for_customer(cls, customer_id):
         """The enquiries a customer has sent, newest first, for their My enquiries page."""
-        return (cls.query.filter_by(customer_id=customer_id)
+        return (cls._with_conversation().filter_by(customer_id=customer_id)
                 .order_by(cls.created_at.desc(), cls.id.desc()).all())
 
     @classmethod
@@ -89,8 +103,20 @@ class Enquiry(db.Model):
         return new
 
     @classmethod
-    def for_person(cls, user_id):
-        return cls.query.filter(db.or_(cls.designer_id == user_id, cls.customer_id == user_id)).all()
+    def unread_count_for(cls, user_id):
+        """How many of this person's conversations have something new (the badge). Same rule as
+        new_messages_for, but counted in the database: it runs on every page, so it must not load them all."""
+        from app.entity.reply import EnquirySeen, Reply
+
+        newer = or_(EnquirySeen.seen_at.is_(None), Reply.created_at > EnquirySeen.seen_at)
+        new_reply = exists().where(and_(Reply.enquiry_id == cls.id, Reply.sender_id != user_id, newer))
+        new_enquiry = and_(cls.designer_id == user_id,
+                           or_(EnquirySeen.seen_at.is_(None), cls.created_at > EnquirySeen.seen_at))
+        return (db.session.query(func.count(cls.id))
+                .outerjoin(EnquirySeen, and_(EnquirySeen.enquiry_id == cls.id, EnquirySeen.user_id == user_id))
+                .filter(or_(cls.designer_id == user_id, cls.customer_id == user_id))
+                .filter(or_(new_enquiry, new_reply))
+                .scalar())
 
     @property
     def last_message_from_designer(self):

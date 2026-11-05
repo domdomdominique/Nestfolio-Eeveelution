@@ -1,5 +1,7 @@
 from datetime import datetime
 
+from sqlalchemy.exc import IntegrityError
+
 from app.entity.db import db
 
 
@@ -74,4 +76,19 @@ class EnquirySeen(db.Model):
                 seen[enquiry_id].seen_at = now
             else:
                 db.session.add(cls(enquiry_id=enquiry_id, user_id=user_id, seen_at=now))
-        db.session.commit()
+        # The inbox already holds these conversations. A normal commit would expire every one of them, and
+        # the page would then read each back from the database separately (4 queries per conversation).
+        session = db.session()
+        expire_on_commit, session.expire_on_commit = session.expire_on_commit, False
+        try:
+            try:
+                session.commit()
+            except IntegrityError:
+                # Another request (a second tab, a double-click) recorded the first visit just before us:
+                # the rows now exist, so just move their time forward.
+                session.rollback()
+                cls.query.filter(cls.enquiry_id.in_(enquiry_ids), cls.user_id == user_id).update(
+                    {"seen_at": now}, synchronize_session=False)
+                session.commit()
+        finally:
+            session.expire_on_commit = expire_on_commit
