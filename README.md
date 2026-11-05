@@ -122,6 +122,7 @@ This **wipes and rebuilds** the database with repeatable data (it uses a fixed r
 | Enquiries | 100 |
 | Categories / user profiles | 6 / 4 defaults |
 | Announcements | 3 |
+| Photos | 1 per project (random from `app/static/img/idpbg`) and 1 per category (random from `app/static/img/idpcatbg`), scaled down and stored in the database |
 
 ### 4. Run the app
 

@@ -121,7 +121,8 @@ button, input, select, textarea { font: inherit; }
   gap: 32px;
   text-align: center;
 }
-.hero-image { width: 100%; height: 560px; margin-top: 24px; border-radius: 4px; background: #e2d9cf; }
+.hero-image { width: 100%; height: 560px; margin-top: 24px; border-radius: 4px; background: #e2d9cf; overflow: hidden; }
+.hero-image img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 55%; }  /* keeps the car in frame */
 .hero h1 { font-family: var(--font-display); font-size: 66px; line-height: 1.12; font-weight: 400; letter-spacing: -0.33px; color: var(--espresso-deep); }
 .hero-sub { font-size: 19px; line-height: 1.65; }
 
@@ -207,6 +208,8 @@ button, input, select, textarea { font: inherit; }
 .category-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px 24px; }
 .category-card { display: flex; flex-direction: column; gap: 16px; }
 .category-card .photo { height: 280px; border-radius: 4px; }
+.category-card .photo.has-photo { overflow: hidden; }
+.category-card .photo.has-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .category-card:hover .photo { outline: 2px solid var(--taupe); }
 .card-title { font-family: var(--font-display); font-size: 22px; font-weight: 400; color: var(--espresso-deep); }
 .card-meta { font-size: 13px; color: var(--text-muted); }
@@ -1045,6 +1048,10 @@ dialog.lightbox::backdrop { background: rgba(20, 14, 9, 0.88); }
   background: var(--sand); border: 1px solid var(--line); color: var(--text-body); text-decoration: none;
 }
 .inbox-tabs a[aria-current="page"] { background: var(--navy-dark); border-color: var(--navy-dark); color: #fff; }
+/* position: relative keeps the absolutely positioned screen-reader labels (.visually-hidden) inside
+   the scrolling panes; without it they sit below the inbox and stretch the page with blank space */
+.inbox { position: relative; }
+.inbox-items, .inbox-messages { position: relative; }
 .inbox-items { flex: 1; overflow-y: auto; }
 .inbox-item {
   display: flex; gap: 12px; padding: 14px 16px;

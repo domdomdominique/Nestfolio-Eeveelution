@@ -5,6 +5,7 @@ from flask import send_file
 from app.control.update_company_controller import UpdateCompanyController
 
 from app.control.view_idp_photo_controller import ViewIDPPhotoController
+from app.control.view_category_photo_controller import ViewCategoryPhotoController
 
 from app.boundary import role_required, safe_next
 from app.control.send_announcement_controller import SendAnnouncementController
@@ -312,6 +313,26 @@ def project_photo(photo_id):
     try:
         photo = ViewIDPPhotoController().view(photo_id)
 
+    except LookupError:
+        abort(404)
+
+    response = send_file(
+        BytesIO(photo.data),
+        mimetype=photo.content_type,
+        download_name=photo.filename,
+        max_age=0,
+    )
+
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["Cache-Control"] = "no-store"
+
+    return response
+
+
+@customer_bp.route("/categories/<int:category_id>/photo")
+def category_photo(category_id):
+    try:
+        photo = ViewCategoryPhotoController().view(category_id)
     except LookupError:
         abort(404)
 

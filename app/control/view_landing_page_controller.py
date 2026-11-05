@@ -1,6 +1,7 @@
 from app.entity.announcement import Announcement
 from app.entity.favourite import Favourite
 from app.entity.idp import IDP
+from app.entity.idp_category import IDPCategory
 from app.entity.user_account import UserAccount
 
 
@@ -15,6 +16,7 @@ class ViewLandingPageController:
             "announcements": Announcement.latest(3) if customer_id else [],
             "popular": IDP.popular(sort),
             "categories": [(name, counts.get(name, 0)) for name in IDP.categories()],
+            "category_photos": IDPCategory.photo_ids(),
             "featured": [self._designer_card(UserAccount.get(i)) for i in IDP.featured_designer_ids()],
             "customer_count": UserAccount.count_by_role("customer"),
             "designer_count": UserAccount.count_by_role("designer"),

@@ -1,7 +1,6 @@
 """Generate realistic demo data for Nestfolio (at least 100 records per data type).
 
-Run:  python seed.py
-Then (optional) add project photos:  python add_demo_photos.py
+Run:  python seed.py   (then start the site with: python run.py)
 
 Everything is generated from a fixed random seed, so every run gives the same data.
 Numbers shown on the site always match the records behind them: a project's view
@@ -11,6 +10,9 @@ import os
 import random
 from datetime import datetime, timedelta
 
+from io import BytesIO
+
+from PIL import Image
 from werkzeug.security import generate_password_hash
 
 from app import create_app
@@ -22,7 +24,8 @@ from app.entity.enquiry import Enquiry
 from app.entity.reply import EnquirySeen, Reply
 from app.entity.favourite import Favourite
 from app.entity.idp import IDP
-from app.entity.idp_category import IDPCategory
+from app.entity.idp_category import IDPCategory, IDPCategoryPhoto
+from app.entity.idp_photo import IDPPhoto
 from app.entity.idp_view import IDPView
 from app.entity.report import Report
 from app.entity.user_account import UserAccount
@@ -215,6 +218,62 @@ REPORT_DETAILS = {
                                      "These photos are from a magazine.", ""],
     "Other": ["The designer did not reply to my enquiry for a month.", "Duplicate of another project.", ""],
 }
+
+# --- Demo photos -----------------------------------------------------------------------------
+# Every project gets a random photo from app/static/img/idpbg and every category a random background
+# from app/static/img/idpcatbg. The source images are large wallpapers, so each one is scaled down
+# and saved as a JPEG that fits the normal upload rules (ID-19: JPG/PNG, 5 MB, 20 megapixels).
+IMG_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app", "static", "img")
+PHOTO_MAX_SIDE = 1600  # long edge in pixels: sharp on the site, small in the database
+
+
+def images_in(folder):
+    folder = os.path.join(IMG_FOLDER, folder)
+    if not os.path.isdir(folder):
+        return []
+    return sorted(os.path.join(folder, f) for f in os.listdir(folder)
+                  if f.lower().endswith((".jpg", ".jpeg", ".png")))
+
+
+def load_photo(path):
+    """The image at path as a downscaled JPEG, ready to store as a photo record."""
+    with Image.open(path) as image:
+        image.draft("RGB", (PHOTO_MAX_SIDE, PHOTO_MAX_SIDE))  # JPEGs decode straight at a smaller size
+        if image.mode == "P":
+            image = image.convert("RGBA")  # palette PNGs with transparency must go through RGBA first
+        image = image.convert("RGB")
+        image.thumbnail((PHOTO_MAX_SIDE, PHOTO_MAX_SIDE), Image.LANCZOS)
+        out = BytesIO()
+        image.save(out, "JPEG", quality=82, optimize=True, progressive=True)
+    name = os.path.splitext(os.path.basename(path))[0][:250] + ".jpg"
+    return {"filename": name, "content_type": "image/jpeg", "data": out.getvalue()}
+
+
+def assign_photos(items, folder, attach):
+    """Attach a random image from folder to each item; returns how many items got one.
+
+    Images are dealt like shuffled cards, so none repeats until every one has been used,
+    and each image is only decoded once.
+    """
+    sources = images_in(folder)
+    if not sources:
+        print(f"No images in app/static/img/{folder}, so those records have no photos.")
+        return 0
+    cache, deck = {}, []
+    for item in items:
+        if not deck:
+            deck = random.sample(sources, len(sources))
+        path = deck.pop()
+        if path not in cache:
+            cache[path] = load_photo(path)
+        attach(item, cache[path])
+    db.session.commit()
+    return len(items)
+
+
+def attach_category_photo(category, photo):
+    category.photo = IDPCategoryPhoto(**photo)
+
 
 # seed.py rebuilds everything, so remove the old database first. This also avoids the
 # "encryption_key.key is missing but eeveelution.db exists" error after pulling new code.
@@ -419,14 +478,22 @@ with app.app_context():
                                     sent_at=NOW - timedelta(days=days_ago)))
     db.session.commit()
 
+    # --- Photos for every project and category -----------------------------------------------
+    print("Adding demo photos (this can take a minute)...")
+    project_photos = assign_photos(IDP.query.order_by(IDP.id).all(), "idpbg",
+                                   lambda p, photo: p.photos.append(IDPPhoto(**photo)))
+    category_photos = assign_photos(IDPCategory.query.order_by(IDPCategory.id).all(), "idpcatbg",
+                                    attach_category_photo)
+
     print(f"Accounts: {UserAccount.query.count()} ({len(customers)} customers, {len(designers)} designers), "
           f"companies: {DesignerCompany.query.count()}, projects: {IDP.query.count()}, "
           f"views logged: {IDPView.query.count()}, favourites: {Favourite.query.count()}, "
           f"enquiries: {Enquiry.query.count()} ({Reply.query.count()} replies), reports: {Report.query.count()} ({Report.count_open()} open), "
           f"applications: {DesignerApplication.query.count()} ({DesignerApplication.count_pending()} pending), "
           f"categories: {IDPCategory.query.count()}, profiles: {UserProfile.query.count()}, "
-          f"announcements: {Announcement.query.count()}")
+          f"announcements: {Announcement.query.count()}, "
+          f"photos: {project_photos} projects, {category_photos} categories")
     print(f"Demo logins (password: {PASSWORD}): admin@demo.com / platform@demo.com / "
           f"designer@demo.com / customer@demo.com")
     print(f"Pending applicant example: {pending[0].email}")
-    print("Add project photos with: python add_demo_photos.py")
+    print("Done. Start the site with: python run.py")

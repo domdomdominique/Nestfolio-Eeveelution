@@ -24,6 +24,12 @@ class IDPCategory(db.Model):
     name = db.Column(db.String(50), unique=True, nullable=False)
     description = db.Column(db.Text, default="")
     created_at = db.Column(db.DateTime, default=datetime.now)
+    photo = db.relationship(
+        "IDPCategoryPhoto",
+        uselist=False,
+        cascade="all, delete-orphan",
+        backref="category",
+    )
 
     @classmethod
     def ensure_defaults(cls):
@@ -61,6 +67,12 @@ class IDPCategory(db.Model):
         """Category names in display order, for designer forms and customer filters."""
         return [c.name for c in cls.query.order_by(cls.id)]
 
+    @classmethod
+    def photo_ids(cls):
+        """{category name: category id} for the categories that have a background photo."""
+        rows = db.session.query(cls.name, cls.id).join(IDPCategoryPhoto)
+        return {name: category_id for name, category_id in rows}
+
     @property
     def idp_count(self):
         from app.entity.idp import IDP
@@ -78,3 +90,22 @@ class IDPCategory(db.Model):
     def delete(self):
         db.session.delete(self)
         db.session.commit()
+
+
+class IDPCategoryPhoto(db.Model):
+    """Entity: the background photo shown on a category's card on the landing page."""
+
+    category_id = db.Column(
+        db.Integer,
+        db.ForeignKey("idp_category.id"),
+        primary_key=True,
+    )
+    filename = db.Column(db.String(255), nullable=False)
+    content_type = db.Column(db.String(30), nullable=False)
+    data = db.deferred(
+        db.Column(db.LargeBinary, nullable=False)
+    )
+
+    @classmethod
+    def get(cls, category_id):
+        return db.session.get(cls, category_id)

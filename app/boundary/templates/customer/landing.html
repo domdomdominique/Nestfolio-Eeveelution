@@ -39,9 +39,8 @@
         </div>
 
         <p class="hero-stats">{{ '{:,}'.format(customer_count) }} homeowners have joined · {{ '{:,}'.format(designer_count) }} verified designers</p>
-        {# Placeholder until the team picks a real hero photo #}
         <div class="photo hero-image">
-          <img src="{{ url_for('static', filename=img ~ 'hero-image.svg') }}" width="56" height="56" alt="">
+          <img src="{{ url_for('static', filename=img ~ 'hero.jpg') }}" width="2400" height="1599" alt="">
         </div>
       </div>
     </section>
@@ -58,9 +57,15 @@
         <div class="category-row">
           {% for name, count in categories %}
             <a class="category-card" href="{{ url_for('customer.home', category=name) }}">
+              {% if name in category_photos %}
+              <div class="photo has-photo">
+                <img src="{{ url_for('customer.category_photo', category_id=category_photos[name]) }}" alt="" loading="lazy">
+              </div>
+              {% else %}
               <div class="photo" style="background: {{ category_colours[loop.index0 % category_colours|length] }}">
                 <img src="{{ url_for('static', filename=img ~ 'category-image.svg') }}" width="29" height="29" alt="">
               </div>
+              {% endif %}
               <div>
                 <p class="card-title">{{ name }}</p>
                 <p class="card-meta">{{ count }} project{{ '' if count == 1 else 's' }}</p>
