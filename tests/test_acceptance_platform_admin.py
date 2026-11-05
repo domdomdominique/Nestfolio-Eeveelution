@@ -428,7 +428,7 @@ def test_ua17_review_reported_idps(ua, app):
     assert "Old Loft" in text(ua.get("/admin/reports?status=resolved"))
     assert app.test_client().get(f"/customer/projects/{old.id}").status_code == 200                  # dismissed: stays
     second = Report.query.filter_by(idp_id=new.id).one()
-    ua.post(f"/admin/reports/{second.id}/remove")
+    ua.post(f"/admin/reports/{second.id}/remove", data={"reason": "Spam"})
     assert app.test_client().get(f"/customer/projects/{new.id}").status_code == 404                  # removed: hidden
 
 

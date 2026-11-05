@@ -149,6 +149,8 @@ def create_app(test_config=None):
     with app.app_context():
         db.create_all()
         enquiry_attachment.EnquiryAttachment.ensure_schema()
+        from app.entity.report import Report
+        Report.ensure_schema()
         IDPCategory.ensure_defaults()
         UserProfile.ensure_defaults()
 
