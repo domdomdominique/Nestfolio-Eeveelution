@@ -47,3 +47,74 @@ class Enquiry(db.Model):
     @classmethod
     def count_for_designer(cls, designer_id):
         return cls.query.filter_by(designer_id=designer_id).count()
+
+    # --- Replies (ID-21 AC3 and AC5) -------------------------------------------------------
+
+    @classmethod
+    def get(cls, enquiry_id):
+        return db.session.get(cls, enquiry_id)
+
+    @classmethod
+    def for_customer(cls, customer_id):
+        """The enquiries a customer has sent, newest first, for their My enquiries page."""
+        return (cls.query.filter_by(customer_id=customer_id)
+                .order_by(cls.created_at.desc(), cls.id.desc()).all())
+
+    @classmethod
+    def latest_between(cls, customer_id, designer_id, idp_id=None, any_project=False):
+        """The newest conversation this customer has with this designer: about the given
+        project, or about any project when any_project is True."""
+        query = cls.query.filter_by(customer_id=customer_id, designer_id=designer_id)
+        if not any_project:
+            query = query.filter_by(idp_id=idp_id)
+        return query.order_by(cls.created_at.desc(), cls.id.desc()).first()
+
+    @property
+    def designer(self):
+        from app.entity.user_account import UserAccount
+
+        return UserAccount.get(self.designer_id)
+
+    def new_messages_for(self, user_id, seen_at):
+        """Messages from the other person this user has not seen yet (for notifications).
+        For the designer the customer's original message counts too."""
+        new = 0
+        if user_id == self.designer_id and (seen_at is None or self.created_at > seen_at):
+            new += 1
+        new += sum(1 for r in self.replies if r.sender_id != user_id and (seen_at is None or r.created_at > seen_at))
+        return new
+
+    @classmethod
+    def for_person(cls, user_id):
+        return cls.query.filter(db.or_(cls.designer_id == user_id, cls.customer_id == user_id)).all()
+
+    @property
+    def last_message_from_designer(self):
+        """True once the designer has answered the customer's latest message."""
+        return bool(self.replies) and self.replies[-1].sender_id == self.designer_id
+
+    @property
+    def conversation(self):
+        """The whole conversation in order: the customer's first message, then every reply."""
+        first = Message(self.customer_id, self.message, self.created_at)
+        return [first] + [Message(r.sender_id, r.message, r.created_at) for r in self.replies]
+
+    @property
+    def last_activity(self):
+        return self.replies[-1].created_at if self.replies else self.created_at
+
+    def mentions(self, text):
+        """True if the search text appears in the name, project title or any message."""
+        text = text.lower()
+        words = [self.name, self.idp.title if self.idp else "", self.designer.display_name if self.designer else ""]
+        words += [m.message for m in self.conversation]
+        return any(text in (w or "").lower() for w in words)
+
+
+class Message:
+    """One speech bubble in an enquiry conversation (not stored: built from Enquiry and Reply)."""
+
+    def __init__(self, sender_id, message, created_at):
+        self.sender_id = sender_id
+        self.message = message
+        self.created_at = created_at

@@ -13,10 +13,11 @@
     {% for key, label, icon, url in [
       ('profile', 'My profile', 'menu-profile', url_for('customer.profile')),
       ('favourites', 'My favourites', 'menu-favourites', url_for('customer.favourites')),
+      ('enquiries', 'My enquiries', 'chat', url_for('customer.my_enquiries')),
       ('password', 'Change password', 'menu-password', url_for('customer.profile') ~ '#password'),
     ] %}
       <a class="account-link{{ ' active' if key == active }}" href="{{ url }}" {% if key == active %}aria-current="page"{% endif %}>
-        <img src="{{ url_for('static', filename=img ~ icon ~ '.svg') }}" width="18" height="18" alt="">{{ label }}
+        <img src="{{ url_for('static', filename=img ~ icon ~ '.svg') }}" width="18" height="18" alt="">{{ label }}{% if key == 'enquiries' and unread_enquiries %} <span class="badge-new" style="margin-left:auto; background:#b25e09; color:#fff; border-radius:999px; padding:1px 8px; font-size:12px;">{{ unread_enquiries }}</span>{% endif %}
       </a>
     {% endfor %}
     <div class="account-divider"></div>

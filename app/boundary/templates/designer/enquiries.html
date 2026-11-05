@@ -1,64 +1,14 @@
 {% extends "designer/layout.html" %}
+{% from "shared/_inbox.html" import inbox %}
+{% set inline_errors = true %}
 {% block title %}Enquiries — Nestfolio{% endblock %}
 
 {% block content %}
 <div>
   <h1 class="dash-title">Enquiries</h1>
-  <p class="dash-sub">
-    {{ total }} customer message{{ '' if total == 1 else 's' }}, newest first.
-  </p>
+  <p class="dash-sub">Messages from customers about your projects.</p>
 </div>
 
-<section class="card">
-  {% if enquiries %}
-    <div class="enq-list">
-      {% for e in enquiries %}
-        <article class="enq-item">
-          <span class="initials initials-xs">
-            {{ (e.name.split()|map('first')|join)[:2]|upper }}
-          </span>
-
-          <div style="flex:1; min-width:0;">
-            <div class="enq-top">
-              <strong>{{ e.name }}</strong>
-              <small>
-                {{ e.created_at.strftime('%d %b %Y, %H:%M') }}
-              </small>
-            </div>
-
-            <p>
-              <strong>Contact:</strong>
-              {{ e.contact }}
-            </p>
-
-            <p class="enq-ref">
-              <strong>Related project:</strong>
-              {% if e.idp %}
-                <a href="{{ url_for('customer.project', idp_id=e.idp_id) }}">
-                  {{ e.idp.title }}
-                </a>
-              {% else %}
-                General company enquiry or project no longer available.
-              {% endif %}
-            </p>
-
-            <p style="white-space:pre-wrap; overflow-wrap:anywhere;">{{ e.message }}</p>
-          </div>
-        </article>
-      {% endfor %}
-    </div>
-    {% include "shared/_pager.html" %}
-  {% else %}
-    <p class="empty-row">
-      No enquiries yet. Messages will appear here
-      when customers contact you.
-    </p>
-  {% endif %}
-</section>
-
-<p>
-  <a href="{{ url_for('designer.home') }}">
-    Back to dashboard
-  </a>
-</p>
+{{ inbox('designer', enquiries, selected, unread, counts, show, search, session.user_id,
+         'designer.enquiries', 'designer.reply_to_enquiry') }}
 {% endblock %}

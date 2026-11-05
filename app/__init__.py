@@ -85,6 +85,7 @@ def create_app(test_config=None):
     from app.entity.idp_photo import IDPPhoto
     from app.entity.idp_view import IDPView
     from app.entity import activity_report, announcement  # noqa: F401  (PM-08, UA-18)
+    from app.entity import reply  # noqa: F401  (ID-21 replies)
     from app.entity.idp_category import IDPCategory
     from app.entity.user_profile import UserProfile
 
@@ -127,6 +128,22 @@ def create_app(test_config=None):
     # Over-time charts (inline SVG) on the Reports, Statistics and Trends pages
     from app.boundary.charts import line_chart
     app.jinja_env.globals["line_chart"] = line_chart
+
+    # Short times and initials for the Enquiries inbox
+    from app.boundary import timefmt
+    for name in ("ago", "clock", "day_label", "initials"):
+        app.jinja_env.filters[name] = getattr(timefmt, name)
+
+    # ID-21 notification badge: number of enquiry conversations with new messages
+    @app.context_processor
+    def enquiry_notifications():
+        from flask import session
+
+        from app.control.enquiry_notification_controller import EnquiryNotificationController
+
+        if session.get("role") in ("designer", "customer") and session.get("user_id"):
+            return {"unread_enquiries": EnquiryNotificationController().unread_count(session["user_id"])}
+        return {"unread_enquiries": 0}
 
     with app.app_context():
         db.create_all()

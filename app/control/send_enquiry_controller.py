@@ -9,6 +9,26 @@ class SendEnquiryController:
 
     MAX_MESSAGE = 2000
 
+    def start(self, customer_id, designer_id, idp_id=None):
+        """Open the 'new enquiry' pane from a project or designer page (C-16 AC1).
+
+        Returns (designer, project, existing): when the customer has already written to
+        this designer about this project (or, from the designer page, about anything),
+        existing is that conversation so the page can open it instead of a duplicate."""
+        designer = UserAccount.get(designer_id)
+        if designer is None or designer.role != "designer" or designer.is_suspended:
+            raise LookupError("Designer not found.")
+        idp = IDP.get(idp_id) if idp_id else None
+        if idp is not None and (idp.designer_id != designer.id or not idp.is_visible):
+            idp = None
+        existing = Enquiry.latest_between(customer_id, designer.id, idp.id if idp else None,
+                                          any_project=idp_id is None)
+        return designer, idp, existing
+
+    def latest(self, customer_id, designer_id):
+        """The conversation the customer has just started, so the page can open it."""
+        return Enquiry.latest_between(customer_id, designer_id, any_project=True)
+
     def send(self, customer_id, designer_id, name, contact, message, idp_id=None):
         designer = UserAccount.get(designer_id)
         if designer is None or designer.role != "designer" or designer.is_suspended:

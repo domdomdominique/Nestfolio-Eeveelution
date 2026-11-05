@@ -22,7 +22,6 @@ from app.control.view_enquiries_controller import ViewEnquiriesController
 from app.control.add_company_controller import AddCompanyController
 from app.control.view_company_controller import ViewCompanyController
 from app.control.add_idp_controller import AddIDPController
-from app.control.paginate import paginate
 from app.control.edit_project_controller import EditProjectController
 from app.control.delete_project_controller import DeleteProjectController
 from app.control.view_portfolio_controller import ViewPortfolioController
@@ -32,6 +31,8 @@ from app.control.update_designer_account_controller import UpdateDesignerAccount
 from app.control.remove_project_photo_controller import RemoveProjectPhotoController
 from app.control.view_trends_controller import ViewTrendsController
 
+from app.control.enquiry_inbox_controller import EnquiryInboxController
+from app.control.reply_to_enquiry_controller import ReplyToEnquiryController
 from app.control.set_idp_status_controller import SetIDPStatusController
 from app.control.update_designer_profile_controller import UpdateDesignerProfileController
 from app.control.view_designer_dashboard_controller import ViewDesignerDashboardController
@@ -95,28 +96,42 @@ def set_status(idp_id):
 
 # --- Enquiries (ID-21) -------------------------------------------------------------
 
+@designer_bp.route("/enquiries/<int:enquiry_id>/reply", methods=["POST"])
+@role_required("designer")
+def reply_to_enquiry(enquiry_id):
+    """Boundary: 'Send reply' box under the open conversation (ID-21 AC3)."""
+    try:
+        reply = ReplyToEnquiryController().reply(session["user_id"], enquiry_id, request.form.get("message"))
+    except LookupError:
+        abort(404)
+    except ValueError as error:
+        flash(str(error), "error")
+    else:
+        flash(f"Reply sent to {reply.enquiry.name}.", "success")
+    return redirect(url_for("designer.enquiries", id=enquiry_id, **inbox_args()))
+
+
+def inbox_args():
+    """Keep the inbox's tab and search when the page reloads after a reply."""
+    args = {"show": request.values.get("show"), "q": request.values.get("q")}
+    return {k: v for k, v in args.items() if v and v != "all"}
+
+
 @designer_bp.route("/enquiries")
 @role_required("designer")
 def enquiries():
+    """Boundary: EnquiriesPage, a two-pane inbox: conversations on the left, the open one on the right."""
     try:
-        messages = ViewEnquiriesController().view(
-            session["user_id"]
-        )
+        messages = ViewEnquiriesController().view(session["user_id"])
     except LookupError:
         abort(404)
-
-    shown, page, pages = paginate(
-        messages, request.args.get("page", 1, type=int)
+    inbox = EnquiryInboxController().open(
+        session["user_id"], messages,
+        selected_id=request.args.get("id", type=int),
+        show=request.args.get("show", "all"),
+        search=request.args.get("q", ""),
     )
-
-    return render_template(
-        "designer/enquiries.html",
-        nav="enquiries",
-        enquiries=shown,
-        total=len(messages),
-        page=page,
-        pages=pages,
-    )
+    return render_template("designer/enquiries.html", nav="enquiries", total=len(messages), **inbox)
 
 @designer_bp.after_request
 def prevent_designer_page_caching(response):

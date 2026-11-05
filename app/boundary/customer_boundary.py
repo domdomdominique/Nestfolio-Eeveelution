@@ -20,8 +20,11 @@ from app.control.update_profile_controller import UpdateProfileController
 from app.control.validate_session_controller import ValidateSessionController
 from app.entity.user_account import UserAccount
 from app.control.view_designer_profile_controller import ViewDesignerProfileController
+from app.control.enquiry_inbox_controller import EnquiryInboxController
+from app.control.reply_to_enquiry_controller import ReplyToEnquiryController
 from app.control.view_favourites_controller import ViewFavouritesController
 from app.control.view_idp_controller import ViewIDPController
+from app.control.view_my_enquiries_controller import ViewMyEnquiriesController
 from app.control.view_profile_controller import ViewProfileController
 
 customer_bp = Blueprint("customer", __name__, url_prefix="/customer")
@@ -223,19 +226,85 @@ def designer_profile(designer_id):
 @customer_bp.route("/designers/<int:designer_id>/enquiry", methods=["POST"])
 @role_required("customer")
 def send_enquiry(designer_id):
-    """Boundary: 'Like this design?' enquiry form (C-16)."""
+    """Boundary: 'Send enquiry' in the messaging page's new-conversation pane (C-16).
+    When it is sent, the new conversation opens in My enquiries."""
     f = request.form
+    idp_id = f.get("idp_id", type=int)
+    controller = SendEnquiryController()
     try:
-        designer = SendEnquiryController().send(
-            session["user_id"], designer_id, f.get("name"), f.get("contact"),
-            f.get("message"), f.get("idp_id", type=int))
+        designer = controller.send(session["user_id"], designer_id, f.get("name"), f.get("contact"),
+                                   f.get("message"), idp_id)
+    except LookupError:
+        abort(404)
+    except ValueError as error:
+        # Show the error next to the form and keep what the customer typed
+        flash(str(error), "error")
+        designer, idp, _ = controller.start(session["user_id"], designer_id, idp_id)
+        return _enquiries_page(compose={"designer": designer, "idp": idp, "name": f.get("name", ""),
+                                        "contact": f.get("contact", ""), "message": f.get("message", "")})
+    flash(f"Your enquiry has been sent to {designer.display_name}. Their reply will appear in My enquiries.", "success")
+    new = controller.latest(session["user_id"], designer.id)
+    return redirect(url_for("customer.my_enquiries", id=new.id))
+
+
+# --- My enquiries: the designer's replies (ID-21 AC5) -----------------------------------
+
+def _enquiries_page(compose=None):
+    """The customer's two-pane messaging page; compose fills the right pane with a new enquiry."""
+    try:
+        enquiries = ViewMyEnquiriesController().view(session["user_id"])
+    except LookupError:
+        abort(404)
+    inbox = EnquiryInboxController().open(
+        session["user_id"], enquiries,
+        selected_id=request.args.get("id", type=int),
+        show=request.args.get("show", "all"),
+        search=request.args.get("q", ""),
+    )
+    if compose:
+        inbox["selected"] = None  # nothing else is open while writing a new enquiry
+    return render_template("customer/enquiries.html", nav="enquiries", total=len(enquiries),
+                           compose=compose, **inbox)
+
+
+@customer_bp.route("/enquiries")
+@role_required("customer")
+def my_enquiries():
+    """Boundary: MyEnquiriesPage, the same two-pane inbox the designer has, from the customer's side."""
+    return _enquiries_page()
+
+
+@customer_bp.route("/enquiries/new")
+@role_required("customer")
+def new_enquiry():
+    """Boundary: 'Send enquiry' button on a project or designer page (C-16 AC1).
+    Opens the messaging page ready to write to that designer, or the existing conversation."""
+    try:
+        designer, idp, existing = SendEnquiryController().start(
+            session["user_id"], request.args.get("designer_id", type=int), request.args.get("idp_id", type=int))
+    except LookupError:
+        abort(404)
+    if existing is not None:
+        return redirect(url_for("customer.my_enquiries", id=existing.id))
+    account = UserAccount.get(session["user_id"])
+    return _enquiries_page(compose={"designer": designer, "idp": idp, "name": account.name or "",
+                                    "contact": account.email, "message": ""})
+
+
+@customer_bp.route("/enquiries/<int:enquiry_id>/reply", methods=["POST"])
+@role_required("customer")
+def reply_to_designer(enquiry_id):
+    """Boundary: the customer answers a designer's reply."""
+    try:
+        reply = ReplyToEnquiryController().reply(session["user_id"], enquiry_id, request.form.get("message"))
     except LookupError:
         abort(404)
     except ValueError as error:
         flash(str(error), "error")
     else:
-        flash(f"Your enquiry has been sent to {designer.display_name}.", "success")
-    return _back(url_for("customer.designer_profile", designer_id=designer_id))
+        flash(f"Message sent to {reply.enquiry.designer.display_name}.", "success")
+    args = {k: v for k, v in (("show", request.form.get("show")), ("q", request.form.get("q"))) if v and v != "all"}
+    return redirect(url_for("customer.my_enquiries", id=enquiry_id, **args))
 
 
 @customer_bp.route("/photos/<int:photo_id>")
