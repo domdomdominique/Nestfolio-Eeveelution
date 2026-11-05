@@ -17,7 +17,7 @@ from flask import (
 
 from app.control.update_company_controller import UpdateCompanyController
 from app.control.delete_company_controller import DeleteCompanyController
-from app.boundary import role_required, safe_next
+from app.boundary import role_required, safe_next, send_attachment
 from app.control.view_enquiries_controller import ViewEnquiriesController
 from app.control.add_company_controller import AddCompanyController
 from app.control.view_company_controller import ViewCompanyController
@@ -101,7 +101,8 @@ def set_status(idp_id):
 def reply_to_enquiry(enquiry_id):
     """Boundary: 'Send reply' box under the open conversation (ID-21 AC3)."""
     try:
-        reply = ReplyToEnquiryController().reply(session["user_id"], enquiry_id, request.form.get("message"))
+        reply = ReplyToEnquiryController().reply(session["user_id"], enquiry_id, request.form.get("message"),
+                                                 request.files.getlist("attachments"))
     except LookupError:
         abort(404)
     except ValueError as error:
@@ -115,6 +116,13 @@ def inbox_args():
     """Keep the inbox's tab and search when the page reloads after a reply."""
     args = {"show": request.values.get("show"), "q": request.values.get("q")}
     return {k: v for k, v in args.items() if v and v != "all"}
+
+
+@designer_bp.route("/enquiries/attachments/<int:attachment_id>")
+@role_required("designer")
+def enquiry_attachment(attachment_id):
+    """Boundary: open a photo or PDF a customer attached to an enquiry sent to this designer."""
+    return send_attachment(session["user_id"], attachment_id)
 
 
 @designer_bp.route("/enquiries")

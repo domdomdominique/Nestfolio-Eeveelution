@@ -13,7 +13,7 @@ class ViewLandingPageController:
         counts = IDP.count_by_category()
         return {
             "sort": sort,
-            "announcements": Announcement.latest(3) if customer_id else [],
+            "announcements": Announcement.latest(3, role="customer") if customer_id else [],
             "popular": IDP.popular(sort),
             "categories": [(name, counts.get(name, 0)) for name in IDP.categories()],
             "category_photos": IDPCategory.photo_ids(),

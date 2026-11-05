@@ -1,3 +1,4 @@
+from app.control.enquiry_attachment_validation import validated_attachments
 from app.control.signup_validation import clean_email, clean_phone
 from app.entity.enquiry import Enquiry
 from app.entity.idp import IDP
@@ -29,7 +30,8 @@ class SendEnquiryController:
         """The conversation the customer has just started, so the page can open it."""
         return Enquiry.latest_between(customer_id, designer_id, any_project=True)
 
-    def send(self, customer_id, designer_id, name, contact, message, idp_id=None):
+    def send(self, customer_id, designer_id, name, contact, message, idp_id=None, files=()):
+        """files are the uploaded photos (JPG/PNG) and PDFs to attach, checked before anything is saved."""
         designer = UserAccount.get(designer_id)
         if designer is None or designer.role != "designer" or designer.is_suspended:
             raise LookupError("Designer not found.")
@@ -46,8 +48,9 @@ class SendEnquiryController:
             raise ValueError("Please write a message for the designer.")
         if len(message) > self.MAX_MESSAGE:
             raise ValueError(f"Please keep your message under {self.MAX_MESSAGE} characters.")
+        attachments = validated_attachments(files)
         # Only link the project if it really belongs to this designer
         idp = IDP.get(idp_id) if idp_id else None
         idp_id = idp.id if idp and idp.designer_id == designer.id else None
-        Enquiry.send(designer.id, customer_id, name, contact, message, idp_id)
+        Enquiry.send(designer.id, customer_id, name, contact, message, idp_id, attachments)
         return designer

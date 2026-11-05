@@ -86,6 +86,7 @@ def create_app(test_config=None):
     from app.entity.idp_view import IDPView
     from app.entity import activity_report, announcement  # noqa: F401  (PM-08, UA-18)
     from app.entity import reply  # noqa: F401  (ID-21 replies)
+    from app.entity import enquiry_attachment  # noqa: F401  (C-16 attachments)
     from app.entity.idp_category import IDPCategory
     from app.entity.user_profile import UserProfile
 
@@ -147,7 +148,8 @@ def create_app(test_config=None):
 
     with app.app_context():
         db.create_all()
+        enquiry_attachment.EnquiryAttachment.ensure_schema()
         IDPCategory.ensure_defaults()
         UserProfile.ensure_defaults()
 
-    return app
+    return app

@@ -125,7 +125,7 @@ def test_empty_reply_from_page_shows_error(client, app):
     login(client, "des@test.com", "designer")
     page = client.post(f"/designer/enquiries/{enquiry.id}/reply", data={"message": " "},
                        follow_redirects=True).get_data(as_text=True)
-    assert "Please write a reply before sending." in page and Reply.query.count() == 0
+    assert "Please write a reply or attach a file before sending." in page and Reply.query.count() == 0
 
 
 def test_other_users_get_404_and_pages_need_login(client, app):

@@ -3,9 +3,11 @@
 {% block content %}
 <div>
   <h1 class="dash-title">Announcements</h1>
-  <p class="dash-sub">Shown on every user's home page after they log in.</p>
+  <p class="dash-sub">Shown on users' home pages after they log in. Send to everyone, or only to the roles you choose.</p>
 </div>
 
+{% set to_roles = form.get('audience') == 'roles' %}
+{% set ticked = form.getlist('roles') if to_roles else [] %}
 <form class="form-card-dash" method="post" style="max-width:640px;">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <h2>New announcement</h2>
@@ -14,8 +16,30 @@
     <input name="title" required maxlength="150" value="{{ form.get('title', '') }}"></label>
   <label class="field"><span>Message *</span>
     <textarea name="message" rows="4" required>{{ form.get('message', '') }}</textarea></label>
-  <div class="form-actions"><button class="btn btn-primary" type="submit">Send to all users</button></div>
+  <fieldset class="audience-field">
+    <legend>Send to *</legend>
+    <label class="audience-option"><input type="radio" name="audience" value="all" {{ 'checked' if not to_roles }}> Everyone</label>
+    <label class="audience-option"><input type="radio" name="audience" value="roles" {{ 'checked' if to_roles }}> Selected roles only</label>
+    <div class="audience-roles" id="audience-roles">
+      {% for key, name in role_choices %}
+      <label class="audience-option"><input type="checkbox" name="roles" value="{{ key }}" {{ 'checked' if key in ticked }}> {{ name }}</label>
+      {% endfor %}
+    </div>
+  </fieldset>
+  <div class="form-actions"><button class="btn btn-primary" type="submit">Send announcement</button></div>
 </form>
+<script>
+  // Role checkboxes only matter for "Selected roles only"; ticking one picks that option.
+  (function () {
+    var form = document.currentScript.previousElementSibling;
+    var roles = form.querySelector('#audience-roles');
+    var pick = form.querySelector('input[name="audience"][value="roles"]');
+    function sync() { roles.classList.toggle('is-off', !pick.checked); }
+    form.querySelectorAll('input[name="audience"]').forEach(function (r) { r.addEventListener('change', sync); });
+    roles.addEventListener('change', function () { pick.checked = true; sync(); });
+    sync();
+  })();
+</script>
 
 <section class="card">
   <div class="card-head"><h2>Past announcements</h2></div>
@@ -23,6 +47,7 @@
   <article class="enq-item">
     <div style="flex:1; min-width:0;">
       <div class="enq-top"><strong>{{ a.title }}</strong><small>{{ a.sent_at.strftime('%d %b %Y, %H:%M') }}</small></div>
+      <p class="audience-tag">To: {% if a.is_for_everyone %}Everyone{% else %}{% for key in a.role_keys %}{{ role_names.get(key, key) }}{{ ', ' if not loop.last }}{% endfor %}{% endif %}</p>
       <p style="white-space:pre-wrap; overflow-wrap:anywhere;">{{ a.message }}</p>
     </div>
     <form method="post" action="{{ url_for('admin.remove_announcement', announcement_id=a.id) }}" class="status-form">
