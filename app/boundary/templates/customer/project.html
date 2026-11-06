@@ -69,37 +69,43 @@
       </div>
     </div>
 
-    {# Photos are added by designers later (ID-19); until then show placeholders in the gallery layout #}
+    {# Gallery (ID-19): one large photo, the next four beside it, and "+N more" on the last tile.
+       Every photo opens in the viewer below, including the ones not shown here. #}
+    {% set photos = idp.photos %}
     <div class="gallery">
-      {% if idp.photos %}
-        <div style="
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-          gap: 12px;
-          margin: 24px 0;
-        ">
-          {% for photo in idp.photos %}
-            <a
-              href="{{ url_for('customer.project_photo', photo_id=photo.id) }}"
-              data-lightbox
-            >
-              <img
-                src="{{ url_for('customer.project_photo', photo_id=photo.id) }}"
-                alt="{{ idp.title }} photo {{ loop.index }}"
-                loading="lazy"
-                style="
-                  width: 100%;
-                  height: 260px;
-                  object-fit: cover;
-                  border-radius: 12px;
-                "
-              >
-            </a>
-          {% endfor %}
-        </div>
+      {% if photos %}
+        {% set first = photos[0] %}
+        <a class="photo gallery-main" href="{{ url_for('customer.project_photo', photo_id=first.id) }}" data-lightbox>
+          <img class="gallery-img" src="{{ url_for('customer.project_photo', photo_id=first.id) }}" alt="{{ idp.title }} photo 1">
+          <span class="gallery-count"><img src="{{ url_for('static', filename=img ~ 'photos.svg') }}" width="16" height="16" alt="">1 / {{ photos|length }} photo{{ '' if photos|length == 1 else 's' }}</span>
+        </a>
       {% else %}
-        <p>No photos have been uploaded for this project.</p>
+        <div class="photo gallery-main" style="background: {{ photo_colours[idp.id % 5] }}">
+          <img src="{{ url_for('static', filename=img ~ 'cover-image.svg') }}" width="64" height="64" alt="">
+          <span class="gallery-count"><img src="{{ url_for('static', filename=img ~ 'photos.svg') }}" width="16" height="16" alt="">No photos yet</span>
+        </div>
       {% endif %}
+      <div class="gallery-thumbs">
+        {% for i in range(1, 5) %}
+          {% if i < photos|length %}
+            {% set photo = photos[i] %}
+            {% set more = photos|length - 5 %}
+            <a class="photo{{ ' gallery-more' if i == 4 and more > 0 }}" href="{{ url_for('customer.project_photo', photo_id=photo.id) }}" data-lightbox>
+              <img class="gallery-img" src="{{ url_for('customer.project_photo', photo_id=photo.id) }}" alt="{{ idp.title }} photo {{ i + 1 }}" loading="lazy">
+              {% if i == 4 and more > 0 %}<span class="gallery-more-label">+{{ more }} more</span>{% endif %}
+            </a>
+          {% else %}
+            <div class="photo" style="background: {{ photo_colours[(idp.id + i) % 5] }}">
+              <img src="{{ url_for('static', filename=img ~ 'idp-image.svg') }}" width="42" height="42" alt="">
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      {# The rest, so the viewer can step through every photo #}
+      {% for photo in photos[5:] %}
+        <a hidden href="{{ url_for('customer.project_photo', photo_id=photo.id) }}" data-lightbox
+           aria-label="{{ idp.title }} photo {{ loop.index + 5 }}"><img alt="{{ idp.title }} photo {{ loop.index + 5 }}"></a>
+      {% endfor %}
     </div>
 
     {% if idp.photos %}

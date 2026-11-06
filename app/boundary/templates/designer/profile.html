@@ -4,112 +4,92 @@
 {% block title %}My profile — Nestfolio{% endblock %}
 
 {% block content %}
-{% set f = form or {
-  'name': account.name,
-  'email': account.email,
-  'phone': account.phone or ''
-} %}
+{% set f = form %}
+{% set company = account.company %}
 
 <div>
   <h1 class="dash-title">My profile</h1>
-  <p class="dash-sub">Your personal login details.</p>
+  <p class="dash-sub">Your company information and login details.</p>
 </div>
 
 <div class="profile-grid">
   <section class="card profile-card">
-    <span class="initials initials-lg">
-      {{ (account.name.split()|map('first')|join)[:2]|upper or '?' }}
-    </span>
+    {% if company and company.profile_photo %}
+      <img src="{{ url_for('customer.company_photo', designer_id=account.id) }}" alt="{{ account.display_name }} profile picture"
+           width="96" height="96" style="width:96px; height:96px; border-radius:50%; object-fit:cover;">
+    {% else %}
+      <span class="initials initials-lg">{{ account.initials }}</span>
+    {% endif %}
 
-    <h2>{{ account.name }}</h2>
-
-    <p class="hint">
-      Interior Designer
-      {% if account.company %}
-        · {{ account.company.company_name }}
-      {% endif %}
-    </p>
+    <h2>{{ account.display_name }}</h2>
+    <p class="hint">Interior Design Company</p>
 
     {% set application = account.designer_application %}
     {% set reg = application.status if application else 'approved' %}
-
     <p>Registration {{ reg }}</p>
   </section>
 
-  <form
-    class="card form-card-dash"
-    method="post"
-    action="{{ url_for('designer.profile') }}"
-    novalidate
-  >
-    <input
-      type="hidden"
-      name="csrf_token"
-      value="{{ csrf_token() }}"
-    >
+  <form class="card form-card-dash" method="post" action="{{ url_for('designer.profile') }}" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
     {% if updated %}
-      <p class="banner" role="status">
-        <span>Profile updated successfully.</span>
-      </p>
+      <p class="banner" role="status"><span>Profile updated successfully.</span></p>
     {% endif %}
 
-    <h2>Personal details</h2>
+    <h2>Company information</h2>
 
     {% for message in get_flashed_messages(category_filter=['error']) %}
       <p class="form-error" role="alert">{{ message }}</p>
     {% endfor %}
 
+    <label class="field">
+      <span>Company name</span>
+      <input name="company_name" maxlength="150" value="{{ f.get('company_name', '') }}" autocomplete="organization" required>
+    </label>
+
     <div class="field-row">
       <label class="field">
-        <span>Full name</span>
-        <input
-          name="name"
-          value="{{ f.get('name', '') }}"
-          autocomplete="name"
-          required
-        >
+        <span>Company email address</span>
+        <input name="email" type="email" value="{{ f.get('email', '') }}" autocomplete="email" required>
       </label>
-
       <label class="field">
-        <span>Phone number</span>
+        <span>Company phone number</span>
         {{ phone_input(f.get('phone', '')) }}
+      </label>
+    </div>
+    <p class="hint">You log in with this email address.</p>
+
+    <div class="field-row">
+      <label class="field">
+        <span>UEN</span>
+        <input value="{{ f.get('uen', '') }}" readonly aria-readonly="true">
+        <span class="hint">Verified by our admin team, so it cannot be changed here.</span>
+      </label>
+      <label class="field">
+        <span>Years of experience</span>
+        <input name="experience_years" type="number" min="0" value="{{ f.get('experience_years', 0) }}">
       </label>
     </div>
 
     <label class="field">
-      <span>Email address</span>
-      <input
-        name="email"
-        type="email"
-        value="{{ f.get('email', '') }}"
-        autocomplete="email"
-        required
-      >
+      <span>Portfolio or website (optional)</span>
+      <input name="portfolio_url" type="url" maxlength="255" value="{{ f.get('portfolio_url', '') }}" placeholder="https://">
+    </label>
+
+    <label class="field">
+      <span>About company (optional)</span>
+      <textarea name="description" rows="4" maxlength="5000">{{ f.get('description', '') }}</textarea>
     </label>
 
     <label class="field">
       <span>Current password</span>
-      <input
-        name="current_password"
-        type="password"
-        autocomplete="current-password"
-        placeholder="Enter your password to confirm these changes"
-        required
-      >
+      <input name="current_password" type="password" autocomplete="current-password"
+             placeholder="Enter your password to confirm these changes" required>
     </label>
 
     <div class="form-actions">
-      <a
-        class="btn btn-outline"
-        href="{{ url_for('designer.profile') }}"
-      >
-        Cancel
-      </a>
-
-      <button class="btn btn-primary" type="submit">
-        Save changes
-      </button>
+      <a class="btn btn-outline" href="{{ url_for('designer.profile') }}">Cancel</a>
+      <button class="btn btn-primary" type="submit">Save changes</button>
     </div>
   </form>
 </div>

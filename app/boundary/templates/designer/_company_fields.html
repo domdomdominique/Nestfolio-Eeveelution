@@ -24,3 +24,29 @@
     </label>
   </div>
 {% endmacro %}
+
+{# Profile picture and background uploads (shown on the public designer profile). #}
+{% macro company_images(company=None) %}
+  <label class="field" for="profile_photo">
+    <span>Company profile picture</span>
+    <input type="file" id="profile_photo" name="profile_photo" accept="image/jpeg,image/png">
+    <span class="hint">A square JPG or PNG works best, maximum 5 MB.{% if company and company.profile_photo %} Leave empty to keep your current picture.{% endif %}</span>
+  </label>
+  {% if company and company.profile_photo %}
+  <label class="checkbox">
+    <input type="checkbox" name="remove_profile_photo" value="1">
+    <span>Remove current company profile picture</span>
+  </label>
+  {% endif %}
+  <label class="field" for="cover_photo">
+    <span>Profile background</span>
+    <input type="file" id="cover_photo" name="cover_photo" accept="image/jpeg,image/png">
+    <span class="hint">A wide JPG or PNG shown across the top of your profile, maximum 5 MB.{% if company and company.cover_photo %} Leave empty to keep your current background.{% endif %}</span>
+  </label>
+  {% if company and company.cover_photo %}
+  <label class="checkbox">
+    <input type="checkbox" name="remove_cover_photo" value="1">
+    <span>Remove current profile background</span>
+  </label>
+  {% endif %}
+{% endmacro %}

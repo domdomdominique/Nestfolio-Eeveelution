@@ -1,3 +1,4 @@
+from app.control.update_company_controller import company_image
 from app.control.signup_validation import clean_email, clean_phone
 from app.entity.designer_company import DesignerCompany
 from app.entity.user_account import UserAccount
@@ -9,7 +10,7 @@ class AddCompanyController:
         account = UserAccount.get(account_id)
         return bool(account and account.company)
 
-    def add(self, account_id, form):
+    def add(self, account_id, form, photo=None, cover=None):
         account = UserAccount.get(account_id)
 
         if (
@@ -60,6 +61,9 @@ class AddCompanyController:
                     "Email must be 120 characters or fewer."
                 )
 
+        if account.name != company_name:  # the account is named after the company
+            account.update_details(company_name, account.email, account.phone)
+
         return DesignerCompany.create(
             account_id=account.id,
             company_name=company_name,
@@ -67,4 +71,6 @@ class AddCompanyController:
             address=address,
             phone=phone,
             email=email,
+            photo=company_image(photo),
+            cover=company_image(cover),
         )

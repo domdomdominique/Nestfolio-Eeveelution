@@ -1,0 +1,70 @@
+{# Parts of the public designer profile (C-13) that the designer's own My profile page (ID-17) also shows,
+   so both pages always display the same information. #}
+{% set img = 'img/ui/' %}
+
+{% macro badges(designer, company, total) %}
+  <div class="badges">
+    <span class="badge badge-blue">Verified designer</span>
+    {% if designer.designer_since %}<span class="badge">Since {{ designer.designer_since }}</span>{% endif %}
+    <span class="badge">{{ total }} project{{ '' if total == 1 else 's' }}</span>
+    {% if company and company.experience_years %}<span class="badge">{{ company.experience_years }} yrs experience</span>{% endif %}
+  </div>
+{% endmacro %}
+
+{% macro about(designer, company) %}
+  <p>{{ company.description if company and company.description else designer.display_name ~ ' is a verified interior designer on Nestfolio.' }}</p>
+{% endmacro %}
+
+{% macro company_details(designer, company, category_share) %}
+  <section class="company-details">
+    <h2>Company details</h2>
+    <dl>
+      <div><dt>Company name</dt><dd>{{ designer.display_name }}</dd></div>
+      {% if company %}
+        <div><dt>UEN</dt><dd>{{ company.uen }}</dd></div>
+        <div><dt>Experience</dt><dd>{{ company.experience_years }} year{{ '' if company.experience_years == 1 else 's' }}</dd></div>
+      {% endif %}
+      {% if company and company.portfolio_url %}
+        <div><dt>Website</dt><dd><a href="{{ company.portfolio_url }}" rel="noopener" target="_blank">{{ company.portfolio_url.split('//')[-1] }}</a></dd></div>
+      {% endif %}
+      {% if category_share %}
+        <div><dt>Specialities</dt><dd>{{ category_share[:3]|map('first')|join(', ') }}</dd></div>
+      {% endif %}
+      {% if company %}
+        {% if company.address|default('') %}
+          <div><dt>Company address</dt><dd>{{ company.address }}</dd></div>
+        {% endif %}
+        {% if company.phone %}
+          <div><dt>Company contact</dt><dd>{{ company.phone }}</dd></div>
+        {% endif %}
+        {% if company.email %}
+          <div><dt>Company email</dt><dd><a href="mailto:{{ company.email }}">{{ company.email }}</a></dd></div>
+        {% endif %}
+      {% endif %}
+    </dl>
+  </section>
+{% endmacro %}
+
+{% macro at_a_glance(total, current, views, category_share) %}
+  <section class="side-card">
+    <h2>At a glance</h2>
+    <div class="glance">
+      <div><strong>{{ total }}</strong><span>Projects</span></div>
+      <div><strong>{{ current }}</strong><span>Current</span></div>
+      <div><strong>{{ '%.1fk'|format(views / 1000) if views >= 1000 else views }}</strong><span>Views</span></div>
+    </div>
+    {% if category_share %}
+      <h3>Project types</h3>
+      {% for name, percent in category_share[:3] %}
+        <div class="type-bar">
+          <div class="type-label"><span>{{ name }}</span><strong>{{ percent }}%</strong></div>
+          <div class="type-track"><div style="width: {{ percent }}%"></div></div>
+        </div>
+      {% endfor %}
+      <h3>Categories</h3>
+      <div class="tags">
+        {% for name, percent in category_share %}<span class="tag">{{ name }}</span>{% endfor %}
+      </div>
+    {% endif %}
+  </section>
+{% endmacro %}

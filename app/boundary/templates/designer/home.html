@@ -115,20 +115,14 @@
       </div>
 
       {% if company %}
-        <p><strong>{{ company.company_name }}</strong></p>
+        {% from "shared/_avatar.html" import designer_avatar %}
+        <div style="display:flex; align-items:center; gap:16px; margin-top:12px;">
+          {{ designer_avatar(account, 'initials initials-md') }}
+          <strong style="font-size:18px; overflow-wrap:anywhere;">{{ company.company_name }}</strong>
+        </div>
 
-        {% if company.profile_photo %}
-          <img
-            src="{{ url_for('customer.company_photo', designer_id=account.id) }}"
-            alt="Company profile picture"
-            style="width:80px; height:80px; object-fit:cover; border-radius:50%;"
-          >
-        {% endif %}
-
-        <p>
+        <p style="margin-top:12px;">
           <a href="{{ url_for('designer.company') }}">View company</a>
-          ·
-          <a href="{{ url_for('designer.edit_company') }}">Edit company</a>
         </p>
       {% else %}
         <p>No company information added yet.</p>

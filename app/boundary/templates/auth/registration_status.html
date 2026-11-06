@@ -30,7 +30,7 @@
           </span>
 
           <h2>
-            {% if status == 'pending' %}Thanks, {{ application.name.split()[0] }}! Your application is being reviewed
+            {% if status == 'pending' %}Thanks, {{ application.company_name }}! Your application is being reviewed
             {% elif status == 'approved' %}Your application has been approved
             {% else %}Your application was not approved{% endif %}
           </h2>
@@ -50,7 +50,7 @@
             <dl>
               <dt>Company</dt><dd>{{ application.company_name }}</dd>
               <dt>UEN</dt><dd>{{ application.uen }}</dd>
-              <dt>Contact</dt><dd>{{ application.name }} · {{ application.email }}</dd>
+              <dt>Contact</dt><dd>{{ application.email }}</dd>
             </dl>
           </section>
 

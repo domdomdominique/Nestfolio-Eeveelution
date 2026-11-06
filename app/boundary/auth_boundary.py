@@ -81,7 +81,7 @@ def register():
 
 
 def _full_name(form):
-    """The sign-up forms ask for first and last name; accounts store one name."""
+    """The customer sign-up form asks for first and last name; accounts store one name."""
     if form.get("name"):
         return form.get("name")
     return f"{form.get('first_name', '').strip()} {form.get('last_name', '').strip()}".strip()
@@ -95,10 +95,10 @@ def apply_designer():
         f = request.form
         try:
             application = ApplyDesignerController().apply(
-                _full_name(f), f.get("email"), f.get("phone"),
+                f.get("company_name"), f.get("email"), f.get("phone"),
                 f.get("password"), f.get("confirm_password"),
-                f.get("company_name"), f.get("uen"), f.get("portfolio_url"),
-                f.get("experience_years"), f.get("description"),
+                f.get("uen"), f.get("experience_years"),
+                f.get("portfolio_url"), f.get("description"),
             )
         except ValueError as error:
             flash(str(error), "error")

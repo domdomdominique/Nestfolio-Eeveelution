@@ -35,7 +35,7 @@ def test_profile_is_only_for_designers(client, designer):
 def test_update_saves_valid_changes_and_refreshes_session_name(client, designer):
     login(client)
     response = client.post("/designer/profile", data={
-        "name": "Dana Lim", "email": "dana@test.com", "phone": "9876 5432",
+        "company_name": "Dana Lim", "email": "dana@test.com", "phone": "9876 5432",
         "current_password": "password123"})
     assert response.status_code == 302
     account = UserAccount.get(designer.id)
@@ -44,9 +44,11 @@ def test_update_saves_valid_changes_and_refreshes_session_name(client, designer)
 
 
 @pytest.mark.parametrize("data", [
-    {"name": "", "email": "a@b.co", "phone": "91234567"},
-    {"name": "Dana", "email": "not-an-email", "phone": "91234567"},
-    {"name": "Dana", "email": "a@b.co", "phone": "123"},
+    {"company_name": "", "email": "a@b.co", "phone": "91234567"},
+    {"company_name": "Dana", "email": "not-an-email", "phone": "91234567"},
+    {"company_name": "Dana", "email": "a@b.co", "phone": "123"},
+    {"company_name": "Dana", "email": "a@b.co", "phone": "91234567", "experience_years": "-1"},
+    {"company_name": "Dana", "email": "a@b.co", "phone": "91234567", "portfolio_url": "oak.sg"},
 ])
 def test_invalid_update_changes_nothing_and_shows_error(client, designer, data):
     login(client)
@@ -74,3 +76,28 @@ def test_forged_post_without_csrf_token_is_rejected():
         client = app.test_client()
         assert client.post("/login", data={"email": "des@test.com", "password": "password123"}).status_code == 400
         _db.drop_all()
+
+
+def test_profile_shows_company_information_not_personal_details(client, designer):
+    login(client)
+    html = client.get("/designer/profile").get_data(as_text=True)
+    assert "Company information" in html and "Personal details" not in html
+    for field in ("company_name", "email", "phone", "experience_years", "portfolio_url", "description"):
+        assert f'name="{field}"' in html
+    assert 'name="name"' not in html and "Full name" not in html
+
+
+def test_saving_company_information_updates_account_and_company(client, designer):
+    from app.entity.designer_company import DesignerCompany
+    login(client)
+    client.post("/designer/profile", data={
+        "company_name": "Oak Studio", "email": "oakstudio@test.com", "phone": "9123 4567",
+        "experience_years": "7", "portfolio_url": "https://oak.sg", "description": "Warm homes.",
+        "current_password": "password123"})
+    account = UserAccount.get(designer.id)
+    assert (account.name, account.email) == ("Oak Studio", "oakstudio@test.com")
+    company = DesignerCompany.for_account(designer.id)
+    assert (company.company_name, company.experience_years, company.portfolio_url, company.description) == \
+        ("Oak Studio", 7, "https://oak.sg", "Warm homes.")
+    page = client.get(f"/customer/designers/{designer.id}").get_data(as_text=True)
+    assert "Oak Studio" in page and "Warm homes." in page and "oak.sg" in page

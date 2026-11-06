@@ -11,8 +11,8 @@ from app.entity.user_account import UserAccount
 def approved_designer():
     admin = UserAccount.create("admin@test.com", "password123", "admin")
     application = ApplyDesignerController().apply(
-        "Ben Lim", "ben@studio.com", "+65 8765 4321", "designer123", "designer123",
-        "Oakline Studio", "201912345K", "https://oakline.sg", "5", "Warm, practical homes.")
+        "Oakline Studio", "ben@studio.com", "+65 8765 4321", "designer123", "designer123",
+        "201912345K", "5", "https://oakline.sg", "Warm, practical homes.")
     designer = ReviewDesignerApplicationController().approve(application.id, admin.id)
     db.session.add_all([
         IDP(title="Warm HDB", category="Living Room", designer_id=designer.id,
@@ -60,3 +60,4 @@ def test_designers_page_lists_designers_with_projects(client, app):
     page = client.get("/customer/designers").get_data(as_text=True)
     assert "Oakline Studio" in page
     assert "Idle Person" not in page
+

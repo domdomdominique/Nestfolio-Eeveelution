@@ -363,7 +363,20 @@ def company_photo(designer_id):
         photo = UpdateCompanyController().view_photo(designer_id)
     except LookupError:
         abort(404)
+    return _company_image(photo)
 
+
+@customer_bp.route("/designers/<int:designer_id>/company-cover")
+def company_cover(designer_id):
+    """The designer's profile background (banner on the public profile)."""
+    try:
+        photo = UpdateCompanyController().view_cover(designer_id)
+    except LookupError:
+        abort(404)
+    return _company_image(photo)
+
+
+def _company_image(photo):
     response = send_file(
         BytesIO(photo.data),
         mimetype=photo.content_type,

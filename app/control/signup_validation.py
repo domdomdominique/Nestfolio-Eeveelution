@@ -48,3 +48,29 @@ def clean_uen(uen):
     if not UEN_RE.match(uen):
         raise ValueError("Please enter a valid UEN, for example 201912345K or 53312345A.")
     return uen
+
+
+def clean_experience(years):
+    try:
+        years = int(years or 0)
+    except (TypeError, ValueError):
+        raise ValueError("Years of experience must be a number.")
+    if years < 0:
+        raise ValueError("Years of experience cannot be negative.")
+    return years
+
+
+def clean_portfolio_url(url):
+    url = (url or "").strip()
+    if url and not url.startswith(("http://", "https://")):
+        raise ValueError("Portfolio link must start with http:// or https://")
+    if len(url) > 255:
+        raise ValueError("Portfolio link must be 255 characters or fewer.")
+    return url
+
+
+def clean_about(text):
+    text = (text or "").strip()
+    if len(text) > 5000:
+        raise ValueError("About company must be 5000 characters or fewer.")
+    return text

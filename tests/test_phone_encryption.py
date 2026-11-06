@@ -32,8 +32,8 @@ def test_app_reads_phone_back_as_plain_text(app):
 
 def test_designer_application_phone_is_encrypted(app):
     ApplyDesignerController().apply(
-        "Ben Lim", "ben@studio.com", "8765 4321", "designer123", "designer123",
-        "Oak Studio", "201912345K",
+        "Oak Studio", "ben@studio.com", "8765 4321", "designer123", "designer123",
+        "201912345K",
     )
     assert "87654321" not in raw_phone("designer_application")
 

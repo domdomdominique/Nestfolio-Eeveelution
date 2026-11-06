@@ -218,15 +218,17 @@ def test_id13_id14_counts_follow_customer_actions(dc, app):
 
 # ID-15 / ID-16 registration and status --------------------------------------------------------------
 
-APPLY = {"first_name": "Ann", "last_name": "Lim", "email": "ann@test.com", "phone": "81234567",
+APPLY = {"email": "ann@test.com", "phone": "81234567",
          "password": "password123", "confirm_password": "password123", "company_name": "Ann Studio",
          "uen": "201912345K", "experience_years": "5", "portfolio_url": "https://ann.example", "description": "x"}
 
 
 def test_id15_registration_form(client, app):
     page = text(client.get("/register/designer"))
-    for field in ("first_name", "email", "phone", "password", "company_name", "uen"):            # AC1
+    for field in ("company_name", "email", "phone", "password", "confirm_password", "uen",
+                  "experience_years", "portfolio_url", "description"):                           # AC1
         assert f'name="{field}"' in page
+    assert 'name="first_name"' not in page and 'name="last_name"' not in page
     done = client.post("/register/designer", data=APPLY, follow_redirects=True)
     assert b"submitted successfully" in done.data and b"Pending" in done.data                    # AC2, AC5
     assert DesignerApplication.query.filter_by(email="ann@test.com").one().status == "pending"  # AC4
@@ -269,7 +271,7 @@ def test_id18_edit_profile(dc, app):
     make("designer", "o@test.com", "Olly", phone="82223333")
     page = text(dc.get("/designer/profile"))
     assert 'value="des@test.com"' in page                                                        # AC1
-    base = {"name": "Dana Tan", "email": "des@test.com", "phone": "91234567",
+    base = {"company_name": "Dana Studio", "email": "des@test.com", "phone": "91234567",
             "current_password": "password123"}
     assert "Profile updated" in text(dc.post("/designer/profile", data=base, follow_redirects=True))  # AC2, AC5
     assert b"valid email" in dc.post("/designer/profile", data={**base, "email": "nope"}).data   # AC3
@@ -325,3 +327,70 @@ def test_id21_designer_can_reply_and_customer_sees_it(dc, app):
     cc = dc.application.test_client()
     cc.post("/login", data={"email": "cus@test.com", "password": "password123", "role": "customer"})
     assert "Happy to help, Ann!" in cc.get("/customer/enquiries").get_data(as_text=True)               # AC5
+
+
+# Company profile picture and background ---------------------------------------------------------
+
+def _image(colour):
+    from io import BytesIO
+    from PIL import Image
+    out = BytesIO()
+    Image.new("RGB", (40, 20), colour).save(out, "PNG")
+    out.seek(0)
+    return out
+
+
+def test_company_profile_picture_and_background(dc, app):
+    designer = UserAccount.query.filter_by(email="des@test.com").one()
+    form = text(dc.get("/designer/company/add"))
+    assert 'name="profile_photo"' in form and 'name="cover_photo"' in form
+    dc.post("/designer/company/add", content_type="multipart/form-data",
+            data={**COMPANY, "profile_photo": (_image("red"), "logo.png"),
+                  "cover_photo": (_image("blue"), "banner.png")})
+    company = DesignerCompany.query.one()
+    assert company.profile_photo and company.cover_photo
+
+    visitor = app.test_client()
+    public = text(visitor.get(f"/customer/designers/{designer.id}"))
+    assert f"/customer/designers/{designer.id}/company-cover" in public
+    assert f"/customer/designers/{designer.id}/company-photo" in public
+    assert visitor.get(f"/customer/designers/{designer.id}/company-cover").status_code == 200
+
+    # Replace the background, then remove it
+    dc.post("/designer/company/edit", content_type="multipart/form-data",
+            data={**COMPANY, "cover_photo": (_image("green"), "new.png")})
+    assert DesignerCompany.query.one().cover_photo.filename.startswith("new")
+    dc.post("/designer/company/edit", data={**COMPANY, "remove_cover_photo": "1"})
+    assert DesignerCompany.query.one().cover_photo is None
+    assert DesignerCompany.query.one().profile_photo is not None
+    assert visitor.get(f"/customer/designers/{designer.id}/company-cover").status_code == 404
+
+    bad = dc.post("/designer/company/edit", content_type="multipart/form-data",
+                  data={**COMPANY, "cover_photo": (_image("red"), "banner.gif")})
+    assert b"Only JPG and PNG" in bad.data
+
+
+def test_project_gallery_layout(dc, app):
+    from app.entity.idp_photo import IDPPhoto
+    add(dc, title="Gallery")
+    idp = IDP.query.filter_by(title="Gallery").one()
+    visitor = app.test_client()
+    assert "No photos yet" in text(visitor.get(f"/customer/projects/{idp.id}"))
+    for n in range(12):
+        db.session.add(IDPPhoto(idp_id=idp.id, filename=f"p{n}.jpg", content_type="image/jpeg", data=b"x"))
+    db.session.commit()
+    page = text(visitor.get(f"/customer/projects/{idp.id}"))
+    assert "1 / 12 photos" in page and "+7 more" in page          # 1 large + 4 beside it, 7 left over
+    import re
+    assert len(re.findall(r"data-lightbox[\s>]", page)) == 12      # every photo opens in the viewer
+
+
+def test_designer_picture_shows_on_designer_cards_and_dashboard(dc, app):
+    designer = UserAccount.query.filter_by(email="des@test.com").one()
+    dc.post("/designer/company/add", content_type="multipart/form-data",
+            data={**COMPANY, "profile_photo": (_image("red"), "logo.png")})
+    add(dc, title="Loft")
+    photo_url = f"/customer/designers/{designer.id}/company-photo"
+    assert photo_url in text(app.test_client().get("/customer/designers"))
+    assert photo_url in text(dc.get("/designer/"))
+    assert "Your public profile" not in text(dc.get("/designer/profile"))

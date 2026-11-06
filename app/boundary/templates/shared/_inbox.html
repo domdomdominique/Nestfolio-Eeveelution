@@ -1,3 +1,4 @@
+{% from "shared/_avatar.html" import designer_avatar %}
 {# ID-21 Enquiries inbox: conversations on the left, the open conversation on the right.
    Used by the designer's Enquiries page and the customer's My enquiries page.
    side is 'designer' or 'customer'; page and reply are the endpoints for links and the reply form. #}
@@ -28,7 +29,7 @@
   {% set d = c.designer %}
   <header class="inbox-head">
     <a class="inbox-back" href="{{ url_for(page) }}">{{ icon('back') }}All conversations</a>
-    <span class="inbox-avatar inbox-avatar-lg">{{ d.display_name|initials }}</span>
+    {{ designer_avatar(d, 'inbox-avatar inbox-avatar-lg') }}
     <div class="inbox-who">
       <h2><a href="{{ url_for('customer.designer_profile', designer_id=d.id) }}">{{ d.display_name }}</a></h2>
       <p>Interior designer</p>
@@ -98,7 +99,8 @@
       {% set last = e.conversation[-1] %}
       <a class="inbox-item" id="enquiry-{{ e.id }}" href="{{ url_for(page, id=e.id, **keep) }}"
          {% if selected and e.id == selected.id %}aria-current="true"{% endif %}>
-        <span class="inbox-avatar">{{ other|initials }}</span>
+        {% if side == 'designer' %}<span class="inbox-avatar">{{ other|initials }}</span>
+        {% else %}{{ designer_avatar(e.designer, 'inbox-avatar') }}{% endif %}
         <span class="inbox-item-body">
           <span class="inbox-item-top">
             <strong>{{ other }}</strong>
@@ -130,7 +132,8 @@
     {% set answered = e.last_message_from_designer %}
     <header class="inbox-head">
       <a class="inbox-back" href="{{ url_for(page, **keep) }}">{{ icon('back') }}All conversations</a>
-      <span class="inbox-avatar inbox-avatar-lg">{{ other|initials }}</span>
+      {% if side == 'designer' %}<span class="inbox-avatar inbox-avatar-lg">{{ other|initials }}</span>
+      {% else %}{{ designer_avatar(e.designer, 'inbox-avatar inbox-avatar-lg') }}{% endif %}
       <div class="inbox-who">
         {% if side == 'designer' %}
         <h2>{{ other }}</h2>

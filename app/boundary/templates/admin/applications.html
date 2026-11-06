@@ -15,12 +15,11 @@
   {% if applications %}
   <div class="table-wrap">
     <table class="ptable">
-      <thead><tr><th>Submitted</th><th>Name</th><th>Company</th><th>Email</th><th></th></tr></thead>
+      <thead><tr><th>Submitted</th><th>Company</th><th>Email</th><th></th></tr></thead>
       <tbody>
         {% for a in applications %}
         <tr>
           <td class="num">{{ a.submitted_at.strftime('%d %b %Y') }}</td>
-          <td>{{ a.name }}</td>
           <td>{{ a.company_name }}</td>
           <td>{{ a.email }}</td>
           <td class="num"><a href="{{ url_for('admin.application_detail', application_id=a.id) }}">{{ 'Review' if a.status == 'pending' else 'View' }}</a></td>

@@ -1,5 +1,5 @@
 {% extends "designer/layout.html" %}
-{% from "designer/_company_fields.html" import company_fields %}
+{% from "designer/_company_fields.html" import company_fields, company_images %}
 {% set nav = 'profile' %}
 {% set inline_errors = true %}
 {% block title %}Add company — Nestfolio{% endblock %}
@@ -12,12 +12,13 @@
   </div>
 </div>
 
-<form class="card form-card-dash" method="post" novalidate style="max-width:760px;">
+<form class="card form-card-dash" method="post" enctype="multipart/form-data" novalidate style="max-width:760px;">
   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   {% for message in get_flashed_messages(category_filter=['error']) %}
     <p class="form-error" role="alert">{{ message }}</p>
   {% endfor %}
   {{ company_fields(form) }}
+  {{ company_images() }}
   <div class="form-actions">
     <a class="btn btn-outline" href="{{ url_for('designer.home') }}">Cancel</a>
     <button class="btn btn-primary" type="submit">Save company information</button>

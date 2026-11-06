@@ -35,7 +35,9 @@
     <header class="dash-top">
       {% block topbar_left %}<span></span>{% endblock %}
       <a class="dash-user" href="{{ account_url|default(home_url) }}">
-        <span class="initials initials-xs">{{ initials or '?' }}</span>
+        <span class="initials initials-xs">
+          {%- if my_photo_url -%}<img class="avatar-img" src="{{ my_photo_url }}" alt="">{%- else -%}{{ initials or '?' }}{%- endif -%}
+        </span>
         <span><strong>{{ display }}</strong><small>{{ role_label }}</small></span>
       </a>
     </header>

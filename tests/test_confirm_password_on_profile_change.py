@@ -44,7 +44,7 @@ def test_pages_show_the_password_field_and_an_error_when_it_is_wrong(client, cus
     client.post("/login", data={"email": "des@test.com", "password": "password123", "role": "designer"})
     page = client.get("/designer/profile").get_data(as_text=True)
     assert 'name="current_password"' in page and 'type="password"' in page
-    page = client.post("/designer/profile", data={"name": "X Y", "email": "des@test.com",
+    page = client.post("/designer/profile", data={"company_name": "X Y", "email": "des@test.com",
                                                    "phone": "81234567", "current_password": "nope"}).get_data(as_text=True)
     assert "current password" in page
     assert UserAccount.get(designer.id).name == "Dana Ong"
@@ -55,6 +55,6 @@ def test_pages_show_the_password_field_and_an_error_when_it_is_wrong(client, cus
 
 def test_password_is_never_echoed_back_after_an_error(client, designer):
     client.post("/login", data={"email": "des@test.com", "password": "password123", "role": "designer"})
-    page = client.post("/designer/profile", data={"name": "X Y", "email": "des@test.com",
+    page = client.post("/designer/profile", data={"company_name": "X Y", "email": "des@test.com",
                                                    "phone": "81234567", "current_password": "secret-guess"}).get_data(as_text=True)
     assert "secret-guess" not in page
