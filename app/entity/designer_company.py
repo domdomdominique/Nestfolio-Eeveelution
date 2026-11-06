@@ -28,6 +28,13 @@ class DesignerCompany(db.Model):
         cascade="all, delete-orphan",
         backref="company",
     )
+    # Wide banner shown across the top of the public designer profile.
+    cover_photo = db.relationship(
+        "CompanyCoverPhoto",
+        uselist=False,
+        cascade="all, delete-orphan",
+        backref="company",
+    )
 
     @classmethod
     def for_account(cls, account_id):
@@ -38,8 +45,12 @@ class DesignerCompany(db.Model):
         return db.session.get(CompanyRemoval, account_id) is not None
 
     @classmethod
-    def create(cls, account_id, **details):
+    def create(cls, account_id, photo=None, cover=None, **details):
         company = cls(account_id=account_id, **details)
+        if photo is not None:
+            company.profile_photo = CompanyProfilePhoto(**photo)
+        if cover is not None:
+            company.cover_photo = CompanyCoverPhoto(**cover)
         db.session.add(company)
 
         CompanyRemoval.query.filter_by(
@@ -50,7 +61,8 @@ class DesignerCompany(db.Model):
         return company
 
     @classmethod
-    def save(cls, account, details, photo=None, remove_photo=False):
+    def save(cls, account, details, photo=None, remove_photo=False,
+             cover=None, remove_cover=False):
         company = cls.for_account(account.id)
 
         if company is None:
@@ -89,6 +101,17 @@ class DesignerCompany(db.Model):
                 company.profile_photo.content_type = photo["content_type"]
                 company.profile_photo.data = photo["data"]
 
+        if remove_cover:
+            company.cover_photo = None
+
+        if cover is not None:
+            if company.cover_photo is None:
+                company.cover_photo = CompanyCoverPhoto(**cover)
+            else:
+                company.cover_photo.filename = cover["filename"]
+                company.cover_photo.content_type = cover["content_type"]
+                company.cover_photo.data = cover["data"]
+
         CompanyRemoval.query.filter_by(
             account_id=account.id
         ).delete(synchronize_session=False)
@@ -119,6 +142,19 @@ class CompanyRemoval(db.Model):
     )
 
 class CompanyProfilePhoto(db.Model):
+    company_id = db.Column(
+        db.Integer,
+        db.ForeignKey("designer_company.id"),
+        primary_key=True,
+    )
+    filename = db.Column(db.String(255), nullable=False)
+    content_type = db.Column(db.String(30), nullable=False)
+    data = db.deferred(
+        db.Column(db.LargeBinary, nullable=False)
+    )
+
+
+class CompanyCoverPhoto(db.Model):
     company_id = db.Column(
         db.Integer,
         db.ForeignKey("designer_company.id"),

@@ -1,0 +1,10 @@
+{# A designer's company profile picture, or their initials when there is none. #}
+{% macro designer_avatar(d, cls='initials') %}
+  <span class="{{ cls }}">
+    {%- if d and d.has_profile_photo -%}
+      <img class="avatar-img" src="{{ url_for('customer.company_photo', designer_id=d.id) }}" alt="{{ d.display_name }} profile picture" loading="lazy">
+    {%- else -%}
+      {{ d.initials if d else '?' }}
+    {%- endif -%}
+  </span>
+{% endmacro %}

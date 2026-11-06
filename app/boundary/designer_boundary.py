@@ -41,6 +41,18 @@ from app.control.view_profile_controller import ViewProfileController
 designer_bp = Blueprint("designer", __name__, url_prefix="/designer")
 
 
+@designer_bp.app_context_processor
+def my_profile_photo():
+    """The logged-in designer's company picture for the dashboard's top bar."""
+    if session.get("role") == "designer" and session.get("user_id"):
+        try:
+            if ViewProfileController().view(session["user_id"]).has_profile_photo:
+                return {"my_photo_url": url_for("customer.company_photo", designer_id=session["user_id"])}
+        except LookupError:
+            pass
+    return {"my_photo_url": None}
+
+
 @designer_bp.app_template_filter("ago")
 def ago(moment):
     """'2 days ago' style text for a datetime."""
@@ -166,12 +178,14 @@ def add_company():
 
     if request.method == "POST":
         try:
-            controller.add(account_id, request.form)
+            controller.add(account_id, request.form,
+                           request.files.get("profile_photo"), request.files.get("cover_photo"))
 
         except ValueError as error:
             flash(str(error), "error")
 
         else:
+            session["name"] = ViewProfileController().view(account_id).name
             flash(
                 "Company information added successfully.",
                 "success",
@@ -249,11 +263,13 @@ def edit_company():
                     session["user_id"],
                     request.form,
                     request.files.get("profile_photo"),
+                    request.files.get("cover_photo"),
                 )
             except ValueError as error:
                 flash(str(error), "error")
 
             else:
+                session["name"] = ViewProfileController().view(session["user_id"]).name
                 flash(
                     "Company information updated successfully.",
                     "success",
@@ -280,6 +296,7 @@ def edit_company():
     return render_template(
         "designer/edit_company.html",
         form=form,
+        company=existing,
     )
 
 
@@ -488,19 +505,25 @@ def statistics():
 def profile():
     """Boundary: MyProfilePage (ID-17, ID-18)."""
     account = ViewProfileController().view(session["user_id"])
+    controller = UpdateDesignerProfileController()
     form = None
     if request.method == "POST":
         form = request.form
         try:
-            UpdateDesignerProfileController().update(
-                account.id, form.get("name"), form.get("email"), form.get("phone"),
-                form.get("current_password"))
+            controller.update(
+                account.id, form.get("company_name"), form.get("email"), form.get("phone"),
+                form.get("current_password"), form.get("experience_years"),
+                form.get("portfolio_url"), form.get("description"))
         except ValueError as error:
             flash(str(error), "error")
         else:
             session["name"] = account.name
             return redirect(url_for("designer.profile", updated=1))
-    return render_template("designer/profile.html", nav="profile", account=account, form=form,
+    saved = controller.company_information(account)
+    if form is not None:  # keep what was typed after an error, but never the password
+        form = {**saved, **{k: v for k, v in form.items() if k != "current_password"}}
+    return render_template("designer/profile.html", nav="profile", account=account,
+                           form=form or saved,
                            updated=request.args.get("updated") == "1",
                            registration_status=ViewDesignerAccountController().registration_status(account.id))
 

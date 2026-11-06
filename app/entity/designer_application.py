@@ -16,6 +16,11 @@ class DesignerApplication(db.Model):
     (with the password they chose when applying); rejecting does not.
     """
 
+    # Until the designer adds a company record (ID-03), the profile pages read the company
+    # details from this application, which has no pictures.
+    profile_photo = None
+    cover_photo = None
+
     STATUSES = ("pending", "approved", "rejected")
 
     id = db.Column(db.Integer, primary_key=True)

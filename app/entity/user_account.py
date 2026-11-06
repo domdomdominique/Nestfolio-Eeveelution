@@ -123,6 +123,11 @@ class UserAccount(db.Model):
         return self.company.company_name if self.company else self.name
 
     @property
+    def has_profile_photo(self):
+        """Has this designer's company uploaded a profile picture?"""
+        return bool(self.company and self.company.profile_photo)
+
+    @property
     def initials(self):
         words = [w for w in self.display_name.replace("&", " ").split() if w[0].isalnum()]
         return "".join(w[0] for w in words[:2]).upper() or "?"

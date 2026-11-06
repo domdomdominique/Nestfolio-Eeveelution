@@ -4,9 +4,19 @@ from app.entity.designer_company import DesignerCompany
 from app.entity.user_account import UserAccount
 
 
+def _chosen(upload):
+    return upload is not None and bool(upload.filename)
+
+
+def company_image(upload):
+    """A checked JPG/PNG (same rules as project photos, ID-19), or None when no file was chosen."""
+    photos = validated_photos([upload] if _chosen(upload) else [])
+    return photos[0] if photos else None
+
+
 # ID-05 Update company information: same checks as ID-03, own record only.
 class UpdateCompanyController:
-    def update(self, account_id, form, photo=None):
+    def update(self, account_id, form, photo=None, cover=None):
         account = UserAccount.get(account_id)
 
         if (
@@ -49,19 +59,22 @@ class UpdateCompanyController:
                     "Email must be 120 characters or fewer."
                 )
 
-        remove_photo = (
-            form.get("remove_profile_photo") == "1"
-        )
+        remove_photo = form.get("remove_profile_photo") == "1"
+        remove_cover = form.get("remove_cover_photo") == "1"
 
-        if remove_photo and photo is not None and photo.filename:
+        if remove_photo and _chosen(photo):
             raise ValueError(
                 "Choose either a new picture or remove the "
                 "current picture, then save again."
             )
+        if remove_cover and _chosen(cover):
+            raise ValueError(
+                "Choose either a new background or remove the "
+                "current background, then save again."
+            )
 
-        photos = validated_photos(
-            [photo] if photo is not None and photo.filename else []
-        )
+        if account.name != name:  # the account is named after the company
+            account.update_details(name, account.email, account.phone)
 
         return DesignerCompany.save(
             account,
@@ -72,9 +85,23 @@ class UpdateCompanyController:
                 "phone": phone,
                 "email": email,
             },
-            photo=photos[0] if photos else None,
+            photo=company_image(photo),
             remove_photo=remove_photo,
+            cover=company_image(cover),
+            remove_cover=remove_cover,
         )
+
+    def view_cover(self, account_id):
+        company = self._company(account_id)
+        if company is None or company.cover_photo is None:
+            raise LookupError("Company background not found.")
+        return company.cover_photo
+
+    def _company(self, account_id):
+        account = UserAccount.get(account_id)
+        if account is None or account.role != "designer" or account.is_suspended:
+            raise LookupError("Designer account not found.")
+        return DesignerCompany.for_account(account_id)
 
     def view_photo(self, account_id):
         account = UserAccount.get(account_id)

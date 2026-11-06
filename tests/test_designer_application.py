@@ -5,7 +5,7 @@ from app.control.login_controller import LoginController
 from app.control.review_designer_application_controller import ReviewDesignerApplicationController
 from app.entity.user_account import UserAccount
 
-VALID = dict(name="Ben Lim", email="ben@studio.com", phone="+65 8765 4321",
+VALID = dict(email="ben@studio.com", phone="+65 8765 4321",
              password="designer123", confirm_password="designer123",
              company_name="Oak Studio", uen="201912345K",
              portfolio_url="https://oakstudio.sg", experience_years="5",
@@ -76,7 +76,7 @@ def test_approving_creates_designer_account_with_chosen_password(app):
     account = ReviewDesignerApplicationController().approve(application.id, admin.id)
 
     assert account.role == "designer"
-    assert account.name == "Ben Lim"
+    assert account.name == "Oak Studio"
     assert application.status == "approved"
     assert application.reviewed_by == admin.id
     assert application.account_id == account.id

@@ -28,24 +28,39 @@
           {% endif %}
           {{ auth.errors() }}
 
-          <div class="field-row">
+          {% if designer %}
             <label class="field">
-              <span>First name</span>
-              <input name="first_name" value="{{ form.get('first_name') or form.get('name', '') }}" autocomplete="given-name" required>
+              <span>Company name</span>
+              <input name="company_name" value="{{ form.get('company_name', '') }}" autocomplete="organization" required>
             </label>
             <label class="field">
-              <span>Last name</span>
-              <input name="last_name" value="{{ form.get('last_name', '') }}" autocomplete="family-name">
+              <span>Company email address</span>
+              <input name="email" type="email" value="{{ form.get('email', '') }}" placeholder="yourstudio@example.com" autocomplete="email" required>
             </label>
-          </div>
-          <label class="field">
-            <span>Email address</span>
-            <input name="email" type="email" value="{{ form.get('email', '') }}" placeholder="you@example.com" autocomplete="email" required>
-          </label>
-          <label class="field">
-            <span>Phone number</span>
-            {{ phone_input(form.get('phone', '')) }}
-          </label>
+            <label class="field">
+              <span>Company phone number</span>
+              {{ phone_input(form.get('phone', '')) }}
+            </label>
+          {% else %}
+            <div class="field-row">
+              <label class="field">
+                <span>First name</span>
+                <input name="first_name" value="{{ form.get('first_name') or form.get('name', '') }}" autocomplete="given-name" required>
+              </label>
+              <label class="field">
+                <span>Last name</span>
+                <input name="last_name" value="{{ form.get('last_name', '') }}" autocomplete="family-name">
+              </label>
+            </div>
+            <label class="field">
+              <span>Email address</span>
+              <input name="email" type="email" value="{{ form.get('email', '') }}" placeholder="you@example.com" autocomplete="email" required>
+            </label>
+            <label class="field">
+              <span>Phone number</span>
+              {{ phone_input(form.get('phone', '')) }}
+            </label>
+          {% endif %}
           <label class="field">
             <span>Password</span>
             <input name="password" type="password" minlength="8" placeholder="At least 8 characters" autocomplete="new-password" required>
@@ -57,11 +72,6 @@
           {{ auth.show_password() }}
 
           {% if designer %}
-            <p class="form-section">Company details</p>
-            <label class="field">
-              <span>Company name</span>
-              <input name="company_name" value="{{ form.get('company_name', '') }}" autocomplete="organization" required>
-            </label>
             <div class="field-row">
               <label class="field">
                 <span>UEN</span>
@@ -77,10 +87,11 @@
               <input name="portfolio_url" type="url" value="{{ form.get('portfolio_url', '') }}" placeholder="https://">
             </label>
             <label class="field">
-              <span>About your company (optional)</span>
+              <span>About company (optional)</span>
               <textarea name="description" rows="4">{{ form.get('description', '') }}</textarea>
             </label>
           {% endif %}
+
 
           <label class="checkbox">
             <input type="checkbox" name="terms" value="1" required {% if form.get('terms') %}checked{% endif %}>

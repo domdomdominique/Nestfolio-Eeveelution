@@ -1,5 +1,5 @@
 {% extends "designer/layout.html" %}
-{% from "designer/_company_fields.html" import company_fields %}
+{% from "designer/_company_fields.html" import company_fields, company_images %}
 {% set nav = 'profile' %}
 {% set inline_errors = true %}
 {% block title %}Edit company — Nestfolio{% endblock %}
@@ -18,15 +18,7 @@
     <p class="form-error" role="alert">{{ message }}</p>
   {% endfor %}
   {{ company_fields(form) }}
-  <label class="field" for="profile_photo">
-    <span>Company profile picture</span>
-    <input type="file" id="profile_photo" name="profile_photo" accept="image/jpeg,image/png">
-    <span class="hint">Choose a JPG or PNG, maximum 5 MB. Leave empty to keep your current picture.</span>
-  </label>
-  <label class="checkbox">
-    <input type="checkbox" name="remove_profile_photo" value="1">
-    <span>Remove current company profile picture</span>
-  </label>
+  {{ company_images(company) }}
   <div class="form-actions">
     <a class="btn btn-outline" href="{{ url_for('designer.company') }}">Cancel</a>
     <button class="btn btn-primary" type="submit">Save changes</button>

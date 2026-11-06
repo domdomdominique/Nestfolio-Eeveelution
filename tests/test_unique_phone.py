@@ -17,8 +17,8 @@ def register(email="amy@test.com", phone="9123 4567"):
 
 
 def apply(email="ben@studio.com", phone="8765 4321"):
-    return ApplyDesignerController().apply("Ben Lim", email, phone, "password123", "password123",
-                                           "Ben Studio", "201912345K")
+    return ApplyDesignerController().apply("Ben Studio", email, phone, "password123", "password123",
+                                           "201912345K")
 
 
 def test_customer_cannot_register_with_a_phone_already_in_use(app):

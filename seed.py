@@ -19,7 +19,7 @@ from app import create_app
 from app.entity.announcement import Announcement
 from app.entity.db import db
 from app.entity.designer_application import DesignerApplication
-from app.entity.designer_company import DesignerCompany
+from app.entity.designer_company import CompanyCoverPhoto, CompanyProfilePhoto, DesignerCompany
 from app.entity.enquiry import Enquiry
 from app.entity.reply import EnquirySeen, Reply
 from app.entity.favourite import Favourite
@@ -125,6 +125,17 @@ def company_slug(name):
     return "".join(ch for ch in name.lower() if ch.isalnum())
 
 
+def company_email(company):
+    """"Oak Studio" -> oakstudio@test.com; designer accounts are company accounts."""
+    base = company_slug(company)
+    email, n = f"{base}@test.com", 1
+    while email in _used_emails:
+        n += 1
+        email = f"{base}{n}@test.com"
+    _used_emails.add(email)
+    return email
+
+
 def random_uen(year):
     """Singapore company UEN format: YYYYNNNNNX (e.g. 201912345K)."""
     return f"{year}{random.randint(10000, 99999)}{random.choice('ABCDEGHKMNRWZ')}"
@@ -220,11 +231,13 @@ REPORT_DETAILS = {
 }
 
 # --- Demo photos -----------------------------------------------------------------------------
-# Every project gets a random photo from app/static/img/idpbg and every category a random background
-# from app/static/img/idpcatbg. The source images are large wallpapers, so each one is scaled down
+# Every project gets PROJECT_PHOTOS random photos from app/static/img/idpbg, every company a profile
+# picture from app/static/img/idpfp and a background from idpbg, and every category the image in
+# app/static/img/idpcatbg named after it (e.g. "Kitchen_....jpg"). The source images are large wallpapers, so each one is scaled down
 # and saved as a JPEG that fits the normal upload rules (ID-19: JPG/PNG, 5 MB, 20 megapixels).
 IMG_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app", "static", "img")
-PHOTO_MAX_SIDE = 1600  # long edge in pixels: sharp on the site, small in the database
+PHOTO_MAX_SIDE = 1200  # long edge in pixels: sharp on the site, small in the database
+PROJECT_PHOTOS = 10    # the most a project may have (ID-19)
 
 
 def images_in(folder):
@@ -271,8 +284,51 @@ def assign_photos(items, folder, attach):
     return len(items)
 
 
-def attach_category_photo(category, photo):
-    category.photo = IDPCategoryPhoto(**photo)
+def add_project_photos(projects, folder="idpbg"):
+    """Give every project PROJECT_PHOTOS different random photos; returns how many were added."""
+    sources = images_in(folder)
+    if not sources:
+        print(f"No images in app/static/img/{folder}, so projects have no photos.")
+        return 0
+    cache, added = {}, 0
+    for idp in projects:
+        for path in random.sample(sources, min(PROJECT_PHOTOS, len(sources))):
+            if path not in cache:
+                cache[path] = load_photo(path)
+            idp.photos.append(IDPPhoto(**cache[path]))
+            added += 1
+        db.session.commit()  # one project at a time keeps memory use flat
+    return added
+
+
+def category_image(name, sources):
+    """The idpcatbg image whose file name starts with this category's name.
+
+    Falls back to the first word ("Whole Home" -> "Whole House_...jpg") so a slightly
+    different file name still always gives the same picture.
+    """
+    def label(path):
+        return os.path.basename(path).split("_")[0].strip().lower()
+    for match in (lambda p: label(p) == name.lower(),
+                  lambda p: label(p).split()[0] == name.lower().split()[0]):
+        found = [p for p in sources if match(p)]
+        if found:
+            return found[0]
+    return None
+
+
+def add_category_photos(categories, folder="idpcatbg"):
+    sources = images_in(folder)
+    done = 0
+    for category in categories:
+        path = category_image(category.name, sources)
+        if path is None:
+            print(f"No image in app/static/img/{folder} named after '{category.name}'.")
+            continue
+        category.photo = IDPCategoryPhoto(**load_photo(path))
+        done += 1
+    db.session.commit()
+    return done
 
 
 # seed.py rebuilds everything, so remove the old database first. This also avoids the
@@ -312,12 +368,14 @@ with app.app_context():
     # --- Designer applications: 100 approved (with companies), 40 pending, 15 rejected -------
     used_companies = set()
 
-    def new_application(name, email, submitted, years=None):
+    def new_application(submitted, years=None, email=None):
+        # A designer account is a company account: its name and email come from the company.
         company = make_company(used_companies)
+        email = email or company_email(company)
         years = years or random.randint(2, 22)
         speciality = random.choice(SPECIALITIES)
         application = DesignerApplication(
-            name=name, email=email, phone=random_phone(), password_hash=password_hash,
+            name=company, email=email, phone=random_phone(), password_hash=password_hash,
             company_name=company, uen=random_uen(min(2025, NOW.year - years + random.randint(0, 2))),
             portfolio_url=f"https://www.{company_slug(company)}.sg", experience_years=years,
             description=company_description(company, speciality, years, random.randint(3, 25)),
@@ -325,18 +383,11 @@ with app.app_context():
         db.session.add(application)
         return application
 
-    approved = [new_application("Demo Designer", "designer@demo.com", NOW - timedelta(days=380), years=8)]
+    approved = [new_application(NOW - timedelta(days=380), years=8, email="designer@demo.com")]
     for _ in range(99):
-        name = random_name()
-        approved.append(new_application(name, email_for(name), ago(30, 900)))
-    pending = []
-    for _ in range(40):
-        name = random_name()
-        pending.append(new_application(name, email_for(name), ago(0, 21)))
-    rejected = []
-    for _ in range(15):
-        name = random_name()
-        rejected.append(new_application(name, email_for(name), ago(10, 120)))
+        approved.append(new_application(ago(30, 900)))
+    pending = [new_application(ago(0, 21)) for _ in range(40)]
+    rejected = [new_application(ago(10, 120)) for _ in range(15)]
     db.session.commit()
 
     designers = []
@@ -345,11 +396,10 @@ with app.app_context():
         application.reviewed_at = application.submitted_at + timedelta(days=random.uniform(1, 5))
         account.created_at = application.reviewed_at
         # The company record designers manage on their Company page (ID-03 to ID-05)
-        company_email = f"hello@{company_slug(application.company_name)}.sg"
         db.session.add(DesignerCompany(
             account_id=account.id, company_name=application.company_name,
             description=application.description, address=company_address(),
-            phone=random_phone("6"), email=company_email, uen=application.uen,
+            phone=random_phone("6"), email=application.email, uen=application.uen,
             portfolio_url=application.portfolio_url, experience_years=application.experience_years,
             reviewed_at=application.reviewed_at))
         designers.append(account)
@@ -480,10 +530,13 @@ with app.app_context():
 
     # --- Photos for every project and category -----------------------------------------------
     print("Adding demo photos (this can take a minute)...")
-    project_photos = assign_photos(IDP.query.order_by(IDP.id).all(), "idpbg",
-                                   lambda p, photo: p.photos.append(IDPPhoto(**photo)))
-    category_photos = assign_photos(IDPCategory.query.order_by(IDPCategory.id).all(), "idpcatbg",
-                                    attach_category_photo)
+    project_photos = add_project_photos(IDP.query.order_by(IDP.id).all())
+    category_photos = add_category_photos(IDPCategory.query.order_by(IDPCategory.id).all())
+    companies = DesignerCompany.query.order_by(DesignerCompany.id).all()
+    company_pictures = assign_photos(companies, "idpfp",
+                                     lambda c, photo: setattr(c, "profile_photo", CompanyProfilePhoto(**photo)))
+    company_covers = assign_photos(companies, "idpbg",
+                                   lambda c, photo: setattr(c, "cover_photo", CompanyCoverPhoto(**photo)))
 
     print(f"Accounts: {UserAccount.query.count()} ({len(customers)} customers, {len(designers)} designers), "
           f"companies: {DesignerCompany.query.count()}, projects: {IDP.query.count()}, "
@@ -492,7 +545,8 @@ with app.app_context():
           f"applications: {DesignerApplication.query.count()} ({DesignerApplication.count_pending()} pending), "
           f"categories: {IDPCategory.query.count()}, profiles: {UserProfile.query.count()}, "
           f"announcements: {Announcement.query.count()}, "
-          f"photos: {project_photos} projects, {category_photos} categories")
+          f"photos: {project_photos} project photos, {category_photos} categories, "
+          f"{company_pictures} company pictures, {company_covers} company backgrounds")
     print(f"Demo logins (password: {PASSWORD}): admin@demo.com / platform@demo.com / "
           f"designer@demo.com / customer@demo.com")
     print(f"Pending applicant example: {pending[0].email}")
