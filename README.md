@@ -41,7 +41,7 @@ Story IDs (C-, ID-, PM-, UA-) refer to the team's user story sheet.
 - Apply to join with company details (company name, UEN, portfolio URL, years of experience).
 - Check application status (pending, approved, or rejected with a reason) on the **Registration status** page. Designers can only log in once approved.
 - Add, view, edit and delete their **company profile**, including a company photo.
-- Manage a **portfolio**: add, edit and delete IDPs with up to 10 JPG/PNG photos each (5 MB per photo), mark projects current or past, and search their own portfolio.
+- Manage a **portfolio**: add, edit and delete IDPs with up to 10 JPG/PNG photos each (10 MB per photo), mark projects current or past, and search their own portfolio.
 - **Statistics**: view and shortlist counts for each of their IDPs.
 - **Trends**: the platform's most viewed categories and IDPs over the last 7 or 30 days.
 - View enquiries from customers.

@@ -1,10 +1,16 @@
 {# Dark left-hand panel of the log in / sign up card. #}
-{% macro brand_panel(title, text, points) %}
+{% macro brand_panel(title, text, points, photo=None) %}
   {% set img = 'img/ui/' %}
   <div class="auth-brand">
+    {% if photo %}
+    <div class="photo auth-photo has-photo">
+      <img src="{{ url_for('static', filename=img ~ photo) }}" alt="">
+    </div>
+    {% else %}
     <div class="photo auth-photo">
       <img src="{{ url_for('static', filename=img ~ 'idp-image.svg') }}" width="42" height="42" alt="">
     </div>
+    {% endif %}
     <h2>{{ title }}</h2>
     <p>{{ text }}</p>
     <ul class="auth-points">

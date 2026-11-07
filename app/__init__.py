@@ -193,6 +193,8 @@ def create_app(test_config=None):
                 enquiry_attachment.EnquiryAttachment.ensure_schema()
                 from app.entity.report import Report
                 Report.ensure_schema()
+                from app.entity.announcement import Announcement
+                Announcement.ensure_schema()
                 IDPCategory.ensure_defaults()
                 UserProfile.ensure_defaults()
                 break

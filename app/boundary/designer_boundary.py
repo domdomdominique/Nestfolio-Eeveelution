@@ -568,7 +568,7 @@ def remove_project_photo(idp_id, photo_id):
 def photo_upload_too_large(error):
     flash(
         "Upload is too large. Use at most 10 photos, "
-        "each 5 MB or smaller.",
+        "each 10 MB or smaller.",
         "error",
     )
 

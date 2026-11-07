@@ -9,7 +9,8 @@
       <div class="auth-card">
         {{ auth.brand_panel('Find a designer you can trust',
                             'Browse real projects, save the ones you love and reach out when you are ready.',
-                            ['Every designer is verified', 'Real projects to explore', 'Free for homeowners']) }}
+                            ['Every designer is verified', 'Real projects to explore', 'Free for homeowners'],
+                            photo='login.jpg') }}
 
         <form class="auth-form" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <h1>Log in</h1>

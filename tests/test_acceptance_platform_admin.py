@@ -19,6 +19,8 @@ from app.entity.user_account import UserAccount
 from app.entity.user_profile import UserProfile
 from openpyxl import load_workbook
 
+from conftest import png_field
+
 
 def make(role, email, name=None, **kw):
     return UserAccount.create(email, "password123", role, name=name or role.title(), **kw)
@@ -80,9 +82,9 @@ def test_pm03_create_category(pm, app):
     form = text(pm.get("/platform/categories/new"))
     assert 'name="name"' in form and 'name="description"' in form and "required" in form      # AC1, AC2
     assert b"category name" in pm.post("/platform/categories/new", data={"name": " "}).data.lower()
-    pm.post("/platform/categories/new", data={"name": "Balcony"})                              # description optional
+    pm.post("/platform/categories/new", data={"name": "Balcony", "photo": png_field()})        # description optional
     assert "Balcony" in text(pm.get("/platform/categories"))                                   # AC4
-    assert b"already exists" in pm.post("/platform/categories/new", data={"name": "balcony"}).data   # AC3
+    assert b"already exists" in pm.post("/platform/categories/new", data={"name": "balcony", "photo": png_field()}).data   # AC3
     assert IDPCategory.query.filter(IDPCategory.name.ilike("balcony")).count() == 1
     make("designer", "des@test.com", "Dana")
     designer = app.test_client()

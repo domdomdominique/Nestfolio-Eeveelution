@@ -6,7 +6,8 @@ from PIL import Image, UnidentifiedImageError
 from werkzeug.utils import secure_filename
 
 
-MAX_PHOTO_BYTES = 5 * 1024 * 1024
+MAX_PHOTO_BYTES = 5 * 1024 * 1024        # company profile picture and background
+IDP_MAX_PHOTO_BYTES = 10 * 1024 * 1024   # IDP photos and IDP category backgrounds
 MAX_PHOTOS = 10
 
 
@@ -18,8 +19,9 @@ def safe_upload_name(filename):
     return ((secure_filename(path.stem)[:240] or "file") + extension)[:255], extension
 
 
-# ID-19 Photo rules: JPG or PNG, 5 MB each, at most 10, checked as real images.
-def validated_photos(files, existing=0):
+# ID-19 Photo rules: JPG or PNG, at most max_bytes each (10 MB for IDP photos), at most 10,
+# checked as real images.
+def validated_photos(files, existing=0, max_bytes=MAX_PHOTO_BYTES):
     files = [
         upload for upload in files
         if upload and upload.filename
@@ -38,10 +40,12 @@ def validated_photos(files, existing=0):
         if extension not in (".jpg", ".jpeg", ".png"):
             raise ValueError("Only JPG and PNG photos are accepted.")
 
-        data = upload.stream.read(MAX_PHOTO_BYTES + 1)
+        data = upload.stream.read(max_bytes + 1)
 
-        if len(data) > MAX_PHOTO_BYTES:
-            raise ValueError("Each photo must be 5 MB or smaller.")
+        if len(data) > max_bytes:
+            raise ValueError(
+                f"Each photo must be {max_bytes // (1024 * 1024)} MB or smaller."
+            )
 
         try:
             with warnings.catch_warnings():

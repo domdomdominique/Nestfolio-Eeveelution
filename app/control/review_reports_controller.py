@@ -1,3 +1,4 @@
+from app.entity.announcement import Announcement
 from app.entity.report import Report
 
 
@@ -38,10 +39,26 @@ class ReviewReportsController:
         report = self._get(report_id)
         if report.status != "open":
             raise ValueError("This report has already been resolved.")
-        report.idp.remove()
-        for other in Report.query.filter_by(idp_id=report.idp_id, status="open").all():
+        idp = report.idp
+        idp.remove()
+        open_reports = Report.query.filter_by(idp_id=report.idp_id, status="open").all()
+        for other in open_reports:
             other.resolve(admin_id, "removed", reason)
+        self._notify_designer(idp, admin_id, reason, open_reports)
         return report
+
+    @staticmethod
+    def _notify_designer(idp, admin_id, reason, reports):
+        """Tell the designer, through a personal announcement, that their IDP was reported and removed."""
+        reported_for = ", ".join(dict.fromkeys(r.reason for r in reports)) or "Not given"
+        title = f"Project removed: {idp.title}"[:150]
+        message = (
+            f"Your project “{idp.title}” was reported by customers and has been removed "
+            "from public view by a User Admin.\n\n"
+            f"Reported for: {reported_for}\n"
+            f"Reason for removal: {reason}"
+        )
+        Announcement.send(admin_id, title, message, recipient_id=idp.designer_id)
 
     @staticmethod
     def _get(report_id):

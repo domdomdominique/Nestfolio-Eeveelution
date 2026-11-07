@@ -71,7 +71,8 @@ def create_category():
     if request.method == "POST":
         try:
             category = CreateCategoryController().create(
-                request.form.get("name"), request.form.get("description"))
+                request.form.get("name"), request.form.get("description"),
+                request.files.get("photo"))
         except ValueError as exc:
             error = str(exc)
         else:
@@ -93,7 +94,8 @@ def edit_category(category_id):
     if request.method == "POST":
         try:
             UpdateCategoryController().update(
-                category_id, request.form.get("name"), request.form.get("description"))
+                category_id, request.form.get("name"), request.form.get("description"),
+                request.files.get("photo"))
         except ValueError as exc:
             error = str(exc)
         else:
@@ -101,6 +103,12 @@ def edit_category(category_id):
             return redirect(url_for("platform.categories"))
     return render_template("platform/category_form.html", nav="categories",
                            category=category, form=form, error=error)
+
+
+@platform_bp.errorhandler(413)
+def upload_too_large(error):
+    flash("The background image is too large. Use a JPG or PNG of 10 MB or smaller.", "error")
+    return redirect(url_for("platform.categories"))
 
 
 def category_form(category):

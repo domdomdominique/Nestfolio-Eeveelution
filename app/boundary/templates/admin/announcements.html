@@ -47,7 +47,7 @@
   <article class="enq-item">
     <div style="flex:1; min-width:0;">
       <div class="enq-top"><strong>{{ a.title }}</strong><small>{{ a.sent_at.strftime('%d %b %Y, %H:%M') }}</small></div>
-      <p class="audience-tag">To: {% if a.is_for_everyone %}Everyone{% else %}{% for key in a.role_keys %}{{ role_names.get(key, key) }}{{ ', ' if not loop.last }}{% endfor %}{% endif %}</p>
+      <p class="audience-tag">To: {% if a.is_personal %}{{ a.recipient.display_name if a.recipient else 'Deleted account' }} (personal notice){% elif a.is_for_everyone %}Everyone{% else %}{% for key in a.role_keys %}{{ role_names.get(key, key) }}{{ ', ' if not loop.last }}{% endfor %}{% endif %}</p>
       <p style="white-space:pre-wrap; overflow-wrap:anywhere;">{{ a.message }}</p>
     </div>
     <form method="post" action="{{ url_for('admin.remove_announcement', announcement_id=a.id) }}" class="status-form">

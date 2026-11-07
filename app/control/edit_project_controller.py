@@ -1,5 +1,5 @@
 from app.control.idp_validation import clean_idp_fields
-from app.control.portfolio_validation import validated_photos
+from app.control.portfolio_validation import IDP_MAX_PHOTO_BYTES, validated_photos
 from app.entity.idp import IDP
 from app.entity.user_account import UserAccount
 
@@ -42,6 +42,7 @@ class EditProjectController:
         photos = validated_photos(
             files,
             len(project.photos),
+            max_bytes=IDP_MAX_PHOTO_BYTES,
         )
 
         project.update_details(

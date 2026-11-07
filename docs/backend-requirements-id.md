@@ -94,7 +94,7 @@ Table `photo`:
 
 Rules (backend enforces; frontend checks are only for convenience):
 - JPG and PNG only. Verify with Pillow (`Image.open` then `verify`, format in `JPEG`/`PNG`), not by extension or MIME type. Set `Image.MAX_IMAGE_PIXELS`.
-- At most 5 MB per file and 20 per IDP. Error text: "Only JPG or PNG files up to 5 MB are allowed."
+- At most 10 MB per file and 20 per IDP. Error text: "Only JPG or PNG files up to 10 MB are allowed."
 - Store under `instance/uploads/idp/`, outside `static/`.
 - Serve through a route that checks the IDP is visible, or that the viewer owns it. Use `send_from_directory` with the correct type.
 - Delete files when a photo is removed and when the IDP is deleted. `IDP.delete()` does not know about photos yet, so please hook it.

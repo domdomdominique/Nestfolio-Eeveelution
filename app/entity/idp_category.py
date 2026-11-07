@@ -49,8 +49,11 @@ class IDPCategory(db.Model):
         return query.first() is not None
 
     @classmethod
-    def create(cls, name, description=""):
+    def create(cls, name, description="", photo=None):
+        """photo is {filename, content_type, data} (already checked by the control layer)."""
         category = cls(name=name, description=description)
+        if photo:
+            category.photo = IDPCategoryPhoto(**photo)
         db.session.add(category)
         db.session.commit()
         return category
@@ -87,12 +90,19 @@ class IDPCategory(db.Model):
 
         return IDP.query.filter_by(category=self.name).count()
 
-    def update(self, name, description):
+    def update(self, name, description, photo=None):
         from app.entity.idp import IDP
 
         if name != self.name:
             IDP.query.filter_by(category=self.name).update({"category": name})
         self.name, self.description = name, description
+        if photo:
+            if self.photo is None:
+                self.photo = IDPCategoryPhoto(**photo)
+            else:
+                self.photo.filename = photo["filename"]
+                self.photo.content_type = photo["content_type"]
+                self.photo.data = photo["data"]
         db.session.commit()
 
     def delete(self):

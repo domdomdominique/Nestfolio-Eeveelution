@@ -1,6 +1,8 @@
 """PM-03 to PM-07: Platform Management manages IDP categories."""
 import pytest
 
+from conftest import png_upload
+
 from app.control.create_category_controller import CreateCategoryController
 from app.control.delete_category_controller import DeleteCategoryController
 from app.control.search_category_controller import SearchCategoryController
@@ -30,7 +32,7 @@ def test_default_categories_exist_on_first_run(app):
 # --- PM-03 Create -------------------------------------------------------------
 
 def test_create_category_appears_in_list_and_customer_filters(app):
-    category = CreateCategoryController().create("  Balcony ", "Outdoor spaces")
+    category = CreateCategoryController().create("  Balcony ", "Outdoor spaces", png_upload())
     assert category.name == "Balcony" and category.description == "Outdoor spaces"
     assert "Balcony" in [c.name for c in ViewCategoryController().list_categories()]
     make_idp("Balcony", "Garden balcony")
@@ -39,7 +41,7 @@ def test_create_category_appears_in_list_and_customer_filters(app):
 
 
 def test_description_is_optional(app):
-    assert CreateCategoryController().create("Balcony").description == ""
+    assert CreateCategoryController().create("Balcony", photo=png_upload()).description == ""
 
 
 @pytest.mark.parametrize("name, message", [

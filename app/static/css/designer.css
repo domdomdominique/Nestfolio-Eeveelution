@@ -117,6 +117,7 @@
 .row-actions { display: flex; align-items: center; justify-content: flex-end; gap: 14px; white-space: nowrap; }
 .link-action { display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none; font-size: 14px; font-weight: 500; color: #1f5a7a; cursor: pointer; }
 .link-danger { color: var(--error); }
+.removed-tag { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--error); background: #fbeaea; white-space: nowrap; }
 .link-action:hover { text-decoration: underline; }
 .status-form { margin: 0; }
 .status-select {

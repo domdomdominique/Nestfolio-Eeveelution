@@ -1,5 +1,5 @@
 from app.control.idp_validation import clean_idp_fields
-from app.control.portfolio_validation import validated_photos
+from app.control.portfolio_validation import IDP_MAX_PHOTO_BYTES, validated_photos
 from app.entity.idp import IDP
 from app.entity.user_account import UserAccount
 
@@ -30,7 +30,7 @@ class AddIDPController:
             form.get("category"),
             form.get("status"),
         )
-        photos = validated_photos(files)
+        photos = validated_photos(files, max_bytes=IDP_MAX_PHOTO_BYTES)
 
         return IDP.create_for_designer(
             account.id,

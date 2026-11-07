@@ -17,7 +17,7 @@ class ViewDesignerDashboardController:
         totals = IDP.totals_for_designer(designer_id)
         return {
             "account": account,
-            "announcements": Announcement.latest(3, role="designer"),
+            "announcements": Announcement.latest(3, role="designer", user_id=designer_id),
             "company": account.company,
             "project_count": IDP.count_for_designer(designer_id),
             "added_this_month": IDP.added_since(designer_id, month_start),

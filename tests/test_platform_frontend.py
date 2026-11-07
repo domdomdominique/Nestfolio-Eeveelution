@@ -5,6 +5,7 @@ from app.entity.db import db
 from app.entity.idp import IDP
 from app.entity.idp_category import IDPCategory
 from app.entity.user_account import UserAccount
+from conftest import png_field
 
 
 def login_platform(client):
@@ -25,7 +26,8 @@ def test_dashboard_and_category_list_load(client, app):
 
 def test_create_edit_and_delete_category(client, app):
     login_platform(client)
-    client.post("/platform/categories/new", data={"name": "Balcony", "description": "Outdoor"})
+    client.post("/platform/categories/new", data={"name": "Balcony", "description": "Outdoor",
+                                                    "photo": png_field()})
     category = IDPCategory.query.filter_by(name="Balcony").one()
     page = client.post(f"/platform/categories/{category.id}/edit",
                        data={"name": "Kitchen", "description": ""})

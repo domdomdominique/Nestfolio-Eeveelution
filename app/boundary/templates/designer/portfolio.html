@@ -50,7 +50,7 @@
           </td>
           <td class="num">{{ i.icon('eye') }} {{ '{:,}'.format(p.view_count or 0) }}</td>
           <td class="num">{{ i.icon('heart') }} {{ '{:,}'.format(p.shortlist_count or 0) }}</td>
-          <td class="num">{{ p.created_at|ago }}</td>
+          <td class="num">{% if p.is_removed %}<span class="removed-tag" title="Removed by a User Admin after a customer report">Project Removed</span>{% else %}{{ p.created_at|ago }}{% endif %}</td>
           <td>
             <div class="row-actions">
               <a class="link-action" href="{{ url_for('designer.edit_project', idp_id=p.id) }}">{{ i.icon('edit') }}Edit</a>
