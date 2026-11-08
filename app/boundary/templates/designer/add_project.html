@@ -76,7 +76,9 @@
             <img src="{{ url_for('customer.project_photo', photo_id=photo.id) }}" alt="Project photo {{ loop.index }}"
                  style="width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:8px;">
             {# A separate form (via form=) so this button doesn't submit the edit form #}
-            <button class="link-action link-danger" type="submit" form="remove-photo-{{ photo.id }}">Remove photo</button>
+            <button class="link-action link-danger" type="submit" form="remove-photo-{{ photo.id }}" onclick="return confirm('Remove this photo from the project? This cannot be undone.');">
+              Remove photo
+            </button>
           </figure>
           {% endfor %}
         </div>

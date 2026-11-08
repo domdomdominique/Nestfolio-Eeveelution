@@ -396,7 +396,10 @@ def edit_project(idp_id):
         )
 
     except LookupError:
-        abort(404)
+        return render_template(
+            "designer/project_not_found.html",
+            nav="portfolio",
+        ), 404
 
     if request.method == "POST":
         _check_company_token()

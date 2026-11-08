@@ -1,3 +1,4 @@
+from urllib.parse import urlsplit
 from flask import Blueprint, abort, flash, redirect, render_template, request, session, url_for
 
 from io import BytesIO
@@ -85,19 +86,32 @@ def home():
 
 @customer_bp.route("/projects/<int:idp_id>")
 def project(idp_id):
-    """Boundary: ProjectDetailPage (C-06)."""
+    """Show a project and count genuine page visits."""
+    skip_view = (
+        request.method == "GET"
+        and session.get("skip_favourite_return_view") == idp_id
+    )
+
+    if skip_view:
+        session.pop("skip_favourite_return_view", None)
+
     try:
-            page = ViewIDPController().view(
+        page = ViewIDPController().view(
             idp_id,
             _customer_id(),
             viewer_role=session.get("role"),
-            record=request.method == "GET",
+            record=request.method == "GET" and not skip_view,
         )
     except LookupError:
-        # Deleted, or the designer is suspended: C-06 AC4 "Project not available"
-        return render_template("customer/project_unavailable.html"), 404
-    return render_template("customer/project.html",
-                           reasons=ReportIDPController().reasons(), **page)
+        return render_template(
+            "customer/project_unavailable.html"
+        ), 404
+
+    return render_template(
+        "customer/project.html",
+        reasons=ReportIDPController().reasons(),
+        **page,
+    )
 
 
 @customer_bp.route("/projects/<int:idp_id>/report", methods=["POST"])
@@ -138,16 +152,32 @@ def favourites():
 @customer_bp.route("/favourites/<int:idp_id>", methods=["POST"])
 @role_required("customer")
 def save_favourite(idp_id):
-    """Boundary: heart / 'Save to favourites' button on an IDP (C-07)."""
+    """Save a favourite without counting the return as another visit."""
     try:
-        idp, added = SaveFavouriteController().save(session["user_id"], idp_id)
+        idp, added = SaveFavouriteController().save(
+            session["user_id"],
+            idp_id,
+        )
     except LookupError:
         abort(404)
+
     if added:
         flash(f"Saved “{idp.title}” to your favourites.", "success")
     else:
-        flash(f"“{idp.title}” is already in your favourites.", "success")
-    return _back(url_for("customer.favourites"))
+        flash(
+            f"“{idp.title}” is already in your favourites.",
+            "success",
+        )
+
+    response = _back(url_for("customer.favourites"))
+
+    if urlsplit(response.location).path == url_for(
+        "customer.project",
+        idp_id=idp.id,
+    ):
+        session["skip_favourite_return_view"] = idp.id
+
+    return response
 
 
 @customer_bp.route("/favourites/<int:idp_id>/remove", methods=["POST"])

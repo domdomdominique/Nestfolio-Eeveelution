@@ -1,0 +1,18 @@
+{% extends "designer/layout.html" %}
+{% block title %}Project not found — Nestfolio{% endblock %}
+
+{% block content %}
+<section class="card">
+  <h1 class="dash-title">Project not found</h1>
+
+  <p>
+    This project does not exist or is not available
+    in your portfolio.
+  </p>
+
+  <a class="btn btn-primary"
+     href="{{ url_for('designer.portfolio') }}">
+    Back to my portfolio
+  </a>
+</section>
+{% endblock %}
